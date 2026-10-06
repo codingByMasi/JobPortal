@@ -1,0 +1,38 @@
+name: Weekly database backup
+# Saves a copy of the whole database (ads, payments, applicants) every Sunday, encrypted, kept 30 days.
+# BEFORE THIS WORKS you must add two secrets in GitHub: Settings > Secrets and variables > Actions:
+#   SUPABASE_DB_URL     the "Connection string" (URI, session pooler) from Supabase > Project Settings > Database
+#   BACKUP_PASSPHRASE   a long password you invent and keep safe (needed to open a backup)
+# Keep this repository PRIVATE: a backup contains personal data (even though it is encrypted).
+# Restore: see docs/10-admin-guide.md.
+on:
+  schedule:
+    - cron: '30 21 * * 0'   # Sunday 21:30 UTC = Monday 03:00 India time
+  workflow_dispatch:
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the secrets exist
+        env:
+          URL: ${{ secrets.SUPABASE_DB_URL }}
+          PASS: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          if [ -z "$URL" ] || [ -z "$PASS" ]; then echo "Add the secrets SUPABASE_DB_URL and BACKUP_PASSPHRASE first (see the top of this file)."; exit 1; fi
+      - name: Install the Postgres tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+      - name: Dump the public tables (data and structure)
+        env:
+          URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: pg_dump "$URL" --schema=public --no-owner --no-privileges --format=custom --file=backup.dump
+      - name: Encrypt
+        env:
+          PASS: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: gpg --batch --yes --passphrase "$PASS" --symmetric --cipher-algo AES256 --output backup.dump.gpg backup.dump
+      - uses: actions/upload-artifact@v4
+        with:
+          name: database-backup
+          path: backup.dump.gpg
+          retention-days: 30

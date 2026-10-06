@@ -12,6 +12,26 @@ export async function listLiveJobs() {
   return state.db.jobs.filter((j) => isLive(j)).map(asJob);
 }
 
+export async function getLiveJob(id) {
+  await wait();
+  const row = state.db.jobs.find((j) => j.id === id);
+  return row && isLive(row) ? asJob(row) : null;
+}
+
+export async function logError({ message, page = '', agent = '' }) {
+  const list = (state.db.error_log ||= []);
+  const text = String(message || '').trim().slice(0, 300);
+  if (!text) return;
+  const same = list.find((r) => r.message === text && r.page === page.slice(0, 200));
+  if (same) {
+    same.times += 1;
+    same.last_at = new Date().toISOString();
+  } else if (list.length < 300) {
+    list.push({ id: uid(), message: text, page: page.slice(0, 200), agent: agent.slice(0, 150), times: 1, created_at: new Date().toISOString(), last_at: new Date().toISOString() });
+  }
+  save();
+}
+
 export async function submitApplication({ jobId, name, phone, city, message }) {
   await wait();
   const job = state.db.jobs.find((j) => j.id === jobId);

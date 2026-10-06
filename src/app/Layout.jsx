@@ -47,7 +47,7 @@ export default function Layout() {
             <Icon name="user" size={22} />
             <span>{user ? t.myAccount : t.login}</span>
           </Link>
-          <button type="button" className="lang-btn" onClick={toggle} aria-label={t.langLabel}>
+          <button type="button" className="lang-btn" onClick={toggle} aria-label={`${t.langButton}. ${t.langLabel}`}>
             <Icon name="languages" size={22} />
             <span>{t.langButton}</span>
           </button>

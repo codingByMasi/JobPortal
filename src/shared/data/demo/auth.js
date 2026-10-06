@@ -13,7 +13,7 @@ export async function getProfile(id) {
   return toProfile(profileOf(id));
 }
 
-export async function signUp({ email, password, companyName, phone }) {
+export async function signUp({ email, password, companyName, phone, raNumber = '' }) {
   await wait();
   const mail = String(email).trim().toLowerCase();
   if (String(password).length < 8) throw fail('WEAK_PASSWORD');
@@ -21,7 +21,7 @@ export async function signUp({ email, password, companyName, phone }) {
   const id = uid();
   state.db.users.push({ id, email: mail, password });
   state.db.profiles.push({
-    id, email: mail, role: 'recruiter', company_name: companyName.trim(), phone: phone.trim(),
+    id, email: mail, role: 'recruiter', company_name: companyName.trim(), phone: phone.trim(), ra_number: String(raNumber).trim(),
     verified: false, blocked: false, created_at: new Date().toISOString(),
   });
   state.db.session = id;
@@ -43,4 +43,37 @@ export async function signOut() {
   state.db.session = null;
   save();
   notify();
+}
+
+/** Demo: there is no email, so the person is signed in at once and goes straight to the "new password" screen. */
+export async function requestPasswordReset(email) {
+  await wait();
+  const user = state.db.users.find((u) => u.email === String(email).trim().toLowerCase());
+  if (user) {
+    state.db.session = user.id;
+    save();
+    notify();
+  }
+}
+
+export async function updatePassword(password) {
+  await wait();
+  if (String(password).length < 8) throw fail('WEAK_PASSWORD');
+  const user = state.db.users.find((u) => u.id === state.db.session);
+  if (!user) throw fail('NEED_LOGIN');
+  user.password = password;
+  save();
+}
+
+/** Demo mode has no authenticator app. */
+export async function mfaStatus() {
+  return { enrolled: false, needsCode: false, factorId: null };
+}
+
+export async function mfaEnroll() {
+  throw fail('NOT_ALLOWED');
+}
+
+export async function mfaVerify() {
+  throw fail('NOT_ALLOWED');
 }

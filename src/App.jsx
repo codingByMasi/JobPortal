@@ -1,7 +1,11 @@
 // Route table: which screen shows at which address.
+import { lazy, Suspense } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import Layout from './app/Layout';
+import ForgotPassword from './features/auth/ForgotPassword';
 import RequireRole from './features/auth/RequireRole';
+import ResetPassword from './features/auth/ResetPassword';
+import { Loading } from './shared/ui/StateViews';
 import Contact from './features/site/Contact';
 import Home from './features/jobs/Home';
 import JobDetail from './features/jobs/JobDetail';
@@ -11,24 +15,30 @@ import Login from './features/auth/Login';
 import NotFound from './features/site/NotFound';
 import PostJob from './features/site/PostJob';
 import Signup from './features/auth/Signup';
-import DashboardLayout from './features/recruiter/DashboardLayout';
-import EditAd from './features/recruiter/EditAd';
-import MyAds from './features/recruiter/MyAds';
-import MyApplications from './features/recruiter/MyApplications';
-import MyPayments from './features/recruiter/MyPayments';
-import NewAd from './features/recruiter/NewAd';
-import Pay from './features/payments/Pay';
-import AdminApplications from './features/admin/AdminApplications';
-import AdminEmployers from './features/admin/AdminEmployers';
-import AdminHome from './features/admin/AdminHome';
-import AdminJobForm from './features/admin/AdminJobForm';
-import AdminJobs from './features/admin/AdminJobs';
-import AdminLayout from './features/admin/AdminLayout';
-import AdminPackages from './features/admin/AdminPackages';
-import AdminPayments from './features/admin/AdminPayments';
+const DashboardLayout = lazy(() => import('./features/recruiter/DashboardLayout'));
+const EditAd = lazy(() => import('./features/recruiter/EditAd'));
+const MyAds = lazy(() => import('./features/recruiter/MyAds'));
+const MyApplications = lazy(() => import('./features/recruiter/MyApplications'));
+const MyPayments = lazy(() => import('./features/recruiter/MyPayments'));
+const Profile = lazy(() => import('./features/recruiter/Profile'));
+const NewAd = lazy(() => import('./features/recruiter/NewAd'));
+const Pay = lazy(() => import('./features/payments/Pay'));
+const AdminApplications = lazy(() => import('./features/admin/AdminApplications'));
+const AdminEmployers = lazy(() => import('./features/admin/AdminEmployers'));
+const AdminHome = lazy(() => import('./features/admin/AdminHome'));
+const AdminJobForm = lazy(() => import('./features/admin/AdminJobForm'));
+const AdminJobs = lazy(() => import('./features/admin/AdminJobs'));
+const AdminLayout = lazy(() => import('./features/admin/AdminLayout'));
+const AdminPackages = lazy(() => import('./features/admin/AdminPackages'));
+const AdminPayments = lazy(() => import('./features/admin/AdminPayments'));
+const AdminRequests = lazy(() => import('./features/admin/AdminRequests'));
+const AdminSecurity = lazy(() => import('./features/admin/AdminSecurity'));
+const AdminProblems = lazy(() => import('./features/admin/AdminProblems'));
+const Receipt = lazy(() => import('./features/recruiter/Receipt'));
 
 export default function App() {
   return (
+    <Suspense fallback={<div className="page"><Loading /></div>}>
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<Home />} />
@@ -38,6 +48,8 @@ export default function App() {
         <Route path="contact" element={<Contact />} />
         <Route path="login" element={<Login />} />
         <Route path="signup" element={<Signup />} />
+        <Route path="forgot-password" element={<ForgotPassword />} />
+        <Route path="reset-password" element={<ResetPassword />} />
         <Route path="privacy" element={<Legal kind="privacy" />} />
         <Route path="terms" element={<Legal kind="terms" />} />
 
@@ -49,6 +61,8 @@ export default function App() {
             <Route path="pay/:id" element={<Pay />} />
             <Route path="payments" element={<MyPayments />} />
             <Route path="applications" element={<MyApplications />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="receipt/:id" element={<Receipt />} />
           </Route>
         </Route>
 
@@ -62,11 +76,15 @@ export default function App() {
             <Route path="payments" element={<AdminPayments />} />
             <Route path="packages" element={<AdminPackages />} />
             <Route path="applications" element={<AdminApplications />} />
+            <Route path="requests" element={<AdminRequests />} />
+            <Route path="security" element={<AdminSecurity />} />
+            <Route path="problems" element={<AdminProblems />} />
           </Route>
         </Route>
 
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>
+    </Suspense>
   );
 }

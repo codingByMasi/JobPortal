@@ -32,7 +32,7 @@ export function jobPostingJson(job, siteUrl) {
     '@context': 'https://schema.org',
     '@type': 'JobPosting',
     title: job.title,
-    description: `${job.title}${job.company ? ` at ${job.company}` : ''} in ${[job.city, country?.name].filter(Boolean).join(', ')}. Open the full advertisement on Jobs Abroad.`,
+    description: `${job.title}${job.company ? ` at ${job.company}` : ''} in ${[job.city, country?.name].filter(Boolean).join(', ')}. ${job.details ? `${job.details} ` : ''}Open the full advertisement on Jobs Abroad.`,
     hiringOrganization: { '@type': 'Organization', name: job.company || 'Employer' },
     jobLocation: {
       '@type': 'Place',
@@ -45,7 +45,7 @@ export function jobPostingJson(job, siteUrl) {
     url: `${siteUrl}/job/${encodeURIComponent(job.id)}`,
   };
   if (job.posted) data.datePosted = day(job.posted);
-  if (job.expiry) data.validThrough = day(job.expiry);
+  if (job.expiresAt) data.validThrough = day(job.expiresAt);
   return JSON.stringify(data).replace(/</g, '\\u003c'); // never let a cell close the script tag
 }
 
@@ -56,14 +56,16 @@ export function jobPageHtml(html, job, siteUrl) {
   const description = `${job.title}${job.company ? ` at ${job.company}` : ''}${place ? ` in ${place}` : ''}. See the full job ad. No login, no payment.`;
   const body = `<main><h1>${escapeHtml(job.title)}</h1><p>${escapeHtml(description)}</p></main>`;
   const extraHead = `    <script type="application/ld+json">${jobPostingJson(job, siteUrl)}</script>\n`;
-  return withMeta(html, { title, description, url: `${siteUrl}/job/${encodeURIComponent(job.id)}`, image: `${siteUrl}/hero.jpg`, extraHead, body });
+  // an ad that is a picture shows that picture in the WhatsApp / Facebook preview; a PDF ad shows the site picture
+  const image = job.fileType === 'image' && job.fileUrl ? job.fileUrl : `${siteUrl}/hero.jpg`;
+  return withMeta(html, { title, description, url: `${siteUrl}/job/${encodeURIComponent(job.id)}`, image, extraHead, body });
 }
 
 export const STATIC_PAGES = [
   { path: '/jobs', title: 'Jobs | Jobs Abroad', description: 'Latest job ads for plumber, electrician, driver, technician, cook and helper jobs in the Gulf.' },
   { path: '/contact', title: 'Contact us | Jobs Abroad', description: 'WhatsApp or email us for help with job ads.' },
-  { path: '/post-job', title: 'Post a Job | Jobs Abroad', description: 'Employers can post a job ad in 3 easy steps. Posting is free.' },
-  { path: '/privacy', title: 'Privacy | Jobs Abroad', description: 'No login. We do not collect your name, phone number or documents.' },
+  { path: '/post-job', title: 'Post a Job | Jobs Abroad', description: 'Employers can post a job ad in 3 easy steps. Making an account is free; you pay when you post an ad.' },
+  { path: '/privacy', title: 'Privacy | Jobs Abroad', description: 'No login to see jobs. If you apply, your name and phone go to the employer and are deleted after 180 days.' },
   { path: '/terms', title: 'Terms and safety | Jobs Abroad', description: 'Stay safe: never pay before checking the employer.' },
 ];
 

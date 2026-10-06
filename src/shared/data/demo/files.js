@@ -16,3 +16,12 @@ export async function copyFile(file, ownerId) {
 }
 
 export async function removeFile() {}
+
+/** Demo files live inside the ad rows, so nothing is ever left behind. */
+export async function adminListUnusedFiles() {
+  return [];
+}
+
+export async function adminRemoveFiles() {
+  return 0;
+}

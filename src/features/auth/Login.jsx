@@ -1,12 +1,11 @@
 // Employer / admin login. In demo mode it also shows the demo accounts with one tap to fill them in.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import Button from '../../shared/ui/Button';
 import Field from '../../shared/ui/Field';
 import Notice from '../../shared/ui/Notice';
 import SectionHeading from '../../shared/ui/SectionHeading';
 import { isDemo } from '../../shared/data';
-import { DEMO_LOGINS } from '../../shared/data/demo/seed';
 import { useAuth } from './AuthContext';
 import { landingPath } from './landing';
 import { friendlyMessage } from '../../shared/lib/friendlyError';
@@ -21,7 +20,13 @@ export default function Login() {
   const [values, setValues] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
   const [state, setState] = useState({ busy: false, message: '' });
+  const [demoLogins, setDemoLogins] = useState(null);
   usePageMeta(t.loginTitle, undefined, { noindex: true });
+
+  // the demo accounts are loaded only in demo mode, so they never ship to real visitors
+  useEffect(() => {
+    if (isDemo) import('../../shared/data/demo/seed').then((m) => setDemoLogins(m.DEMO_LOGINS));
+  }, []);
 
   if (user && profile) return <Navigate to={landingPath(location.state?.from, isAdmin)} replace />;
 
@@ -58,12 +63,13 @@ export default function Login() {
         <Notice tone="error">{state.message}</Notice>
         <Button type="submit" icon="user" disabled={state.busy}>{state.busy ? t.loggingIn : t.loginButton}</Button>
       </form>
+      <p className="center"><Link className="text-link" to="/forgot-password">{t.forgotLink}</Link></p>
       <p className="center"><Link className="text-link" to="/signup">{t.noAccount}</Link></p>
 
-      {isDemo && (
+      {isDemo && demoLogins && (
         <section className="demo-logins">
           <h2>{t.demoLogins}</h2>
-          {[['demoEmployer', DEMO_LOGINS.recruiter], ['demoAdmin', DEMO_LOGINS.admin]].map(([label, creds]) => (
+          {[['demoEmployer', demoLogins.recruiter], ['demoAdmin', demoLogins.admin]].map(([label, creds]) => (
             <div key={label} className="demo-login">
               <span><strong>{t[label]}</strong><br />{creds.email} / {creds.password}</span>
               <Button size="sm" tone="outline" onClick={() => setValues({ email: creds.email, password: creds.password })}>{t.useThis}</Button>

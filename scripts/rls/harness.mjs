@@ -24,6 +24,12 @@ const SUPABASE_STUBS = `
     select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
   $$;
 
+  -- the login system's second-step factors, and the token contents (aal1 = password only, aal2 = password + authenticator app)
+  create table auth.mfa_factors (id uuid primary key default gen_random_uuid(), user_id uuid, status text);
+  create function auth.jwt() returns jsonb language sql stable as $$
+    select coalesce(nullif(current_setting('request.jwt.claims', true), ''), '{}')::jsonb
+  $$;
+
   create schema storage;
   create table storage.buckets (
     id text primary key, name text, public boolean default false, file_size_limit bigint, allowed_mime_types text[]

@@ -161,6 +161,7 @@ describe('the whole journey: post, pay, approve, apply, hide, delete', () => {
   });
   it('an ad disappears when its end time passes, and cannot be shown again', async () => {
     await asAdmin();
+    await api.adminSetHidden('job-1', true);
     await api.adminUpdateJob('job-1', { expiresAt: Date.now() - 1000 });
     expect((await api.listLiveJobs()).map((j) => j.id)).not.toContain('job-1');
     await expect(api.adminSetHidden('job-1', false)).rejects.toMatchObject({ code: 'ENDED' });
@@ -188,5 +189,51 @@ describe('the whole journey: post, pay, approve, apply, hide, delete', () => {
     const pay = (await api.adminListPayments()).find((p) => p.id === 'pay-1');
     await api.adminRefund(pay.id);
     expect((await api.adminCounts()).revenuePaise).toBe(before - pay.amountPaise);
+  });
+});
+
+describe('change requests (same rules as migration 0011)', () => {
+  it('an employer can ask for a change on their own paid ad and sees the request', async () => {
+    await asEmployer();
+    await api.createChangeRequest({ jobId: 'job-3', message: '  Change the city  ' });
+    const mine = await api.listMyChangeRequests();
+    expect(mine.find((r) => r.jobId === 'job-3')).toMatchObject({ message: 'Change the city', status: 'open' });
+  });
+  it('not for an ad waiting for payment, another employer ad, a blocked account, or a bad message', async () => {
+    await asEmployer();
+    await expect(api.createChangeRequest({ jobId: 'job-7', message: 'Change it' })).rejects.toMatchObject({ code: 'NOT_ALLOWED' });
+    await expect(api.createChangeRequest({ jobId: 'job-2', message: 'Change it' })).rejects.toMatchObject({ code: 'NOT_ALLOWED' });
+    await expect(api.createChangeRequest({ jobId: 'job-3', message: ' ab ' })).rejects.toMatchObject({ code: 'NEED_MESSAGE' });
+    await expect(api.createChangeRequest({ jobId: 'job-3', message: 'x'.repeat(301) })).rejects.toMatchObject({ code: 'NEED_MESSAGE' });
+    await api.signOut();
+    await asAdmin();
+    await api.adminSetRecruiter('u-rec', { blocked: true });
+    await api.signOut();
+    await asEmployer();
+    await expect(api.createChangeRequest({ jobId: 'job-3', message: 'Change it' })).rejects.toMatchObject({ code: 'BLOCKED' });
+  });
+  it('at most 3 open requests per ad', async () => {
+    await asEmployer();
+    for (let i = 0; i < 2; i += 1) await api.createChangeRequest({ jobId: 'job-1', message: `Change ${i}` }); // job-1 already has 1 open
+    await expect(api.createChangeRequest({ jobId: 'job-1', message: 'One more' })).rejects.toMatchObject({ code: 'TOO_MANY_REQUESTS' });
+  });
+  it('employers cannot use the admin functions; the admin sees all and can finish a request', async () => {
+    await asEmployer();
+    await expect(api.adminListChangeRequests()).rejects.toMatchObject({ code: 'NOT_ALLOWED' });
+    await expect(api.adminSetChangeRequest('req-1', 'done')).rejects.toMatchObject({ code: 'NOT_ALLOWED' });
+    await api.signOut();
+    await asAdmin();
+    expect((await api.adminCounts()).requests).toBe(1);
+    const all = await api.adminListChangeRequests();
+    expect(all[0]).toMatchObject({ id: 'req-1', jobTitle: 'Plumbers Needed', employerName: 'Gulf Works' });
+    await api.adminSetChangeRequest('req-1', 'done');
+    expect((await api.adminListChangeRequests())[0]).toMatchObject({ status: 'done' });
+    expect((await api.adminListChangeRequests())[0].handledAt).toBeGreaterThan(0);
+    expect((await api.adminCounts()).requests).toBe(0);
+  });
+  it('deleting an ad removes its requests', async () => {
+    await asAdmin();
+    await api.deleteJob({ id: 'job-1' });
+    expect(await api.adminListChangeRequests()).toEqual([]);
   });
 });

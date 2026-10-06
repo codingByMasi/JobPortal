@@ -1,5 +1,5 @@
 // Supabase: admin-only actions. Approve and Mark-paid call database functions that check is_admin() themselves.
-import { toApplication, toJob, toJobRow, toPayment, toProfile } from '../mappers';
+import { toApplication, toChangeRequest, toErrorLog, toJob, toJobRow, toPayment, toProfile } from '../mappers';
 import { iso, JOB_FULL, ok, PROFILE_COLUMNS, raise, supabase, userId } from './client';
 
 const DAY = 86400000;
@@ -31,21 +31,15 @@ export async function adminApprove(id) {
 }
 
 export async function adminReject(id, reason) {
-  ok(await supabase.from('jobs').update({ status: 'rejected', reject_reason: reason.trim() }).eq('id', id).select('id').single());
+  ok(await supabase.rpc('admin_reject_job', { p_job: id, p_reason: reason.trim() }));
 }
 
 export async function adminSetHidden(id, hidden) {
-  if (hidden) {
-    ok(await supabase.from('jobs').update({ status: 'hidden' }).eq('id', id).select('id').single());
-    return;
-  }
-  const row = ok(await supabase.from('jobs').select('expires_at').eq('id', id).single());
-  if (!row.expires_at || Date.parse(row.expires_at) <= Date.now()) throw Object.assign(new Error('ended'), { code: 'ENDED' });
-  ok(await supabase.from('jobs').update({ status: 'live' }).eq('id', id).select('id').single());
+  ok(await supabase.rpc('admin_set_hidden', { p_job: id, p_hidden: hidden }));
 }
 
-export async function adminMarkPaid(id, { amountPaise = null, note = '' } = {}) {
-  return toPayment(ok(await supabase.rpc('admin_mark_paid', { p_job: id, p_amount_paise: amountPaise, p_note: note })));
+export async function adminMarkPaid(id, { amountPaise = null, note = '', reference = '' } = {}) {
+  return toPayment(ok(await supabase.rpc('admin_mark_paid', { p_job: id, p_amount_paise: amountPaise, p_note: note, p_reference: reference })));
 }
 
 export async function adminListRecruiters() {
@@ -65,18 +59,18 @@ export async function adminListPayments() {
   ).map(toPayment);
 }
 
-export async function adminAddPayment({ recruiterId, jobId, amountPaise, note = '' }) {
+export async function adminAddPayment({ recruiterId, jobId, amountPaise, note = '', reference = '' }) {
   ok(
     await supabase
       .from('payments')
-      .insert({ recruiter_id: recruiterId, job_id: jobId || null, amount_paise: amountPaise, method: 'manual', status: 'paid', note })
+      .insert({ recruiter_id: recruiterId, job_id: jobId || null, amount_paise: amountPaise, method: 'manual', status: 'paid', note, reference: reference.trim() || null })
       .select('id')
       .single(),
   );
 }
 
-export async function adminRefund(id) {
-  ok(await supabase.from('payments').update({ status: 'refunded' }).eq('id', id).select('id').single());
+export async function adminRefund(id, { hideAd = false } = {}) {
+  ok(await supabase.rpc('admin_refund_payment', { p_payment: id, p_hide_job: hideAd }));
 }
 
 export async function adminSavePackage(pkg) {
@@ -98,12 +92,32 @@ export async function adminCounts() {
     return n ?? 0;
   };
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
-  const [live, review, waitingPayment, paid] = await Promise.all([
+  const [live, review, waitingPayment, paid, requests] = await Promise.all([
     count((q) => q.eq('status', 'live').gt('expires_at', new Date().toISOString())),
     count((q) => q.eq('status', 'paid_pending_review')),
     count((q) => q.eq('status', 'pending_payment')),
     supabase.from('payments').select('amount_paise').eq('status', 'paid').gte('created_at', monthStart),
+    supabase.from('change_requests').select('id', { count: 'exact', head: true }).eq('status', 'open'),
   ]);
+  if (requests.error) raise(requests.error);
   if (paid.error) raise(paid.error);
-  return { live, review, waitingPayment, revenuePaise: paid.data.reduce((sum, x) => sum + x.amount_paise, 0) };
+  return { live, review, waitingPayment, revenuePaise: paid.data.reduce((sum, x) => sum + x.amount_paise, 0), requests: requests.count ?? 0 };
+}
+
+export async function adminListChangeRequests() {
+  return ok(
+    await supabase.from('change_requests').select('*, job:jobs(id, title), recruiter:profiles(company_name, phone)').order('created_at', { ascending: false }),
+  ).map(toChangeRequest);
+}
+
+export async function adminSetChangeRequest(id, status) {
+  ok(await supabase.from('change_requests').update({ status }).eq('id', id).select('id').single());
+}
+
+export async function adminListErrors() {
+  return ok(await supabase.from('error_log').select('*').order('last_at', { ascending: false }).limit(200)).map(toErrorLog);
+}
+
+export async function adminClearErrors() {
+  ok(await supabase.from('error_log').delete().not('id', 'is', null));
 }

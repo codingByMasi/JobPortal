@@ -18,6 +18,16 @@ export default function Legal({ kind }) {
           <li key={p}><Icon name="check" size={24} /><span>{p}</span></li>
         ))}
       </ul>
+      {kind === 'terms' && (
+        <>
+          <SectionHeading as="h2" icon="briefcase" title={t.employerTermsTitle} />
+          <ul className="legal">
+            {t.employerTermsPoints.map((p) => (
+              <li key={p}><Icon name="check" size={24} /><span>{p}</span></li>
+            ))}
+          </ul>
+        </>
+      )}
       <p className="legal-note">{t.legalDraft}</p>
     </div>
   );

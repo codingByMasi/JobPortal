@@ -6,6 +6,9 @@ export const WHATSAPP_NUMBER = '919999999999';
 // PLACEHOLDER: the UPI ID where employers pay (example: jobsabroad@upi)
 export const UPI_ID = 'yourname@upi';
 
+// PLACEHOLDER: the name that belongs to that UPI ID (shown to employers so they can check who they pay)
+export const UPI_NAME = 'Your Business Name';
+
 // PLACEHOLDER: contact email shown on the Contact page
 export const CONTACT_EMAIL = 'help@example.com';
 
@@ -15,6 +18,10 @@ export const SITE_URL = 'PASTE_SITE_URL_HERE';
 
 // PLACEHOLDER (optional): your Plausible Analytics domain, e.g. jobsabroad.example.com. Empty = no analytics.
 export const ANALYTICS_DOMAIN = '';
+
+// PLACEHOLDER: the person who answers complaints and take-down requests (shown on the Contact page)
+export const GRIEVANCE_NAME = 'Your Name';
+export const GRIEVANCE_EMAIL = 'grievance@example.com';
 
 export const SITE_NAME = 'Jobs Abroad';
 

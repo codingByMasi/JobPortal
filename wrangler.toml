@@ -1,0 +1,14 @@
+# Cloudflare Pages settings for Jobs Abroad (a static site: no Pages Functions, no server code).
+#
+# In the Cloudflare dashboard (Workers & Pages > Create > Pages > Connect to Git) use:
+#   Framework preset: None        Build command: npm run build        Build output directory: dist
+# The Node version comes from the file .node-version in the project (22).
+# Build-time settings (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, optional VITE_TURNSTILE_SITE_KEY) are typed in the dashboard under
+# Settings > Variables and Secrets, SEPARATELY for "Production" and "Preview" (see docs/13-cloudflare-pages.md).
+#
+# There are no runtime bindings (KV, D1, R2) and no secrets in this project. Anything secret (service-role key, Razorpay secret) lives
+# only in Supabase (Edge Function secrets), never here.
+
+name = "jobs-abroad"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-10-01"

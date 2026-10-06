@@ -16,6 +16,7 @@ import { friendlyMessage } from '../../shared/lib/friendlyError';
 import { useLang } from '../../shared/i18n/LangContext';
 import { toDateString } from '../../shared/data/mappers';
 import { formatPrice } from '../../shared/lib/money';
+import { isValidWhatsapp, normalizeWhatsapp } from '../../shared/lib/phone';
 
 const endOfDay = (dateString) => {
   const [y, m, d] = dateString.split('-').map(Number);
@@ -36,13 +37,16 @@ export default function JobForm({ mode, job, renewFrom, packages, onSaved }) {
     country: source?.country || 'uae',
     city: source?.city || '',
     category: source?.category || 'plumber',
-    whatsapp: source?.whatsapp || String(profile?.phone || '').replace(/\D/g, ''),
+    whatsapp: normalizeWhatsapp(source?.whatsapp || profile?.phone || ''),
+    details: source?.details || '',
     packageId: job?.packageId || renewFrom?.packageId || '',
     days: '30',
     expires: job?.expiresAt ? toDateString(job.expiresAt) : '',
   }));
   const [file, setFile] = useState(
-    source?.fileUrl ? { fileUrl: source.fileUrl, filePath: source.filePath, fileType: source.fileType, copy: Boolean(renewFrom) } : null,
+    source?.fileUrl
+      ? { fileUrl: source.fileUrl, filePath: source.filePath, fileType: source.fileType, thumbUrl: source.thumbUrl, thumbPath: source.thumbPath, copy: Boolean(renewFrom) }
+      : null,
   );
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
@@ -59,7 +63,7 @@ export default function JobForm({ mode, job, renewFrom, packages, onSaved }) {
     e.preventDefault();
     const next = {};
     if (v.title.trim().length < 2) next.title = t.errRequired;
-    if (!/^\d{8,15}$/.test(v.whatsapp.replace(/\D/g, ''))) next.whatsapp = t.errPhoneBad;
+    if (!isValidWhatsapp(v.whatsapp)) next.whatsapp = t.errPhoneBad;
     if (mode === 'new' && !v.packageId) next.package = t.errNeedPackage;
     if (!isAdmin && !file) next.file = t.errNeedFile;
     if (mode === 'admin-new' && !(Number.isInteger(+v.days) && +v.days >= 1 && +v.days <= 365)) next.days = t.errRequired;
@@ -69,35 +73,47 @@ export default function JobForm({ mode, job, renewFrom, packages, onSaved }) {
     setBusy(true);
     setFormError('');
     let uploaded = null;
+    let uploadedThumb = null;
     try {
       let fileFields = {};
       if (file?.blob) {
         uploaded = await api.uploadFile(file.blob, user.id);
-        fileFields = { fileUrl: uploaded.url, filePath: uploaded.path, fileType: file.fileType };
+        if (file.thumbBlob) uploadedThumb = await api.uploadFile(file.thumbBlob, user.id, { thumb: true });
+        fileFields = { fileUrl: uploaded.url, filePath: uploaded.path, fileType: file.fileType, thumbUrl: uploadedThumb?.url ?? '', thumbPath: uploadedThumb?.path ?? '' };
       } else if (file?.copy && file.filePath) {
         uploaded = await api.copyFile({ url: file.fileUrl, path: file.filePath }, user.id);
-        fileFields = { fileUrl: uploaded.url, filePath: uploaded.path, fileType: file.fileType };
+        if (file.thumbPath) uploadedThumb = await api.copyFile({ url: file.thumbUrl, path: file.thumbPath }, user.id);
+        fileFields = { fileUrl: uploaded.url, filePath: uploaded.path, fileType: file.fileType, thumbUrl: uploadedThumb?.url ?? '', thumbPath: uploadedThumb?.path ?? '' };
       } else if (file) {
-        fileFields = { fileUrl: file.fileUrl, filePath: file.copy ? null : file.filePath ?? null, fileType: file.fileType };
+        fileFields = {
+          fileUrl: file.fileUrl, filePath: file.copy ? null : file.filePath ?? null, fileType: file.fileType,
+          thumbUrl: file.copy ? '' : file.thumbUrl || '', thumbPath: file.copy ? null : file.thumbPath ?? null,
+        };
       }
       const base = {
-        title: v.title, company: v.company, country: v.country, city: v.city, category: v.category, whatsapp: v.whatsapp, ...fileFields,
+        title: v.title, company: v.company, country: v.country, city: v.city, category: v.category, whatsapp: v.whatsapp, details: v.details, ...fileFields,
       };
       let saved;
       if (mode === 'new') saved = await api.createJob({ ...base, packageId: v.packageId });
-      else if (mode === 'edit') saved = await api.updateJob(job.id, base);
-      else if (mode === 'admin-new') saved = await api.adminCreateJob({ ...base, packageId: v.packageId || null }, Number(v.days));
+      else if (mode === 'edit') {
+        saved = await api.updateJob(job.id, base);
+        if (job.status === 'rejected') saved = await api.resubmitJob(job.id); // a fixed, rejected ad goes back to review
+      } else if (mode === 'admin-new') saved = await api.adminCreateJob({ ...base, packageId: v.packageId || null }, Number(v.days));
       else saved = await api.adminUpdateJob(job.id, { ...base, packageId: v.packageId || null, expiresAt: v.expires ? endOfDay(v.expires) : undefined });
-      if (isEdit && uploaded && job.filePath) api.removeFile(job.filePath).catch(() => {});
+      if (isEdit && uploaded) {
+        if (job.filePath) api.removeFile(job.filePath).catch(() => {});
+        if (job.thumbPath) api.removeFile(job.thumbPath).catch(() => {});
+      }
       onSaved(saved);
     } catch (err) {
       if (uploaded) api.removeFile(uploaded.path).catch(() => {});
+      if (uploadedThumb) api.removeFile(uploadedThumb.path).catch(() => {});
       setFormError(friendlyMessage(err, t));
       setBusy(false);
     }
   };
 
-  const submitLabel = { new: t.continuePay, edit: t.saveChanges, 'admin-new': t.save, 'admin-edit': t.saveChanges }[mode];
+  const submitLabel = { new: t.continuePay, edit: job?.status === 'rejected' ? t.saveAndResend : t.saveChanges, 'admin-new': t.save, 'admin-edit': t.saveChanges }[mode];
 
   return (
     <form className="form" onSubmit={submit} noValidate>
@@ -126,6 +142,10 @@ export default function JobForm({ mode, job, renewFrom, packages, onSaved }) {
       </Field>
       <Field label={t.fWhatsapp} help={t.fWhatsappHelp} error={errors.whatsapp}>
         <input type="tel" inputMode="numeric" value={v.whatsapp} onChange={set('whatsapp')} maxLength={20} />
+      </Field>
+
+      <Field label={t.fDetails} help={t.fDetailsHelp}>
+        <textarea rows={4} value={v.details} onChange={set('details')} maxLength={600} />
       </Field>
 
       <FileField value={file} onChange={(f) => { setFile(f); clearError('file'); }} error={errors.file} />

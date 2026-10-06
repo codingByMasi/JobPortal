@@ -59,6 +59,9 @@ export function buildSeed(now = Date.now()) {
       { id: 'pay-2', job_id: 'job-8', recruiter_id: 'u-rec', amount_paise: 29900, currency: 'INR', method: 'manual', status: 'paid', note: '', created_at: iso(now - 40 * DAY) },
       { id: 'pay-3', job_id: 'job-6', recruiter_id: 'u-rec', amount_paise: 79900, currency: 'INR', method: 'manual', status: 'paid', note: 'UPI, ref 5530', created_at: iso(now - 0.5 * DAY) },
     ],
+    change_requests: [
+      { id: 'req-1', job_id: 'job-1', recruiter_id: 'u-rec', message: 'Please change the WhatsApp number to 919876500000.', status: 'open', created_at: iso(now - 0.2 * DAY), handled_at: null },
+    ],
     applications: [
       { id: 'app-1', job_id: 'job-1', name: 'Ramesh Kumar', phone: '9876500001', city: 'Lucknow', message: '5 years of plumbing work in Dubai.', created_at: iso(now - 0.3 * DAY) },
       { id: 'app-2', job_id: 'job-1', name: 'Sunil Yadav', phone: '9876500002', city: 'Patna', message: '', created_at: iso(now - 0.1 * DAY) },

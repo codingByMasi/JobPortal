@@ -4,12 +4,13 @@ import { useLocation, useSearchParams } from 'react-router-dom';
 import Button from '../../shared/ui/Button';
 import Field from '../../shared/ui/Field';
 import Icon from '../../shared/ui/Icon';
-import Modal from '../../shared/ui/Modal';
+import { AdFileDialog, DeleteDialog, PaidDialog, RejectDialog } from './AdminJobDialogs';
 import Notice from '../../shared/ui/Notice';
 import { StatusBadge } from '../../shared/ui/StatusBadge';
 import { AsyncView } from '../../shared/ui/StateViews';
 import { api } from '../../shared/data';
-import { describeStatus } from '../../shared/lib/format';
+import { adReference } from '../../shared/lib/adReference';
+import { candidateWhatsApp, describeStatus, whatsappLink } from '../../shared/lib/format';
 import { adminActions, effectiveStatus, STATUSES } from '../../shared/lib/jobStatus';
 import { useLang } from '../../shared/i18n/LangContext';
 import { formatPrice } from '../../shared/lib/money';
@@ -35,7 +36,6 @@ export default function AdminJobs() {
   const ads = useAsync(() => api.adminListJobs(), []);
   const { notice, success, fail } = useNotice(location.state?.notice || '');
   const [dialog, setDialog] = useState(null); // { kind: 'reject' | 'paid' | 'delete', job }
-  const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
 
   const status = params.get('status') || 'all';
@@ -53,7 +53,6 @@ export default function AdminJobs() {
     } finally {
       setBusy(false);
       setDialog(null);
-      setReason('');
     }
   };
 
@@ -64,10 +63,15 @@ export default function AdminJobs() {
     else setDialog({ kind: kind === 'markPaid' ? 'paid' : kind, job });
   };
 
-  const rows = (ads.data || []).filter((j) => {
+  const all = ads.data || [];
+  // hints that help the admin spot a risky ad: the first ad of an employer, and one WhatsApp number used by many ads
+  const isFirstAd = (job) => !all.some((o) => o.id !== job.id && o.recruiterId === job.recruiterId && !['pending_payment', 'draft'].includes(o.status));
+  const sameNumber = (job) => (job.whatsapp ? all.filter((o) => o.id !== job.id && o.whatsapp === job.whatsapp).length : 0);
+
+  const rows = all.filter((j) => {
     if (status !== 'all' && effectiveStatus(j) !== status) return false;
     if (!q) return true;
-    return [j.title, j.company, j.city, j.recruiter?.companyName, j.recruiter?.email].join(' ').toLowerCase().includes(q);
+    return [j.title, j.company, j.city, j.recruiter?.companyName, j.recruiter?.email, adReference(j.id)].join(' ').toLowerCase().includes(q);
   });
 
   return (
@@ -108,14 +112,22 @@ export default function AdminJobs() {
                         {job.recruiter?.companyName || '-'}
                         {job.recruiter?.verified && <Icon name="badge" size={16} className="inline-icon" />}
                         <br /><span className="muted">{job.recruiter?.email}</span>
+                        {job.recruiter?.raNumber && <><br /><span className="muted">{t.raShort}: {job.recruiter.raNumber}</span></>}
+                        {['pending_payment', 'paid_pending_review'].includes(job.status) && isFirstAd(job) && <p className="hint">{t.firstAd}</p>}
+                        {sameNumber(job) > 0 && <p className="hint">{t.sameNumber(sameNumber(job))}</p>}
                       </td>
-                      <td data-label={t.colPackage}>{job.package ? `${job.package.name} · ${formatPrice(job.package.pricePaise)}` : '-'}</td>
+                      <td data-label={t.colPackage}>{job.package ? `${job.package.name} · ${formatPrice(job.priceAtOrder ?? job.package.pricePaise)}` : "-"}</td>
                       <td data-label={t.colStatus}>
                         <StatusBadge job={job} />
                         <br /><span className="muted">{describeStatus(job, t, lang)}</span>
+                        <br /><span className="muted">{adReference(job.id)}</span>
                       </td>
                       <td data-label={t.colActions}>
                         <div className="row-actions">
+                          {job.fileUrl && <Button size="sm" tone="blue" icon="eye" onClick={() => setDialog({ kind: 'view', job })}>{t.viewAd}</Button>}
+                          {job.recruiter?.phone && (
+                            <Button size="sm" tone="outline" icon="whatsapp" href={whatsappLink(candidateWhatsApp(job.recruiter.phone), t.waToEmployerAd(job.title, describeStatus(job, t, lang)))} target="_blank" rel="noopener noreferrer">{t.whatsappThem}</Button>
+                          )}
                           {adminActions(job).map((kind) =>
                             kind === 'edit' ? (
                               <Button key={kind} size="sm" tone="outline" icon="edit" to={`/admin/jobs/${job.id}`}>{t.edit}</Button>
@@ -136,30 +148,15 @@ export default function AdminJobs() {
         }
       </AsyncView>
 
+      {dialog?.kind === 'view' && <AdFileDialog job={dialog.job} onClose={() => setDialog(null)} />}
       {dialog?.kind === 'reject' && (
-        <Modal title={t.rejectTitle} onClose={() => setDialog(null)}>
-          <p className="modal-text"><strong>{dialog.job.title}</strong></p>
-          <Field label={t.rejectReason}>
-            <textarea rows={3} value={reason} onChange={(e) => setReason(e.target.value)} maxLength={300} />
-          </Field>
-          <Button tone="danger" icon="close" disabled={busy || !reason.trim()} onClick={() => run(() => api.adminReject(dialog.job.id, reason), t.adRejected)}>
-            {t.rejectConfirm}
-          </Button>
-        </Modal>
+        <RejectDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={(reason) => run(() => api.adminReject(dialog.job.id, reason), t.adRejected)} />
       )}
       {dialog?.kind === 'paid' && (
-        <Modal title={t.markPaidTitle} onClose={() => setDialog(null)}>
-          <p className="modal-text"><strong>{dialog.job.title}</strong></p>
-          <p className="modal-text">{t.markPaidText(formatPrice(dialog.job.package?.pricePaise ?? 0))}</p>
-          <Button icon="rupee" disabled={busy} onClick={() => run(() => api.adminMarkPaid(dialog.job.id), t.adPaid)}>{t.markPaid}</Button>
-        </Modal>
+        <PaidDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={(reference) => run(() => api.adminMarkPaid(dialog.job.id, { reference }), t.adPaid)} />
       )}
       {dialog?.kind === 'delete' && (
-        <Modal title={t.deleteAsk} onClose={() => setDialog(null)}>
-          <p className="modal-text"><strong>{dialog.job.title}</strong></p>
-          <p className="modal-text">{t.deleteText}</p>
-          <Button tone="danger" icon="trash" disabled={busy} onClick={() => run(() => api.deleteJob(dialog.job), t.adDeleted)}>{t.yesDelete}</Button>
-        </Modal>
+        <DeleteDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={() => run(() => api.deleteJob(dialog.job), t.adDeleted)} />
       )}
     </section>
   );

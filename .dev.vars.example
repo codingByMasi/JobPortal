@@ -1,0 +1,4 @@
+# Local secrets for Pages Functions / wrangler. This project has NO Functions and NO runtime secrets today.
+# If you ever add a Function, copy this file to .dev.vars (it is gitignored) and put values there, never in the repo.
+# Never put a secret in a VITE_ variable: those are copied into the browser.
+# EXAMPLE_SECRET=

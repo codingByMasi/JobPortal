@@ -1,5 +1,6 @@
 // /dashboard/applications - people who applied to the employer's ads, with a WhatsApp button for each.
 import Button from '../../shared/ui/Button';
+import Notice from '../../shared/ui/Notice';
 import { AsyncView } from '../../shared/ui/StateViews';
 import { api } from '../../shared/data';
 import { useAuth } from '../auth/AuthContext';
@@ -11,9 +12,12 @@ import { useAsync } from '../../shared/lib/useAsync';
 export default function MyApplications() {
   const { t, lang } = useLang();
   const { user } = useAuth();
+  const { profile } = useAuth();
   const apps = useAsync(() => api.listMyApplications(user.id), [user.id]);
+  const waiting = useAsync(() => (profile?.verified ? Promise.resolve(0) : api.countMyApplications()), [profile?.verified]);
   return (
     <section className="section">
+      {!profile?.verified && <Notice tone="info">{t.applicantsLocked(waiting.data || 0)}</Notice>}
       <AsyncView state={apps} empty={t.noApps} emptyIcon="users">
         {(rows) => (
           <div className="table-wrap">

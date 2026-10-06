@@ -1,6 +1,9 @@
 // Employer signup: company name, phone, email, password.
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
+import Captcha from '../../shared/ui/Captcha';
+import { TURNSTILE_SITE_KEY } from '../../shared/data/env';
+import { isValidPhone } from '../../shared/lib/phone';
 import Button from '../../shared/ui/Button';
 import Field from '../../shared/ui/Field';
 import Notice from '../../shared/ui/Notice';
@@ -14,7 +17,10 @@ import { usePageMeta } from '../../shared/lib/usePageMeta';
 export default function Signup() {
   const { t } = useLang();
   const { user, profile, signUp } = useAuth();
-  const [values, setValues] = useState({ companyName: '', phone: '', email: '', password: '' });
+  const [values, setValues] = useState({ companyName: '', phone: '', raNumber: '', email: '', password: '' });
+  const [agree, setAgree] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState('');
+  const onToken = useCallback((token) => setCaptchaToken(token), []);
   const [errors, setErrors] = useState({});
   const [state, setState] = useState({ busy: false, message: '', confirm: false });
   usePageMeta(t.signupTitle, undefined, { noindex: true });
@@ -30,14 +36,16 @@ export default function Signup() {
     e.preventDefault();
     const next = {};
     if (!values.companyName.trim()) next.companyName = t.errRequired;
-    if (!/^[0-9+ -]{7,20}$/.test(values.phone.trim())) next.phone = t.errPhoneBad;
+    if (!isValidPhone(values.phone)) next.phone = t.errPhoneBad;
     if (!/^\S+@\S+\.\S+$/.test(values.email.trim())) next.email = t.errEmailBad;
     if (values.password.length < 8) next.password = t.errWeakPassword;
+    if (!agree) next.agree = t.errTermsNeeded;
+    if (TURNSTILE_SITE_KEY && !captchaToken) next.captcha = t.errCaptcha;
     setErrors(next);
     if (Object.keys(next).length) return;
     setState({ busy: true, message: '', confirm: false });
     try {
-      const { needsEmailConfirm } = await signUp(values);
+      const { needsEmailConfirm } = await signUp({ ...values, captchaToken: captchaToken || undefined });
       setState({ busy: false, message: '', confirm: needsEmailConfirm });
     } catch (err) {
       setState({ busy: false, message: friendlyMessage(err, t), confirm: false });
@@ -63,12 +71,22 @@ export default function Signup() {
         <Field label={t.phone} error={errors.phone}>
           <input type="tel" inputMode="tel" autoComplete="tel" value={values.phone} onChange={set('phone')} maxLength={20} />
         </Field>
+        <Field label={t.raNumber} help={t.raNumberHelp}>
+          <input type="text" value={values.raNumber} onChange={set('raNumber')} maxLength={40} />
+        </Field>
         <Field label={t.email} error={errors.email}>
           <input type="email" autoComplete="email" value={values.email} onChange={set('email')} />
         </Field>
         <Field label={t.password} help={t.passwordHelp} error={errors.password}>
           <input type="password" autoComplete="new-password" value={values.password} onChange={set('password')} />
         </Field>
+        <label className={`check${errors.agree ? ' has-error' : ''}`}>
+          <input type="checkbox" checked={agree} onChange={(e) => { setAgree(e.target.checked); setErrors((x) => ({ ...x, agree: undefined })); }} />
+          <span>{t.termsAgree} (<Link className="text-link" to="/terms" target="_blank" rel="noopener noreferrer">{t.termsRead}</Link>)</span>
+        </label>
+        {errors.agree && <p className="field-error" role="alert">{errors.agree}</p>}
+        <Captcha onToken={onToken} />
+        {errors.captcha && <p className="field-error" role="alert">{errors.captcha}</p>}
         <Notice tone="error">{state.message}</Notice>
         <Button type="submit" icon="user" disabled={state.busy}>{state.busy ? t.loggingIn : t.signupButton}</Button>
       </form>

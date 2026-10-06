@@ -12,8 +12,18 @@ export function effectiveStatus(job, now = Date.now()) {
 /** True when visitors may see the ad. */
 export const isPubliclyVisible = (job, now = Date.now()) => job.status === 'live' && job.expiresAt != null && job.expiresAt > now;
 
-/** Employers can edit and pay only while the ad waits for payment. */
-export const canEditAsRecruiter = (job) => job.status === 'pending_payment';
+/** Employers can edit an ad while it waits for payment, or after it was rejected (then they send it for review again). */
+export const canEditAsRecruiter = (job) => job.status === 'pending_payment' || job.status === 'rejected';
+
+/** Employers pay only while the ad waits for payment. */
+export const canPay = (job) => job.status === 'pending_payment';
+
+/** Employers can delete an ad only when nothing is running: unpaid, rejected or ended. Paid ads are hidden by us, not deleted. */
+export const canDelete = (job, now = Date.now()) =>
+  ['draft', 'pending_payment', 'rejected'].includes(job.status) || effectiveStatus(job, now) === 'expired';
+
+/** Once an ad is past "waiting for payment" employers cannot edit it, but they can ask us to change it. */
+export const canRequestChange = (job) => job.status !== 'pending_payment' && job.status !== 'draft';
 
 /** Employers can renew an ad that has ended. */
 export const canRenew = (job, now = Date.now()) => effectiveStatus(job, now) === 'expired';
@@ -48,6 +58,7 @@ export function adminActions(job, now = Date.now()) {
   if (s === 'paid_pending_review') return ['approve', 'reject', ...base];
   if (s === 'live') return ['hide', ...base];
   if (s === 'hidden') return ['show', ...base];
-  if (s === 'rejected' || s === 'expired') return ['approve', ...base];
+  if (s === 'rejected') return ['approve', ...base]; // paid, then rejected: the admin may change their mind
+  // an ended ad is not approved again: the employer renews it (a new ad and a new payment)
   return base;
 }

@@ -19,6 +19,9 @@ export default function AdminLayout() {
     { to: '/admin/payments', icon: 'card', label: t.tabAdminPayments },
     { to: '/admin/packages', icon: 'box', label: t.tabPackages },
     { to: '/admin/applications', icon: 'file', label: t.tabAdminApps },
+    { to: '/admin/requests', icon: 'edit', label: t.tabAdminRequests },
+    { to: '/admin/security', icon: 'shield', label: t.tabSecurity },
+    { to: '/admin/problems', icon: 'alert', label: t.tabProblems },
   ];
 
   return (

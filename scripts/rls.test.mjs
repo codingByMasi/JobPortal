@@ -10,6 +10,7 @@ let admin; let e1; let e2; let blocked;           // user ids
 let pkg7; let pkg30; let pkgFeatured; let pkgOff; // package ids
 let live1; let ended; let hidden; let pending1; let e2pending; // job ids
 
+const putFile = (owner, path) => db.query("insert into storage.objects (bucket_id, name, owner) values ('job-files', $1, $2)", [path, owner]);
 const STORAGE_URL = (path) => `https://abc.supabase.co/storage/v1/object/public/job-files/${path}`;
 
 async function seedJob(owner, title, status, packageId, startsDays, endsDays) {
@@ -24,7 +25,7 @@ async function seedJob(owner, title, status, packageId, startsDays, endsDays) {
   return rows[0].id;
 }
 
-const newJob = (owner, o = {}) => ({ recruiter_id: owner, package_id: pkg30, title: 'My new ad', status: 'pending_payment', ...o });
+const newJob = (owner, o = {}) => ({ recruiter_id: owner, package_id: pkg30, title: 'My new ad', status: 'pending_payment', whatsapp: '919999999999', ...o });
 
 /** Inserts a job as `who` using plain column names, so each test only states what it wants to try. */
 function insertJob(who, row) {
@@ -37,6 +38,7 @@ function insertJob(who, row) {
 
 beforeAll(async () => {
   db = await makeDb();
+  await db.query("insert into public.app_settings (key, value) values ('storage_base', 'https://abc.supabase.co')");
   admin = await addUser(db, 'admin@x.co', { company_name: 'Admin Co' });
   e1 = await addUser(db, 'e1@x.co', { company_name: 'Employer One', phone: '9876500001' });
   e2 = await addUser(db, 'e2@x.co', { company_name: 'Employer Two' });
@@ -80,9 +82,9 @@ describe('1. visitors (not logged in)', () => {
       await denied(as(db, who, () => db.query("insert into public.public_jobs (id, title) values (gen_random_uuid(), 'x')")));
     }
   });
-  it('see only live ads even when reading the table directly', async () => {
+  it('cannot read the jobs table at all (only the public view)', async () => {
     const rows = await as(db, null, () => rowsOf(db, 'select id from public.jobs'));
-    expect(rows.map((r) => r.id)).toEqual([live1]);
+    expect(rows).toEqual([]); // visitors read ads only through the view, never the table (so owner ids are never exposed)
   });
   it('cannot read profiles, payments or applications', async () => {
     for (const table of ['profiles', 'payments', 'applications']) {
@@ -182,24 +184,56 @@ describe('3. an employer', () => {
     await denied(insertJob(e1, newJob(e1, { whatsapp: 'call me' })));
     await denied(insertJob(e1, newJob(e1, { title: 'x' })));
   });
-  it('can attach only a file from their own storage folder, with a link that matches', async () => {
+  it('the file link is built by the database: a typed-in link (any website, even one ending in our path) is replaced by ours', async () => {
     const path = `${e1}/ad1.jpg`;
-    await expect(insertJob(e1, newJob(e1, { file_path: path, file_url: STORAGE_URL(path) }))).resolves.toBeTruthy();
-    await denied(insertJob(e1, newJob(e1, { file_path: `${e2}/ad1.jpg`, file_url: STORAGE_URL(`${e2}/ad1.jpg`) }))); // someone else's file
-    await denied(insertJob(e1, newJob(e1, { file_path: path, file_url: 'https://evil.example.com/tracking.png' }))); // outside link
-    await denied(insertJob(e1, newJob(e1, { file_path: null, file_url: STORAGE_URL(path) }))); // link without a path
-    await denied(insertJob(e1, newJob(e1, { file_path: path, file_url: 'javascript:alert(1)' })));
-    await denied(insertJob(e1, newJob(e1, { file_path: path, file_url: 'http://abc.supabase.co/storage/v1/object/public/job-files/' + path }))); // not https
+    await putFile(e1, path);
+    const own = STORAGE_URL(path);
+    const stored = async (url) => (await rowsOf(db, 'select file_url from public.jobs where id = $1', [(await insertJob(e1, newJob(e1, { file_path: path, file_url: url }))).rows[0].id]))[0].file_url;
+    expect(await stored(own)).toBe(own);
+    expect(await stored('https://evil.example.com/tracking.png')).toBe(own);
+    expect(await stored(`https://attacker.example.net/storage/v1/object/public/job-files/${path}`)).toBe(own); // the old hole
+    expect(await stored('javascript:alert(1)')).toBe(own);
+    expect(await stored('http://abc.supabase.co/x')).toBe(own);
+  });
+  it('a link without a file is dropped, and only a real file in the employer own folder can be attached', async () => {
+    const path = `${e1}/ad2.jpg`;
+    await putFile(e1, path);
+    const { rows } = await insertJob(e1, newJob(e1, { file_path: null, file_url: 'https://evil.example.com/x.png' }));
+    expect((await rowsOf(db, 'select file_url from public.jobs where id = $1', [rows[0].id]))[0].file_url).toBeNull();
+    await putFile(e2, `${e2}/ad1.jpg`);
+    await denied(insertJob(e1, newJob(e1, { file_path: `${e2}/ad1.jpg` }))); // someone else's file
+    await denied(insertJob(e1, newJob(e1, { file_path: `${e1}/never-uploaded.jpg` }))); // file does not exist
+    await denied(insertJob(e1, newJob(e1, { file_path: `${e1}/../${e2}/ad1.jpg` }))); // path trick
   });
   it('cannot swap the file of an ad for an outside link or another employer file while editing', async () => {
     const own = `${e1}/edit-me.jpg`;
-    const { rows } = await insertJob(e1, newJob(e1, { title: 'Edit my file', file_path: own, file_url: STORAGE_URL(own) }));
+    await putFile(e1, own);
+    const { rows } = await insertJob(e1, newJob(e1, { title: 'Edit my file', file_path: own }));
     const edit = (set, ...params) => as(db, e1, () => db.query(`update public.jobs set ${set} where id = $1`, [rows[0].id, ...params]));
-    expect((await denied(edit("file_url = 'https://evil.example.com/x.png'"))).code).toBe('42501');
-    expect((await denied(edit('file_path = $2, file_url = $3', `${e2}/theirs.jpg`, STORAGE_URL(`${e2}/theirs.jpg`)))).code).toBe('42501');
-    expect((await denied(edit("file_url = 'javascript:alert(1)'"))).code).toBeTruthy();
+    const link = async () => (await rowsOf(db, 'select file_url from public.jobs where id = $1', [rows[0].id]))[0].file_url;
+    await edit("file_url = 'https://evil.example.com/x.png'");
+    expect(await link()).toBe(STORAGE_URL(own)); // a typed-in link is put back to ours
+    expect((await denied(edit('file_path = $2', `${e2}/ad1.jpg`))).code).toBe('42501');
+    expect((await denied(edit('file_path = $2', `${e1}/not-there.jpg`))).code).toBe('42501');
     const next = `${e1}/edit-me-2.jpg`;
-    expect((await edit('file_path = $2, file_url = $3', next, STORAGE_URL(next))).affectedRows).toBe(1); // a proper replacement works
+    await putFile(e1, next);
+    expect((await edit('file_path = $2', next)).affectedRows).toBe(1); // a proper replacement works
+    expect(await link()).toBe(STORAGE_URL(next));
+  });
+  it('without the storage address setting, an ad with a file cannot be saved', async () => {
+    const path = `${e1}/nosetting.jpg`;
+    await putFile(e1, path);
+    await db.query("delete from public.app_settings where key = 'storage_base'");
+    try {
+      await denied(insertJob(e1, newJob(e1, { file_path: path })));
+    } finally {
+      await db.query("insert into public.app_settings (key, value) values ('storage_base', 'https://abc.supabase.co')");
+    }
+  });
+  it('nobody can read or change the private settings from the browser', async () => {
+    await denied(as(db, e1, () => db.query('select * from public.app_settings')));
+    await denied(as(db, null, () => db.query("update public.app_settings set value = 'https://evil.example.com'")));
+    await denied(as(db, e1, () => db.query("insert into public.app_settings (key, value) values ('x', 'y')")));
   });
   it('cannot keep more than 20 unpaid ads', async () => {
     const heavy = await addUser(db, 'heavy@x.co', { company_name: 'Heavy' });
@@ -232,10 +266,13 @@ describe('3. an employer', () => {
     expect(upd.affectedRows).toBe(0);
     expect(del.affectedRows).toBe(0);
   });
-  it('can delete their own ads (any status)', async () => {
-    const mine = await seedJob(e1, 'To delete', 'hidden', pkg30, -1, 5);
-    const del = await as(db, e1, () => db.query('delete from public.jobs where id = $1', [mine]));
-    expect(del.affectedRows).toBe(1);
+  it('can delete their own unpaid, rejected or ended ads, but not a paid, live or hidden one', async () => {
+    const del = (id) => as(db, e1, () => db.query('delete from public.jobs where id = $1', [id]));
+    for (const [status, ok, a, b] of [['pending_payment', true, null, null], ['rejected', true, null, null], ['expired', true, -9, -1], ['live', true, -9, -1],
+      ['live', false, -1, 5], ['hidden', false, -1, 5], ['paid_pending_review', false, null, null]]) {
+      const id = await seedJob(e1, `To delete ${status}`, status, pkg30, a, b);
+      expect((await del(id)).affectedRows).toBe(ok ? 1 : 0);
+    }
   });
 
   it('can read only their own payments, and cannot write any', async () => {
@@ -309,15 +346,15 @@ describe('4. file storage', () => {
   it('a blocked employer cannot upload', async () => {
     await denied(upload(blocked, `${blocked}/a.jpg`));
   });
-  it('stops an employer storing more than 200 files', async () => {
+  it('stops an employer storing more than 100 files', async () => {
     const hoarder = await addUser(db, 'hoarder@x.co', {});
-    await db.query("insert into storage.objects (bucket_id, name, owner) select 'job-files', $1 || '/f' || n || '.jpg', $1::uuid from generate_series(1, 200) n", [hoarder]);
+    await db.query("insert into storage.objects (bucket_id, name, owner) select 'job-files', $1 || '/f' || n || '.jpg', $1::uuid from generate_series(1, 100) n", [hoarder]);
     await denied(upload(hoarder, `${hoarder}/one-too-many.jpg`));
   });
-  it('the bucket only takes JPG, PNG, WebP and PDF up to 10 MB, and is public by link', async () => {
+  it('the bucket only takes JPG, PNG, WebP and PDF up to 3 MB, and is public by link', async () => {
     const [bucket] = await rowsOf(db, "select public, file_size_limit, allowed_mime_types from storage.buckets where id = 'job-files'");
     expect(bucket.public).toBe(true);
-    expect(Number(bucket.file_size_limit)).toBe(10485760);
+    expect(Number(bucket.file_size_limit)).toBe(3145728);
     expect([...bucket.allowed_mime_types].sort()).toEqual(['application/pdf', 'image/jpeg', 'image/png', 'image/webp']);
   });
 });
@@ -390,7 +427,7 @@ describe('6. the admin', () => {
     expect((await as(db, admin, () => db.query('delete from public.jobs where id = $1', [job]))).affectedRows).toBe(1);
   });
   it('can add an ad that goes live at once', async () => {
-    const { rows } = await insertJob(admin, { recruiter_id: admin, title: 'Admin ad', status: 'live', starts_at: new Date().toISOString(), expires_at: new Date(Date.now() + 864e5).toISOString() });
+    const { rows } = await insertJob(admin, { recruiter_id: admin, title: 'Admin ad', whatsapp: '919999999999', status: 'live', starts_at: new Date().toISOString(), expires_at: new Date(Date.now() + 864e5).toISOString() });
     expect((await as(db, null, () => countOf(db, 'select * from public.public_jobs where id = $1', [rows[0].id])))).toBe(1);
   });
   it('can verify and block employers, and manage packages', async () => {
@@ -430,5 +467,63 @@ describe('7. expiry and signup (run by the system, not by a person)', () => {
     await db.query('delete from auth.users where id = $1', [temp]);
     expect(await countOf(db, 'select 1 from public.profiles where id = $1', [temp])).toBe(0);
     expect(await countOf(db, 'select 1 from public.jobs where id = $1', [job])).toBe(0);
+  });
+});
+
+describe('8. change requests (employers cannot edit paid ads, but can ask us)', () => {
+  const ask = (who, jobId, message = 'Please change the phone number.', extra = {}) => as(db, who, () => {
+    const row = { job_id: jobId, recruiter_id: who, message, ...extra };
+    const cols = Object.keys(row);
+    return db.query(`insert into public.change_requests (${cols.join(', ')}) values (${cols.map((_, i) => `$${i + 1}`).join(', ')}) returning id`, cols.map((c) => row[c]));
+  });
+
+  it('an employer can ask for a change on their own paid, live, hidden or ended ad', async () => {
+    for (const job of [live1, hidden, ended]) await expect(ask(e1, job)).resolves.toBeTruthy();
+  });
+  it('not while the ad still waits for payment (they can just edit it), and not for someone else\'s ad', async () => {
+    await denied(ask(e1, pending1));
+    await denied(ask(e1, e2pending));
+    await denied(ask(e2, live1));
+  });
+  it('whatever they send, it is stored as THEIR request and "open"', async () => {
+    const { rows } = await ask(e1, live1, '  Change the city  ', { status: 'done', handled_at: '2020-01-01' });
+    const [r] = await rowsOf(db, 'select recruiter_id, status, handled_at, message from public.change_requests where id = $1', [rows[0].id]);
+    expect(r).toMatchObject({ recruiter_id: e1, status: 'open', handled_at: null, message: 'Change the city' });
+    await denied(ask(e1, live1, 'x'.repeat(301)));
+    await denied(ask(e1, live1, '  '));
+  });
+  it('at most 3 open requests per ad', async () => {
+    const j = await seedJob(e1, 'Busy ad', 'live', pkg30, -1, 20);
+    for (let i = 0; i < 3; i += 1) await ask(e1, j);
+    expect((await denied(ask(e1, j))).code).toBe('53300');
+  });
+  it('a blocked employer cannot ask', async () => {
+    const j = await seedJob(blocked, 'Blocked ad', 'live', pkg30, -1, 20);
+    await denied(ask(blocked, j));
+  });
+  it('employers read only their own requests and cannot change or delete any', async () => {
+    const mine = await as(db, e1, () => rowsOf(db, 'select recruiter_id from public.change_requests'));
+    expect(mine.length).toBeGreaterThan(0);
+    expect(mine.every((r) => r.recruiter_id === e1)).toBe(true);
+    const upd = await as(db, e1, () => db.query("update public.change_requests set status = 'done'"));
+    expect(upd.affectedRows).toBe(0);
+    const del = await as(db, e1, () => db.query('delete from public.change_requests'));
+    expect(del.affectedRows).toBe(0);
+  });
+  it('visitors cannot read or write requests', async () => {
+    expect(await as(db, null, () => countOf(db, 'select * from public.change_requests'))).toBe(0);
+    await denied(as(db, null, () => db.query("insert into public.change_requests (job_id, recruiter_id, message) values ($1, $2, 'hello there')", [live1, e1])));
+  });
+  it('the admin reads all, and marking one done stamps the time', async () => {
+    const all = await as(db, admin, () => rowsOf(db, 'select id, status from public.change_requests'));
+    expect(all.length).toBeGreaterThan(3);
+    const r = await as(db, admin, () => db.query("update public.change_requests set status = 'done' where id = $1 returning handled_at", [all[0].id]));
+    expect(r.rows[0].handled_at).not.toBeNull();
+  });
+  it('deleting an ad removes its requests', async () => {
+    const j = await seedJob(e2, 'Short lived', 'live', pkg30, -1, 20);
+    await ask(e2, j);
+    await db.query('delete from public.jobs where id = $1', [j]);
+    expect(await countOf(db, 'select 1 from public.change_requests where job_id = $1', [j])).toBe(0);
   });
 });

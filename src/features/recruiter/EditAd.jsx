@@ -27,7 +27,7 @@ export default function EditAd() {
       <AsyncView state={data} isEmpty={() => false}>
         {({ packages, job }) =>
           job && canEditAsRecruiter(job) ? (
-            <JobForm mode="edit" job={job} packages={packages} onSaved={() => navigate('/dashboard', { state: { notice: t.adSaved } })} />
+            <JobForm mode="edit" job={job} packages={packages} onSaved={(saved) => navigate('/dashboard', { state: { notice: saved.status === 'paid_pending_review' ? t.adResent : t.adSaved } })} />
           ) : (
             <Notice tone="error">{job ? t.errNotAllowed : t.errNotFound}</Notice>
           )

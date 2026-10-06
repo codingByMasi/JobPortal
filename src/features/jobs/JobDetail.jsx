@@ -1,6 +1,9 @@
 // Job detail: the full ad (image with tap-to-zoom, or PDF), Download, Apply on WhatsApp, Apply form, Back.
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { api } from '../../shared/data';
+import { adReference } from '../../shared/lib/adReference';
+import { useAsync } from '../../shared/lib/useAsync';
 import AdPoster from './AdPoster';
 import ApplyForm from './ApplyForm';
 import Button from '../../shared/ui/Button';
@@ -54,14 +57,17 @@ export default function JobDetail() {
   const { t, lang } = useLang();
   const { jobs, status, reload } = useJobs();
   const [zoomed, setZoomed] = useState(false);
-  const job = jobs.find((j) => j.id === id);
+  const listed = jobs.find((j) => j.id === id);
+  // a shared link to an ad that is not in the loaded list: ask for that one ad
+  const extra = useAsync(() => (status === 'ready' && !listed ? api.getLiveJob(id).catch(() => null) : Promise.resolve(null)), [id, status, Boolean(listed)]);
+  const job = listed || extra.data;
   const image = useAdImage(job?.fileUrl);
   usePageMeta(job?.title, job ? `${job.title} - ${job.city}` : undefined);
 
   const back = <Button to="/jobs" tone="outline" icon="back">{t.back}</Button>;
 
-  if (status !== 'ready') {
-    return <div className="page">{back}<JobsStatus status={status} onRetry={reload} /></div>;
+  if (status !== 'ready' || (!job && extra.status === 'loading')) {
+    return <div className="page loading-tall">{back}<JobsStatus status={status === 'ready' ? 'loading' : status} onRetry={reload} /></div>;
   }
   if (!job) {
     return (
@@ -106,8 +112,8 @@ export default function JobDetail() {
         {hasFile && isPdf && (
           <>
             <iframe className="ad-pdf" src={job.fileUrl} title={job.title} loading="lazy" />
-            <a className="pdf-fallback" href={job.fileUrl} target="_blank" rel="noopener noreferrer">
-              <Icon name="file" size={22} />{t.pdfFallback}
+            <a className="pdf-open" href={job.fileUrl} target="_blank" rel="noopener noreferrer">
+              <Icon name="file" size={32} />{t.pdfOpen}
             </a>
           </>
         )}
@@ -121,6 +127,12 @@ export default function JobDetail() {
         <span>{place}</span>
       </p>
       {job.company && <p className="help">{job.company}</p>}
+      {job.details && (
+        <section className="job-details">
+          <h2>{t.detailsTitle}</h2>
+          <p>{job.details}</p>
+        </section>
+      )}
 
       <div className="actions">
         {hasFile && (
@@ -134,6 +146,7 @@ export default function JobDetail() {
       <ApplyForm job={job} />
 
       <p className="notice"><Icon name="alert" size={26} /><span>{t.safety}</span></p>
+      <Button tone="outline" icon="alert" href={whatsappLink(WHATSAPP_NUMBER, t.waReportMessage(adReference(job.id), job.title))} target="_blank" rel="noopener noreferrer">{t.reportAd}</Button>
 
       {zoomed && <Lightbox src={image.src} onClose={() => setZoomed(false)} />}
     </div>

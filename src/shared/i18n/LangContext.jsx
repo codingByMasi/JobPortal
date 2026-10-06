@@ -1,16 +1,16 @@
 // Holds the chosen language (remembered in localStorage) and gives screens the text for it.
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { translations } from '.';
+import { pickLang } from './pickLang';
 
 const KEY = 'jobs-abroad-lang';
 const LangContext = createContext(null);
 
 function savedLang() {
   try {
-    const v = localStorage.getItem(KEY);
-    return v === 'hi' || v === 'en' ? v : 'en';
+    return pickLang(localStorage.getItem(KEY), navigator.languages);
   } catch {
-    return 'en';
+    return pickLang(null, typeof navigator === 'undefined' ? [] : navigator.languages);
   }
 }
 

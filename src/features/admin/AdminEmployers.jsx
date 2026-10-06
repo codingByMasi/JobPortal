@@ -78,7 +78,7 @@ export default function AdminEmployers() {
           <div className="table-wrap">
             <table>
               <thead>
-                <tr><th>{t.companyName}</th><th>{t.email}</th><th>{t.phone}</th><th>{t.colDate}</th><th>{t.colStatus}</th><th>{t.colActions}</th></tr>
+                <tr><th>{t.companyName}</th><th>{t.email}</th><th>{t.phone}</th><th>{t.raShort}</th><th>{t.colDate}</th><th>{t.colStatus}</th><th>{t.colActions}</th></tr>
               </thead>
               <tbody>
                 {rows.map((e) => (
@@ -86,6 +86,7 @@ export default function AdminEmployers() {
                     <td data-label={t.companyName}><strong>{e.companyName || '-'}</strong>{e.role === 'admin' && <span className="muted"> ({t.adminPanel})</span>}</td>
                     <td data-label={t.email}>{e.email}</td>
                     <td data-label={t.phone}>{e.phone || '-'}</td>
+                    <td data-label={t.raShort}>{e.raNumber || '-'}</td>
                     <td data-label={t.colDate}>{formatDate(e.createdAt, lang)}</td>
                     <td data-label={t.colStatus}>
                       {e.verified && <span className="tag tag-verified"><Icon name="badge" size={16} />{t.verifiedTag}</span>}

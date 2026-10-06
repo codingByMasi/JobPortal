@@ -1,8 +1,10 @@
-// Gets an uploaded file ready: pictures are made smaller in the browser, big PDFs are refused.
+// Gets an uploaded file ready: pictures are made smaller in the browser (plus a small list picture), big PDFs are refused.
 
 export const LIMITS = {
-  imageTargetBytes: 300 * 1024,
+  imageTargetBytes: 400 * 1024,
   imageMaxWidth: 1200,
+  thumbTargetBytes: 40 * 1024,
+  thumbWidth: 400,
   pdfMaxBytes: 2 * 1024 * 1024,
 };
 
@@ -27,15 +29,9 @@ const fail = (code) => Object.assign(new Error(code), { code });
 
 const toBlob = (canvas, quality) => new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
 
-/** Draws the picture smaller and saves it as JPEG, lowering quality (then size) until it is about 300 KB. */
-async function shrinkImage(file) {
-  let bitmap;
-  try {
-    bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
-  } catch {
-    throw fail('IMAGE_FAIL');
-  }
-  let { width, height } = fitSize(bitmap.width, bitmap.height);
+/** Draws the picture at most `maxWidth` wide and saves it as JPEG, lowering quality (then size) until it is under `targetBytes`. */
+async function drawJpeg(bitmap, { maxWidth, targetBytes, name }) {
+  let { width, height } = fitSize(bitmap.width, bitmap.height, maxWidth);
   let blob = null;
   for (let round = 0; round < 4; round += 1) {
     const canvas = document.createElement('canvas');
@@ -45,21 +41,37 @@ async function shrinkImage(file) {
     ctx.fillStyle = '#ffffff'; // PNGs with see-through parts become white, not black
     ctx.fillRect(0, 0, width, height);
     ctx.drawImage(bitmap, 0, 0, width, height);
-    for (let q = 0.82; q >= 0.4; q -= 0.1) {
+    for (let q = 0.85; q >= 0.5; q -= 0.1) {
       blob = await toBlob(canvas, q);
-      if (blob && blob.size <= LIMITS.imageTargetBytes) break;
+      if (blob && blob.size <= targetBytes) break;
     }
-    if (blob && blob.size <= LIMITS.imageTargetBytes) break;
+    if (blob && blob.size <= targetBytes) break;
     width = Math.round(width * 0.85);
     height = Math.round(height * 0.85);
   }
-  bitmap.close?.();
   if (!blob) throw fail('IMAGE_FAIL');
-  return new File([blob], 'ad.jpg', { type: 'image/jpeg' });
+  return new File([blob], name, { type: 'image/jpeg' });
+}
+
+/** The full picture and the small one for lists. */
+async function shrinkImage(file) {
+  let bitmap;
+  try {
+    bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+  } catch {
+    throw fail('IMAGE_FAIL');
+  }
+  try {
+    const full = await drawJpeg(bitmap, { maxWidth: LIMITS.imageMaxWidth, targetBytes: LIMITS.imageTargetBytes, name: 'ad.jpg' });
+    const thumb = await drawJpeg(bitmap, { maxWidth: LIMITS.thumbWidth, targetBytes: LIMITS.thumbTargetBytes, name: 'ad-t.jpg' });
+    return { full, thumb };
+  } finally {
+    bitmap.close?.();
+  }
 }
 
 /**
- * Checks and prepares a chosen file. Returns { file, fileType }.
+ * Checks and prepares a chosen file. Returns { file, fileType } (and `thumb` for pictures).
  * Throws an error whose `code` is FILE_TYPE, PDF_BIG or IMAGE_FAIL.
  */
 export async function prepareFile(file) {
@@ -69,5 +81,6 @@ export async function prepareFile(file) {
     if (file.size > LIMITS.pdfMaxBytes) throw fail('PDF_BIG');
     return { file, fileType: 'pdf' };
   }
-  return { file: await shrinkImage(file), fileType: 'image' };
+  const { full, thumb } = await shrinkImage(file);
+  return { file: full, fileType: 'image', thumb };
 }

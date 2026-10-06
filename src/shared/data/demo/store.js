@@ -65,6 +65,12 @@ export function findJob(id) {
   if (!row) throw fail('NOT_FOUND');
   return row;
 }
+/** The change requests list (older saved demo data does not have it yet). */
+export const requestRows = () => (state.db.change_requests ||= []);
+/** Writes one line in the demo admin log (the real database does this inside its admin functions). */
+export const logAdmin = (action, targetId, detail = '') => {
+  (state.db.admin_log ||= []).push({ id: uid(), action, target_id: targetId, detail, created_at: new Date().toISOString() });
+};
 export const pkgOf = (id) => state.db.packages.find((p) => p.id === id) || null;
 export const profileOf = (id) => state.db.profiles.find((p) => p.id === id) || null;
 

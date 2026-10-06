@@ -1,14 +1,16 @@
 // The ONE place the Supabase library is created and the shared helpers for talking to it.
 // Only the public (anon) key is used here. It is safe in the browser BECAUSE every table has Row Level Security.
 import { createClient } from '@supabase/supabase-js';
+import { withTimeout } from '../../lib/fetchTimeout';
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from '../env';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { persistSession: true, autoRefreshToken: true },
+  global: { fetch: withTimeout(fetch.bind(globalThis)) },
 });
 
 export const BUCKET = 'job-files';
-export const PROFILE_COLUMNS = 'id, email, role, company_name, phone, verified, blocked, created_at';
+export const PROFILE_COLUMNS = 'id, email, role, company_name, phone, ra_number, verified, blocked, created_at';
 export const JOB_FULL = `*, package:packages(*), recruiter:profiles(${PROFILE_COLUMNS})`;
 
 const AUTH_CODES = {

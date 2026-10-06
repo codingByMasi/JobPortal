@@ -51,7 +51,9 @@ Tests sit next to the code they test (`*.test.js`) and in `scripts/*.test.mjs` (
 - **Text rule:** no words in components. All text lives in `shared/i18n/en.js` and `hi.js` with the same keys (a test checks it). Hindi must be simple.
 - **Money rule:** money is whole paise in the database and code; `formatPrice` shows rupees. Never use floating-point rupees.
 - **Status rule:** ad statuses and who may do what live in `shared/lib/jobStatus.js`. Do not repeat these rules in screens.
+- **Admin rule:** things only an admin may do (approve, reject, hide, mark paid, refund) are database functions that check the status and write to `admin_log`; screens never write those fields directly.
 - **Database rule:** change the database only with a NEW numbered file in `supabase/migrations`, then run `npm run schema`, then update `docs/03-database-security.md`. Never edit an old migration after it has been run on a real project (write a new one). **Every security-relevant SQL change needs a test in `scripts/rls.test.mjs`** (it runs the real migrations in a real Postgres engine); check that the test fails when you break the rule.
+- **Config rule:** `src/config.js` example values must never reach a published site: `npm run build` checks them (`scripts/checkConfig.mjs`). Security headers are written at build time (`scripts/headers.mjs`); add a new outside service there on purpose. Tests must never use `.env` (forced empty in `vite.config.js`).
 - **Environment rule:** a published site without the two Supabase values must show the "not ready" page, never demo data (`shared/data/env.js`). Private pages use `usePageMeta(..., { noindex: true })`.
 - **Accessibility:** big text and buttons, visible keyboard focus, labels on every input, respect reduced motion, 52px minimum tap size.
 - **Errors:** never show technical words to users; use `friendlyMessage`. Every screen that loads data needs loading, empty and error states.
@@ -76,10 +78,11 @@ Tests sit next to the code they test (`*.test.js`) and in `scripts/*.test.mjs` (
 ## Commands
 ```
 npm run dev       demo mode (no Supabase needed) or real mode when .env has the two Supabase values
-npm test          all automated tests
+npm test          unit and database-rule tests
+npm run test:all  everything incl. browser tests, accessibility, Lighthouse (docs/07-testing.md)
 npm run build     production build (+ search pages when Supabase and SITE_URL are set)
 npm run schema    rebuild supabase/schema.sql from the migrations
 ```
 
 ## Docs
-`docs/01-overview.md` product by role - `02-architecture.md` how it fits together - `03-database-security.md` tables, rules, security checks - `04-screens.md` every screen and status - `05-i18n.md` words - `06-deploy.md` set-up and go-live - `07-testing.md` tests and hand checklist - `08-phase2-payments.md` Razorpay plan - `09-decisions.md` why we chose what - `CHANGELOG.md`.
+`docs/14-release-readiness-report.md` pre-launch test pass - `docs/12-live-test-report.md` live test on the real project - `docs/10-admin-guide.md` the admin's daily guide - `docs/11-owner-checklist.md` what only the owner can do - `docs/00-project-analysis.md` full review and finding status - `docs/01-overview.md` product by role - `02-architecture.md` how it fits together - `03-database-security.md` tables, rules, security checks - `04-screens.md` every screen and status - `05-i18n.md` words - `06-deploy.md` set-up and go-live - `07-testing.md` tests and hand checklist - `08-phase2-payments.md` Razorpay plan - `09-decisions.md` why we chose what - `CHANGELOG.md`.

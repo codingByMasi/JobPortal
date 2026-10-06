@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import Button from '../../shared/ui/Button';
+import ChangeRequestModal from './ChangeRequestModal';
 import Icon from '../../shared/ui/Icon';
 import Modal from '../../shared/ui/Modal';
 import Notice from '../../shared/ui/Notice';
@@ -12,7 +13,7 @@ import { useAuth } from '../auth/AuthContext';
 import { countryById } from '../../shared/lib/catalog';
 import { friendlyMessage } from '../../shared/lib/friendlyError';
 import { describeStatus, formatDate } from '../../shared/lib/format';
-import { canEditAsRecruiter, canRenew, effectiveStatus } from '../../shared/lib/jobStatus';
+import { canDelete, canEditAsRecruiter, canPay, canRenew, canRequestChange, effectiveStatus } from '../../shared/lib/jobStatus';
 import { useLang } from '../../shared/i18n/LangContext';
 import { formatPrice } from '../../shared/lib/money';
 import { useAsync } from '../../shared/lib/useAsync';
@@ -23,7 +24,9 @@ export default function MyAds() {
   const { user } = useAuth();
   const location = useLocation();
   const ads = useAsync(() => api.listMyJobs(user.id), [user.id]);
+  const requests = useAsync(() => api.listMyChangeRequests(user.id), [user.id]);
   const [toDelete, setToDelete] = useState(null);
+  const [toChange, setToChange] = useState(null);
   const [notice, setNotice] = useState({ tone: 'success', text: location.state?.notice || '' });
   const [busy, setBusy] = useState(false);
 
@@ -39,6 +42,13 @@ export default function MyAds() {
       setBusy(false);
       setToDelete(null);
     }
+  };
+
+  const latestRequest = (jobId) => (requests.data || []).find((r) => r.jobId === jobId);
+  const requestSent = () => {
+    setToChange(null);
+    setNotice({ tone: 'success', text: t.requestSent });
+    requests.reload();
   };
 
   return (
@@ -68,14 +78,16 @@ export default function MyAds() {
                       <span>{[job.city, t.country[job.country]].filter(Boolean).join(', ')}</span>
                     </p>
                     <p className={`status-line status-${status}`}>{describeStatus(job, t, lang)}</p>
+                    {latestRequest(job.id) && <p className="help">{t.requestLine[latestRequest(job.id).status]}</p>}
                     {job.package && <p className="help">{t.package}: {job.package.name} · {formatPrice(job.package.pricePaise)}</p>}
                   </div>
                   <div className="row-actions">
-                    {canEditAsRecruiter(job) && <Button to={`/dashboard/pay/${job.id}`} icon="rupee">{t.payNow}</Button>}
-                    {canEditAsRecruiter(job) && <Button to={`/dashboard/edit/${job.id}`} tone="outline" icon="edit">{t.edit}</Button>}
+                    {canPay(job) && <Button to={`/dashboard/pay/${job.id}`} icon="rupee">{t.payNow}</Button>}
+                    {canEditAsRecruiter(job) && <Button to={`/dashboard/edit/${job.id}`} tone="outline" icon="edit">{job.status === 'rejected' ? t.editResend : t.edit}</Button>}
                     {status === 'live' && <Button to={`/job/${job.id}`} tone="outline" icon="eye">{t.seeAd}</Button>}
+                    {canRequestChange(job) && !canRenew(job) && <Button tone="outline" icon="edit" onClick={() => setToChange(job)}>{t.requestAsk}</Button>}
                     {canRenew(job) && <Button to={`/dashboard/new?renew=${job.id}`} tone="blue" icon="refresh">{t.renew}</Button>}
-                    <Button tone="danger" icon="trash" onClick={() => setToDelete(job)}>{t.delete}</Button>
+                    {canDelete(job) && <Button tone="danger" icon="trash" onClick={() => setToDelete(job)}>{t.delete}</Button>}
                   </div>
                 </article>
               );
@@ -83,6 +95,8 @@ export default function MyAds() {
           </div>
         )}
       </AsyncView>
+
+      {toChange && <ChangeRequestModal job={toChange} onClose={() => setToChange(null)} onSent={requestSent} />}
 
       {toDelete && (
         <Modal title={t.deleteAsk} onClose={() => setToDelete(null)}>

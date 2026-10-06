@@ -37,7 +37,7 @@ export default function Jobs() {
       if (country && j.country !== country) return false;
       if (category && j.category !== category) return false;
       if (!needle) return true;
-      return [j.title, j.city, j.company, t.country[j.country]].join(' ').toLowerCase().includes(needle);
+      return [j.title, j.city, j.company, t.country[j.country], t.category[j.category]].join(' ').toLowerCase().includes(needle);
     });
   }, [jobs, country, category, q, t]);
 
@@ -93,7 +93,7 @@ export default function Jobs() {
         ) : (
           <>
             <p className="count" aria-live="polite">{t.jobsFound(list.length)}</p>
-            <div className="job-list">{list.slice(0, shown).map((j) => <JobCard key={j.id} job={j} />)}</div>
+            <div className="job-list">{list.slice(0, shown).map((j) => <JobCard key={j.id} job={j} headingLevel={2} />)}</div>
             {list.length > shown && (
               <div className="more">
                 <Button tone="outline" icon="plus" onClick={() => setShown((s) => s + PAGE)}>{t.showMore}</Button>

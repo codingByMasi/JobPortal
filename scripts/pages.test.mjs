@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { jobPageHtml, jobPostingJson, sitemapXml, withMeta } from './pages.mjs';
+import { jobPageHtml, jobPostingJson, sitemapXml, STATIC_PAGES, withMeta } from './pages.mjs';
 
 const base = `<!doctype html><html><head><title>Jobs Abroad</title>
 <meta name="description" content="old" />
@@ -14,7 +14,7 @@ const job = {
   city: 'Dubai',
   country: 'uae',
   posted: new Date(2025, 2, 1).getTime(),
-  expiry: new Date(2025, 3, 1).getTime(),
+  expiresAt: new Date(2025, 3, 1).getTime(),
 };
 
 describe('withMeta', () => {
@@ -43,6 +43,21 @@ describe('job pages', () => {
     expect(data.validThrough).toBe('2025-04-01');
     expect(data.jobLocation.address.addressCountry).toBe('AE');
     expect(data.url).toBe('https://s.com/job/101');
+  });
+});
+
+describe('share preview picture', () => {
+  it('uses the ad picture for a picture ad, and the site picture for a PDF or an ad without a file', () => {
+    const picture = jobPageHtml(base, { ...job, fileType: 'image', fileUrl: 'https://p.supabase.co/storage/v1/object/public/job-files/u/a.jpg' }, 'https://s.com');
+    expect(picture).toContain('property="og:image" content="https://p.supabase.co/storage/v1/object/public/job-files/u/a.jpg"');
+    const pdf = jobPageHtml(base, { ...job, fileType: 'pdf', fileUrl: 'https://p.supabase.co/x.pdf' }, 'https://s.com');
+    expect(pdf).toContain('property="og:image" content="https://s.com/hero.jpg"');
+    expect(jobPageHtml(base, job, 'https://s.com')).toContain('content="https://s.com/hero.jpg"');
+  });
+  it('the public wording is true: employers pay, applicants are named in the privacy text', () => {
+    const text = JSON.stringify(STATIC_PAGES);
+    expect(text).not.toContain('Posting is free');
+    expect(text).not.toContain('do not collect your name');
   });
 });
 

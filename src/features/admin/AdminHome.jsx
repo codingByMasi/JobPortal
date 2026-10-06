@@ -31,6 +31,11 @@ export default function AdminHome() {
               <span className="count-number">{c.waitingPayment}</span>
               <span>{t.cPay}</span>
             </Link>
+            <Link className="count-card" to="/admin/requests">
+              <Icon name="edit" size={32} />
+              <span className="count-number">{c.requests}</span>
+              <span>{t.cRequests}</span>
+            </Link>
             <Link className="count-card" to="/admin/payments">
               <Icon name="card" size={32} />
               <span className="count-number">{formatPrice(c.revenuePaise)}</span>

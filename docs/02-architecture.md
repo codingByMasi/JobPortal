@@ -2,7 +2,7 @@
 
 ## The big picture
 ```
-Browser (React app, static files on Netlify)
+Browser (React app, static files on Cloudflare Pages)
    |  api.listLiveJobs(), api.createJob(), ...        <- screens only know these names
    v
 src/shared/data/index.js  --- picks one backend --->  supabase/  (real: Supabase database, login, storage)
@@ -35,8 +35,8 @@ No Redux and no React Query: the app is small and these are easier to read.
 - **Database (the real lock):** Row Level Security, triggers that lock fields, and admin-only functions. Details in `03-database-security.md`.
 
 ## Routes
-`/`, `/jobs`, `/job/:id`, `/post-job`, `/contact`, `/login`, `/signup`, `/privacy`, `/terms`, `/dashboard` (+ `/new`, `/edit/:id`, `/pay/:id`, `/payments`, `/applications`), `/admin` (+ `/jobs`, `/jobs/new`, `/jobs/:id`, `/employers`, `/payments`, `/packages`, `/applications`).
-Netlify serves `index.html` for every path (`public/_redirects`). At build time `scripts/prerender.mjs` also writes a real page for each live job so search engines and WhatsApp previews work.
+`/`, `/jobs`, `/job/:id`, `/post-job`, `/contact`, `/login`, `/signup`, `/forgot-password`, `/reset-password`, `/privacy`, `/terms`, `/dashboard` (+ `/new`, `/edit/:id`, `/pay/:id`, `/payments`, `/applications`, `/profile`), `/admin` (+ `/jobs`, `/jobs/new`, `/jobs/:id`, `/employers`, `/payments`, `/packages`, `/applications`, `/requests`, `/security`). The employer and admin screens are loaded on demand (`React.lazy`), so visitors do not download them.
+Cloudflare Pages serves `index.html` for any address that has no file of its own (no redirect file is needed; do not add a `404.html`, it would switch this off). `npm run build` does four things in order: `scripts/checkConfig.mjs` (stops on Cloudflare Pages if `src/config.js` still has example values or the Supabase settings are missing), `vite build`, `scripts/headers.mjs` (writes `dist/_headers`, the security headers with a policy naming only YOUR Supabase project) and `scripts/prerender.mjs` (writes a real page for each live job as a flat file `job/<id>.html`, with the ad picture as the share preview, so search engines and WhatsApp previews work; on Cloudflare Pages a failure stops the publish). More in `13-cloudflare-pages.md`..
 
 ## Three modes (decided at start-up in `shared/data/env.js`)
 - **supabase**: both keys are set. Real data.
@@ -47,7 +47,8 @@ Netlify serves `index.html` for every path (`public/_redirects`). At build time 
 With no Supabase keys in `.env`, the app runs on the demo backend: sample ads, an employer, an admin, packages. Data is kept in the browser. It follows the same rules as the database and has tests (`demo.test.js`) so it cannot drift. A yellow banner shows "Demo mode".
 
 ## Known limits
-- The public site loads all live ads in one request (up to 1000) and filters in the browser. That is fine for the first months. Past about 1000 live ads, add paging or server-side filters (change `listLiveJobs` and the Jobs screen only).
+- The public site loads all live ads in one request (up to 1000, featured first then newest, small pictures in lists) and filters in the browser. A shared link to an ad that is not in the list asks for that one ad (`getLiveJob`). That is fine for the first months. Past about 500 live ads, add server-side paging and filters (change `listLiveJobs` and the Jobs screen only).
+- All requests have a time limit (20 seconds, 90 for files) so a bad connection ends in a plain error with a Retry button.
 - A visitor who keeps one page open for hours will not see an ad end until the page reloads; the next load always hides it.
 
 ## Phase 2 in one line

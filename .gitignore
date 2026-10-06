@@ -2,3 +2,9 @@ node_modules
 dist
 .env
 *.log
+supabase/.temp
+.dev.vars
+.wrangler
+dist-e2e
+test-results
+playwright-report

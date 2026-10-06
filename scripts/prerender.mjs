@@ -6,11 +6,12 @@
 // the normal app still works without these extras.
 import { existsSync, readFileSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { dirname } from 'node:path';
 import { SITE_URL, isPlaceholder } from '../src/config.js';
 import { toJob } from '../src/shared/data/mappers.js';
 import { STATIC_PAGES, jobPageHtml, sitemapXml, withMeta } from './pages.mjs';
 
-/** Value from the environment (Netlify) or from the local .env file. */
+/** Value from the environment (the hosting build) or from the local .env file. */
 function setting(name) {
   if (process.env[name]) return process.env[name];
   if (!existsSync('.env')) return '';
@@ -19,7 +20,7 @@ function setting(name) {
 }
 
 async function fetchLiveJobs(url, key) {
-  const columns = 'id,title,company,country,city,category,file_type,posted_date,starts_at,expires_at';
+  const columns = 'id,title,company,country,city,category,file_url,file_type,details,posted_date,starts_at,expires_at';
   const res = await fetch(`${url}/rest/v1/public_jobs?select=${columns}&order=starts_at.desc&limit=1000`, {
     headers: { apikey: key, Authorization: `Bearer ${key}` },
   });
@@ -27,10 +28,12 @@ async function fetchLiveJobs(url, key) {
   return (await res.json()).map((row) => toJob(row));
 }
 
+// Each page is a flat file (jobs.html, job/<id>.html), not a folder with index.html: Cloudflare Pages then serves it at /jobs and
+// /job/<id> exactly (a folder would be redirected to /jobs/ and would not match the address in the share preview and sitemap).
 async function writePage(urlPath, html) {
-  const dir = `dist${urlPath}`;
-  await mkdir(dir, { recursive: true });
-  await writeFile(`${dir}/index.html`, html);
+  const file = `dist${urlPath}.html`;
+  await mkdir(dirname(file), { recursive: true });
+  await writeFile(file, html);
 }
 
 async function main() {
@@ -59,4 +62,8 @@ async function main() {
   console.log(`prerender: wrote ${jobs.length} job pages, ${STATIC_PAGES.length} fixed pages, sitemap.xml, robots.txt`);
 }
 
-main().catch((err) => console.warn('prerender: skipped because of an error:', err.message));
+main().catch((err) => {
+  console.warn('prerender: skipped because of an error:', err.message);
+  // on the hosting service a missing search/share page set must not go unnoticed: stop the publish, the old site stays online
+  if (process.env.CF_PAGES === '1' || process.env.NETLIFY === 'true') process.exit(1);
+});

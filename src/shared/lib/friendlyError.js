@@ -8,7 +8,7 @@ export function errorKey(err) {
     LOGIN: 'errLogin', EMAIL_TAKEN: 'errEmailTaken', WEAK_PASSWORD: 'errWeakPassword', NETWORK: 'errNetwork',
     BLOCKED: 'errBlocked', NOT_ALLOWED: 'errNotAllowed', NEED_LOGIN: 'errNeedLogin', NOT_FOUND: 'errNotFound',
     FILE_TYPE: 'errFileType', PDF_BIG: 'errPdfBig', IMAGE_FAIL: 'errImage', STORAGE_FULL: 'errStorageFull',
-    EMAIL_NOT_CONFIRMED: 'errEmailNotConfirmed', TOO_MANY_ADS: 'errTooManyAds', DUPLICATE: 'errAlreadyApplied', LIMIT: 'errTooManyApplications', ENDED: 'errEnded', NOT_WAITING: 'errNotWaiting', BAD_PRICE: 'errPrice', UPLOAD: 'errUpload',
+    EMAIL_NOT_CONFIRMED: 'errEmailNotConfirmed', TOO_MANY_ADS: 'errTooManyAds', DUPLICATE: 'errAlreadyApplied', LIMIT: 'errTooManyApplications', ENDED: 'errEnded', NOT_WAITING: 'errNotWaiting', BAD_PRICE: 'errPrice', UPLOAD: 'errUpload', TOO_MANY_REQUESTS: 'errTooManyRequests', MFA_CODE: 'errMfaCode', NEED_MESSAGE: 'errNeedMessage',
   };
   if (map[code]) return map[code];
   if (/invalid login credentials/i.test(msg)) return 'errLogin';
@@ -17,9 +17,14 @@ export function errorKey(err) {
   if (/email not confirmed/i.test(msg)) return 'errEmailNotConfirmed';
   if (/failed to fetch|networkerror|load failed|network request failed/i.test(msg)) return 'errNetwork';
   if (/blocked/i.test(msg)) return 'errBlocked';
+  if (/payments_reference|payments_one_paid/i.test(msg)) return 'errReferenceUsed';
+  if (/has ended/i.test(msg)) return 'errEnded';
+  if (/cannot be (approved|rejected|refunded)|not hidden|only a live ad/i.test(msg)) return 'errNotNow';
   if (code === '23505') return 'errAlreadyApplied';
   if (code === '54000') return 'errTooManyApplications';
+  if (code === '54001') return 'errTooFast';
   if (code === '53400') return 'errTooManyAds';
+  if (code === '53300') return 'errTooManyRequests';
   if (code === '42501' || /row-level security|permission denied|not allowed|cannot change/i.test(msg)) return 'errNotAllowed';
   if (/not waiting for payment/i.test(msg)) return 'errNotWaiting';
   return 'errGeneric';

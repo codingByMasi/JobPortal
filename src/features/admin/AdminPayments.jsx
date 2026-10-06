@@ -7,6 +7,7 @@ import Modal from '../../shared/ui/Modal';
 import Notice from '../../shared/ui/Notice';
 import { AsyncView } from '../../shared/ui/StateViews';
 import { api } from '../../shared/data';
+import { downloadTextFile, toCsv } from '../../shared/lib/csv';
 import { formatDate } from '../../shared/lib/format';
 import { useLang } from '../../shared/i18n/LangContext';
 import { formatPrice, rupeesToPaise } from '../../shared/lib/money';
@@ -21,7 +22,7 @@ function AddPayment({ onClose, onSaved }) {
     const [employers, jobs] = await Promise.all([api.adminListRecruiters(), api.adminListJobs()]);
     return { employers, jobs };
   }, []);
-  const [v, setV] = useState({ recruiterId: '', jobId: '', amount: '', note: '' });
+  const [v, setV] = useState({ recruiterId: '', jobId: '', amount: '', note: '', reference: '' });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const { fail } = useNotice();
@@ -34,7 +35,7 @@ function AddPayment({ onClose, onSaved }) {
     setError('');
     setBusy(true);
     try {
-      await api.adminAddPayment({ recruiterId: v.recruiterId, jobId: v.jobId || null, amountPaise, note: v.note.trim() });
+      await api.adminAddPayment({ recruiterId: v.recruiterId, jobId: v.jobId || null, amountPaise, note: v.note.trim(), reference: v.reference.trim() });
       onSaved();
     } catch (err) {
       fail(err);
@@ -63,6 +64,9 @@ function AddPayment({ onClose, onSaved }) {
             <Field label={t.amountRupees}>
               <input type="text" inputMode="decimal" value={v.amount} onChange={(e) => setV({ ...v, amount: e.target.value })} />
             </Field>
+            <Field label={t.payReferenceLabel} help={t.payReferenceHelp}>
+              <input type="text" value={v.reference} onChange={(e) => setV({ ...v, reference: e.target.value })} maxLength={60} />
+            </Field>
             <Field label={t.note}>
               <input type="text" value={v.note} onChange={(e) => setV({ ...v, note: e.target.value })} maxLength={200} />
             </Field>
@@ -83,6 +87,7 @@ export default function AdminPayments() {
   const { notice, success, fail } = useNotice();
   const [adding, setAdding] = useState(false);
   const [toRefund, setToRefund] = useState(null);
+  const [hideAd, setHideAd] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const status = params.get('status') || 'all';
@@ -92,7 +97,7 @@ export default function AdminPayments() {
   const refund = async () => {
     setBusy(true);
     try {
-      await api.adminRefund(toRefund.id);
+      await api.adminRefund(toRefund.id, { hideAd });
       success(t.paymentRefunded);
       payments.reload();
     } catch (err) {
@@ -100,7 +105,17 @@ export default function AdminPayments() {
     } finally {
       setBusy(false);
       setToRefund(null);
+      setHideAd(false);
     }
+  };
+
+  const exportCsv = () => {
+    const columns = [
+      { key: 'date', label: t.colDate }, { key: 'recruiterName', label: t.colEmployer }, { key: 'jobTitle', label: t.colAd },
+      { key: 'rupees', label: t.colAmount }, { key: 'status', label: t.colStatus }, { key: 'reference', label: t.payReferenceLabel }, { key: 'note', label: t.colNote },
+    ];
+    const data = rows.map((x) => ({ ...x, date: new Date(x.createdAt).toISOString().slice(0, 10), rupees: x.amountPaise / 100 }));
+    downloadTextFile(`payments-${new Date().toISOString().slice(0, 10)}.csv`, toCsv(data, columns));
   };
 
   const rows = (payments.data || []).filter((p) => (status === 'all' || p.status === status) && (method === 'all' || p.method === method));
@@ -123,6 +138,7 @@ export default function AdminPayments() {
           </select>
         </Field>
         <Button icon="plus" onClick={() => setAdding(true)}>{t.addPayment}</Button>
+        <Button tone="outline" icon="download" onClick={exportCsv}>{t.exportCsv}</Button>
       </div>
       <Notice tone={notice.tone}>{notice.text}</Notice>
 
@@ -145,7 +161,7 @@ export default function AdminPayments() {
                       <td data-label={t.colAmount}>{formatPrice(p.amountPaise)}</td>
                       <td data-label={t.colHow}>{p.method === 'razorpay' ? t.methodRazorpay : t.methodManual}</td>
                       <td data-label={t.colStatus}><span className={`badge badge-pay-${p.status}`}>{t.payStatus[p.status]}</span></td>
-                      <td data-label={t.colNote}>{p.note || '-'}</td>
+                      <td data-label={t.colNote}>{[p.reference, p.note].filter(Boolean).join(' · ') || '-'}</td>
                       <td data-label={t.colActions}>
                         {p.status === 'paid' && <Button size="sm" tone="outline" icon="refresh" onClick={() => setToRefund(p)}>{t.refund}</Button>}
                       </td>
@@ -172,8 +188,14 @@ export default function AdminPayments() {
         />
       )}
       {toRefund && (
-        <Modal title={t.refundAsk} onClose={() => setToRefund(null)}>
+        <Modal title={t.refundAsk} onClose={() => { setToRefund(null); setHideAd(false); }}>
           <p className="modal-text"><strong>{formatPrice(toRefund.amountPaise)}</strong> · {toRefund.recruiterName}</p>
+          {toRefund.jobId && (
+            <label className="check">
+              <input type="checkbox" checked={hideAd} onChange={(e) => setHideAd(e.target.checked)} />
+              <span>{t.refundAndHide}</span>
+            </label>
+          )}
           <Button tone="danger" icon="refresh" disabled={busy} onClick={refund}>{t.refund}</Button>
         </Modal>
       )}

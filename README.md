@@ -21,12 +21,13 @@ Open the address it prints. A yellow banner says **Demo mode**: sample ads, pack
 | Command | What it does |
 |---|---|
 | `npm run dev` | run on your computer |
-| `npm test` | all automated tests (about 160, including 59 security tests that run the real database rules) |
-| `npm run build` | production build into `dist/` (also writes search pages and sitemap when Supabase and `SITE_URL` are set) |
+| `npm test` | unit and database-rule tests (275, including 128 security tests that run the real database rules) |
+| `npm run test:all` | everything: tests, build, audit, browser tests, accessibility, Lighthouse (see `docs/07-testing.md`) |
+| `npm run build` | production build into `dist/`: checks `src/config.js` (stops on Cloudflare Pages if it has example values), writes the security headers, and writes search pages and sitemap when Supabase and `SITE_URL` are set |
 | `npm run schema` | rebuild `supabase/schema.sql` after changing a migration |
 
 ## Settings you must change before launch
-`src/config.js`: `WHATSAPP_NUMBER`, `UPI_ID`, `CONTACT_EMAIL`, `SITE_URL` (all marked `PLACEHOLDER`). Prices and package days are changed in the Admin > Packages screen.
+`src/config.js`: `WHATSAPP_NUMBER`, `UPI_ID`, `UPI_NAME`, `CONTACT_EMAIL`, `GRIEVANCE_NAME`, `GRIEVANCE_EMAIL`, `SITE_URL` (all marked `PLACEHOLDER`; the Cloudflare build refuses to publish until they are filled in). Then read `docs/11-owner-checklist.md`. Prices and package days are changed in the Admin > Packages screen.
 
 ## Documents
 | File | About |
@@ -36,10 +37,16 @@ Open the address it prints. A yellow banner says **Demo mode**: sample ads, pack
 | `docs/03-database-security.md` | tables, who can do what, security checks |
 | `docs/04-screens.md` | every screen and what has been tested |
 | `docs/05-i18n.md` | how words and Hindi work |
-| `docs/06-deploy.md` | Supabase and Netlify set-up, go-live checklist |
+| `docs/06-deploy.md` | Supabase and Cloudflare Pages set-up, go-live checklist |
+| `docs/13-cloudflare-pages.md` | Cloudflare Pages readiness: what was checked, what to set in the dashboard |
 | `docs/07-testing.md` | automated tests and the hand checklist |
 | `docs/08-phase2-payments.md` | plan for Razorpay |
 | `docs/09-decisions.md` | why we chose what |
+| `docs/10-admin-guide.md` | the daily guide for the admin, in plain words |
+| `docs/11-owner-checklist.md` | what only the owner can do (accounts, lawyer, accountant, settings) |
+| `docs/14-release-readiness-report.md` | the full pre-launch test pass: verdict, results, blockers, launch checklist |
+| `docs/12-live-test-report.md` | the test on the real Supabase project: what passed, what broke, what is untested |
+| `docs/00-project-analysis.md` | the full review of the project and the status of every finding |
 | `docs/CHANGELOG.md` | what changed in each step |
 
 `design/` holds screenshots from the original Figma design for reference.

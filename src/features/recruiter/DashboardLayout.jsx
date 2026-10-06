@@ -18,6 +18,7 @@ export default function DashboardLayout() {
     { to: '/dashboard/new', icon: 'plus', label: t.tabNew },
     { to: '/dashboard/payments', icon: 'card', label: t.tabPayments },
     { to: '/dashboard/applications', icon: 'users', label: t.tabApplications },
+    { to: '/dashboard/profile', icon: 'user', label: t.tabProfile },
   ];
 
   return (

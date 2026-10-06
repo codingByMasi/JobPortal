@@ -26,6 +26,7 @@ export function AuthProvider({ children }) {
   const value = useMemo(
     () => ({
       ...state,
+      refresh,
       isAdmin: state.profile?.role === 'admin',
       isLoggedIn: Boolean(state.user),
       async signIn(details) {

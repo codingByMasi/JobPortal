@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { adminActions, approvalDates, canEditAsRecruiter, canRenew, DAY, effectiveStatus, isPubliclyVisible, publicJobs, sortForPublic } from './jobStatus';
+import { adminActions, approvalDates, canDelete, canEditAsRecruiter, canPay, canRenew, canRequestChange, DAY, effectiveStatus, isPubliclyVisible, publicJobs, sortForPublic } from './jobStatus';
 
 const NOW = Date.UTC(2026, 9, 5, 12);
 const job = (o) => ({ id: 'a', status: 'live', expiresAt: NOW + DAY, featured: false, startsAt: NOW - DAY, ...o });
@@ -23,11 +23,18 @@ describe('who can do what', () => {
     expect(isPubliclyVisible(job({ status: 'hidden' }), NOW)).toBe(false);
     expect(isPubliclyVisible(job({ status: 'live', expiresAt: null }), NOW)).toBe(false);
   });
-  it('employers edit only while waiting for payment', () => {
-    expect(canEditAsRecruiter(job({ status: 'pending_payment' }))).toBe(true);
-    for (const status of ['paid_pending_review', 'live', 'hidden', 'rejected', 'expired']) {
-      expect(canEditAsRecruiter(job({ status }))).toBe(false);
-    }
+  it('employers edit only while waiting for payment, or after a rejection (then they send it again)', () => {
+    for (const status of ['pending_payment', 'rejected']) expect(canEditAsRecruiter(job({ status }))).toBe(true);
+    for (const status of ['paid_pending_review', 'live', 'hidden', 'expired']) expect(canEditAsRecruiter(job({ status }))).toBe(false);
+  });
+  it('employers pay only while waiting for payment', () => {
+    expect(canPay(job({ status: 'pending_payment' }))).toBe(true);
+    for (const status of ['rejected', 'live', 'paid_pending_review']) expect(canPay(job({ status }))).toBe(false);
+  });
+  it('employers delete only unpaid, rejected or ended ads', () => {
+    for (const status of ['pending_payment', 'rejected', 'expired']) expect(canDelete(job({ status, expiresAt: null }), NOW)).toBe(true);
+    expect(canDelete(job({ expiresAt: NOW - 1 }), NOW)).toBe(true);
+    for (const status of ['live', 'hidden', 'paid_pending_review']) expect(canDelete(job({ status }), NOW)).toBe(false);
   });
   it('employers renew only ended ads', () => {
     expect(canRenew(job({ status: 'expired' }), NOW)).toBe(true);
@@ -39,8 +46,9 @@ describe('who can do what', () => {
     expect(adminActions(job({ status: 'paid_pending_review' }), NOW)).toEqual(['approve', 'reject', 'edit', 'delete']);
     expect(adminActions(job(), NOW)).toEqual(['hide', 'edit', 'delete']);
     expect(adminActions(job({ status: 'hidden' }), NOW)).toEqual(['show', 'edit', 'delete']);
-    expect(adminActions(job({ status: 'expired' }), NOW)).toEqual(['approve', 'edit', 'delete']);
-    expect(adminActions(job({ expiresAt: NOW - 5 }), NOW)).toEqual(['approve', 'edit', 'delete']);
+    expect(adminActions(job({ status: 'rejected' }), NOW)).toEqual(['approve', 'edit', 'delete']);
+    expect(adminActions(job({ status: 'expired' }), NOW)).toEqual(['edit', 'delete']);
+    expect(adminActions(job({ expiresAt: NOW - 5 }), NOW)).toEqual(['edit', 'delete']);
   });
 });
 
@@ -67,5 +75,12 @@ describe('dates and order', () => {
       job({ id: 'star-old', featured: true, startsAt: NOW - 9 * DAY }),
     ];
     expect(sortForPublic(list).map((j) => j.id)).toEqual(['star-old', 'new', 'old']);
+  });
+});
+
+describe('change requests', () => {
+  it('employers can ask for a change once an ad is past "waiting for payment"', () => {
+    expect(canRequestChange({ status: 'pending_payment' })).toBe(false);
+    for (const status of ['paid_pending_review', 'live', 'hidden', 'rejected', 'expired']) expect(canRequestChange({ status })).toBe(true);
   });
 });

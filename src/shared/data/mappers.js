@@ -1,4 +1,5 @@
 // Converts database rows (snake_case, text dates) to the plain objects the screens use (camelCase, timestamps), and back.
+import { normalizeWhatsapp } from '../lib/phone.js';
 import { safeFileUrl } from '../lib/safeUrl.js';
 
 /** "2025-03-01" -> local midnight timestamp. Full timestamps are parsed as they are. Returns null for empty/bad. */
@@ -35,6 +36,7 @@ export function toProfile(row) {
     role: row.role === 'admin' ? 'admin' : 'recruiter',
     companyName: row.company_name || '',
     phone: row.phone || '',
+    raNumber: row.ra_number || '',
     verified: Boolean(row.verified),
     blocked: Boolean(row.blocked),
     createdAt: toTime(row.created_at),
@@ -57,8 +59,12 @@ export function toJob(row, { allowData = false } = {}) {
     category: row.category || 'other',
     fileUrl: safeFileUrl(row.file_url, allowData),
     filePath: row.file_path || null,
+    thumbUrl: safeFileUrl(row.thumb_url, allowData),
+    thumbPath: row.thumb_path || null,
+    details: row.details || '',
+    priceAtOrder: row.price_paise_at_order ?? null,
     fileType: row.file_type === 'pdf' ? 'pdf' : 'image',
-    whatsapp: String(row.whatsapp || '').replace(/\D/g, ''),
+    whatsapp: normalizeWhatsapp(row.whatsapp),
     posted: toTime(row.posted_date),
     startsAt: toTime(row.starts_at),
     expiresAt: toTime(row.expires_at),
@@ -77,14 +83,16 @@ export function toJobRow(input) {
   const map = {
     title: 'title', company: 'company', country: 'country', city: 'city', category: 'category',
     whatsapp: 'whatsapp', fileUrl: 'file_url', filePath: 'file_path', fileType: 'file_type', packageId: 'package_id',
+    details: 'details', thumbUrl: 'thumb_url', thumbPath: 'thumb_path',
   };
   for (const [from, to] of Object.entries(map)) {
-    if (input[from] !== undefined) row[to] = input[from] === '' && (from === 'fileUrl' || from === 'filePath') ? null : input[from];
+    if (input[from] !== undefined) row[to] = input[from] === '' && (from === 'fileUrl' || from === 'filePath' || from === 'thumbUrl' || from === 'thumbPath') ? null : input[from];
   }
   if (row.title !== undefined) row.title = String(row.title).trim();
   if (row.company !== undefined) row.company = String(row.company).trim();
   if (row.city !== undefined) row.city = String(row.city).trim();
-  if (row.whatsapp !== undefined) row.whatsapp = String(row.whatsapp).replace(/\D/g, '');
+  if (row.details !== undefined) row.details = String(row.details).trim();
+  if (row.whatsapp !== undefined) row.whatsapp = normalizeWhatsapp(row.whatsapp);
   return row;
 }
 
@@ -100,7 +108,20 @@ export function toPayment(row) {
     method: row.method,
     status: row.status,
     note: row.note || '',
+    reference: row.reference || '',
     createdAt: toTime(row.created_at),
+  };
+}
+
+export function toErrorLog(row) {
+  return {
+    id: row.id,
+    message: row.message,
+    page: row.page || '',
+    agent: row.agent || '',
+    times: row.times || 1,
+    createdAt: toTime(row.created_at),
+    lastAt: toTime(row.last_at),
   };
 }
 
@@ -115,5 +136,20 @@ export function toApplication(row) {
     city: row.city || '',
     message: row.message || '',
     createdAt: toTime(row.created_at),
+  };
+}
+
+export function toChangeRequest(row) {
+  return {
+    id: row.id,
+    jobId: row.job_id,
+    jobTitle: row.job?.title || '',
+    recruiterId: row.recruiter_id,
+    employerName: row.recruiter?.company_name || '',
+    employerPhone: row.recruiter?.phone || '',
+    message: row.message,
+    status: row.status,
+    createdAt: toTime(row.created_at),
+    handledAt: toTime(row.handled_at),
   };
 }

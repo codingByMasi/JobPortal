@@ -9,13 +9,14 @@ import { useLang } from '../../shared/i18n/LangContext';
 import { useAdImage } from './useAdImage';
 
 /** Card for the job lists on Home and Jobs. */
-export default function JobCard({ job }) {
+export default function JobCard({ job, headingLevel = 3 }) {
   const { t, lang } = useLang();
-  const image = useAdImage(job.fileUrl);
+  const image = useAdImage(job.thumbUrl || job.fileUrl);
   const isPdf = job.fileType === 'pdf';
   const country = countryById(job.country);
   const showPicture = !isPdf && !image.failed;
   const place = [job.city, t.country[job.country]].filter(Boolean).join(', ');
+  const Heading = `h${headingLevel}`;
 
   return (
     <article className={`job-card${job.featured ? ' is-featured' : ''}`}>
@@ -35,7 +36,7 @@ export default function JobCard({ job }) {
           <span className="job-date">{relativeDate(job.startsAt || job.posted, t, lang)}</span>
         </div>
         <JobTags job={job} />
-        <h3 className="job-title">{job.title}</h3>
+        <Heading className="job-title">{job.title}</Heading>
         <p className="job-place">
           <span className="flag" aria-hidden="true">{country.flag}</span>
           <Icon name="pin" size={20} />

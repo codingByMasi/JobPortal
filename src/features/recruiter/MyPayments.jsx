@@ -1,4 +1,5 @@
 // /dashboard/payments - the employer's payments (read only).
+import Button from '../../shared/ui/Button';
 import { AsyncView } from '../../shared/ui/StateViews';
 import { api } from '../../shared/data';
 import { useAuth } from '../auth/AuthContext';
@@ -19,7 +20,7 @@ export default function MyPayments() {
           <div className="table-wrap">
             <table>
               <thead>
-                <tr><th>{t.colDate}</th><th>{t.colAd}</th><th>{t.colAmount}</th><th>{t.colHow}</th><th>{t.colStatus}</th></tr>
+                <tr><th>{t.colDate}</th><th>{t.colAd}</th><th>{t.colAmount}</th><th>{t.colHow}</th><th>{t.colStatus}</th><th>{t.colActions}</th></tr>
               </thead>
               <tbody>
                 {rows.map((p) => (
@@ -29,6 +30,7 @@ export default function MyPayments() {
                     <td data-label={t.colAmount}>{formatPrice(p.amountPaise)}</td>
                     <td data-label={t.colHow}>{p.method === 'razorpay' ? t.methodRazorpay : t.methodManual}</td>
                     <td data-label={t.colStatus}><span className={`badge badge-pay-${p.status}`}>{t.payStatus[p.status]}</span></td>
+                    <td data-label={t.colActions}>{p.status === 'paid' && <Button size="sm" tone="outline" icon="file" to={`/dashboard/receipt/${p.id}`}>{t.receiptOpen}</Button>}</td>
                   </tr>
                 ))}
               </tbody>

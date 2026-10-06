@@ -1,5 +1,6 @@
 // Catches any unexpected screen error so people see a calm message and a reload button, not a blank page.
 import { Component } from 'react';
+import { reportError } from './errorReport';
 import Button from '../shared/ui/Button';
 import Icon from '../shared/ui/Icon';
 import { useLang } from '../shared/i18n/LangContext';
@@ -28,6 +29,7 @@ export default class ErrorBoundary extends Component {
 
   componentDidCatch(error) {
     console.error('Screen crashed:', error);
+    reportError(error);
   }
 
   render() {

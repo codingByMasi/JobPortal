@@ -23,9 +23,9 @@ export default function FileField({ value, onChange, error }) {
     setProblem('');
     setBusy(true);
     try {
-      const { file: ready, fileType } = await prepareFile(file);
+      const { file: ready, fileType, thumb } = await prepareFile(file);
       if (value?.previewUrl) URL.revokeObjectURL(value.previewUrl);
-      onChange({ blob: ready, fileType, name: file.name, size: ready.size, fileUrl: '', previewUrl: URL.createObjectURL(ready) });
+      onChange({ blob: ready, thumbBlob: thumb || null, fileType, name: file.name, size: ready.size, fileUrl: '', previewUrl: URL.createObjectURL(ready) });
     } catch (err) {
       setProblem(friendlyMessage(err, t));
     } finally {

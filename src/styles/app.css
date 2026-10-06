@@ -3,7 +3,7 @@
    (loaded after index.css)
    ===================================================================== */
 .muted { color: var(--muted); font-size: 14px; }
-.text-link { color: var(--blue); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
+.text-link { color: var(--blue); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; padding: 12px 6px; } /* the padding only makes the tap area 44 px high: an inline link's padding does not move the text */
 .inline-icon { color: var(--blue); vertical-align: -3px; margin-left: 4px; }
 .page.narrow { max-width: 520px; }
 .page.wide { max-width: 1280px; }
@@ -16,7 +16,7 @@
 /* header: account button */
 .brand { min-width: 0; margin-right: auto; }
 .brand-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.account-btn { display: flex; align-items: center; gap: 8px; min-height: var(--tap); padding: 0 12px; color: var(--blue-dark); border-radius: 12px; font-weight: 700; font-size: 14px; }
+.account-btn { min-width: 44px; justify-content: center; display: flex; align-items: center; gap: 8px; min-height: var(--tap); padding: 0 12px; color: var(--blue-dark); border-radius: 12px; font-weight: 700; font-size: 14px; }
 .account-btn:active { background: var(--blue-soft); }
 @media (max-width: 479px) {
   .account-btn span { display: none; }
@@ -38,7 +38,7 @@
 .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .field > label, .field-label, .packages legend { font-weight: 700; font-size: 16px; color: var(--ink); padding: 0; }
 .field-help { color: var(--muted); font-size: 14px; }
-.field-error { color: var(--red); font-weight: 700; font-size: 14px; }
+.field-error { color: var(--red); font-weight: 700; font-size: 15px; }
 .field-row { display: grid; grid-template-columns: 1fr; gap: 20px; }
 @media (min-width: 560px) { .field-row { grid-template-columns: 1fr 1fr; } }
 input[type='text'], input[type='email'], input[type='password'], input[type='tel'], input[type='number'], input[type='date'], input[type='search'], select, textarea {
@@ -81,12 +81,12 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 4px
 
 /* tags + badges */
 .tags { display: flex; flex-wrap: wrap; gap: 8px; }
-.tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; width: fit-content; }
+.tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: 14px; font-weight: 700; width: fit-content; }
 .tag-featured { background: #fff1c9; color: #7a5600; border: 1px solid #e5b84a; }
 .tag-verified { background: #e8f6ec; color: var(--green-dark); border: 1px solid #9fd3ad; }
 .tag-blocked { background: #fdecea; color: #9b2218; border: 1px solid #f1aca4; }
 .job-card.is-featured { border-color: #d49a00; box-shadow: 0 5px 18px rgba(212, 154, 0, 0.18); }
-.badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 14px; font-weight: 700; white-space: nowrap; }
 .badge-pending_payment { background: #fff1c9; color: #7a5600; }
 .badge-paid_pending_review { background: #dcebfa; color: var(--blue-dark); }
 .badge-live { background: #e8f6ec; color: var(--green-dark); }
@@ -122,7 +122,7 @@ tfoot td { background: var(--blue-card); }
   table, tbody, tfoot, tr, td { display: block; }
   thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
   tr { margin-bottom: 14px; padding: 6px 12px; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 5px 18px rgba(18, 63, 121, 0.06); }
-  td { display: flex; gap: 12px; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed var(--line); text-align: right; }
+  td { display: flex; flex-wrap: wrap; gap: 4px 12px; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed var(--line); text-align: right; } /* wrap: a wide value (a long status pill) goes to the next line instead of running out of the card */
   td:last-child { border-bottom: 0; }
   td::before { content: attr(data-label); flex: none; font-weight: 700; color: var(--blue-dark); text-align: left; }
   tfoot td::before { content: none; }
@@ -176,3 +176,27 @@ tfoot td { background: var(--blue-card); }
   .account-btn { order: 2; }
   .lang-btn { order: 3; }
 }
+
+/* ---------- additions from the project analysis ---------- */
+.check.has-error { color: var(--red); }
+.captcha { min-height: 70px; }
+.hint { margin-top: 4px; padding: 6px 10px; background: var(--warn-bg); border: 1px solid var(--warn-line); border-radius: 8px; font-size: 14px; font-weight: 600; }
+.job-details { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; background: var(--blue-card); border: 1px solid var(--line); border-radius: var(--radius); }
+.job-details h2 { font-size: 18px; }
+.job-details p { font-size: 16px; white-space: pre-line; overflow-wrap: anywhere; }
+/* A PDF: on phones the big "open" button is the main way (many phone browsers cannot show a PDF inside a page); on wide screens the page also shows it. */
+.pdf-open { display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 72px; padding: 14px 16px; background: var(--blue); color: #fff; font-weight: 700; font-size: 18px; text-align: center; }
+.ad-pdf { display: none; }
+@media (min-width: 768px) { .ad-pdf { display: block; } .pdf-open { min-height: var(--tap); font-size: 16px; } }
+
+.qr { width: 220px; height: 220px; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 8px; align-self: center; }
+.secret { font-family: ui-monospace, monospace; letter-spacing: 0.08em; overflow-wrap: anywhere; font-size: 16px; }
+
+@media print {
+  .site-header, .site-footer, .bottom-nav, .demo-banner, .no-print, .subnav, .page-head { display: none !important; }
+  .page, .main, .section { padding: 0 !important; max-width: none !important; }
+  body { background: #fff; }
+}
+
+/* while an ad page loads, keep the page tall so the footer does not jump when the ad appears (layout shift) */
+.page.loading-tall { min-height: 90vh; }

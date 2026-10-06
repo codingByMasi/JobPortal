@@ -7,7 +7,7 @@ import Notice from '../../shared/ui/Notice';
 import { AsyncView } from '../../shared/ui/StateViews';
 import { api } from '../../shared/data';
 import { useAuth } from '../auth/AuthContext';
-import { canEditAsRecruiter } from '../../shared/lib/jobStatus';
+import { canPay } from '../../shared/lib/jobStatus';
 import { useLang } from '../../shared/i18n/LangContext';
 import { formatPrice } from '../../shared/lib/money';
 import { paymentInfo } from './payments';
@@ -36,7 +36,7 @@ export default function Pay() {
       <h2 className="section-title">{t.payTitle}</h2>
       <AsyncView state={data} isEmpty={(job) => !job} empty={t.errNotFound}>
         {(job) => {
-          if (!canEditAsRecruiter(job)) {
+          if (!canPay(job)) {
             return (
               <>
                 <Notice tone="info">{t.payNotNeeded}</Notice>
@@ -46,7 +46,7 @@ export default function Pay() {
           }
           const info = paymentInfo(job, job.package);
           const amount = formatPrice(info.amountPaise);
-          const waLink = info.whatsappLink(t.payWaMessage(info.jobId, info.jobTitle, amount));
+          const waLink = info.whatsappLink(t.payWaMessage(info.reference, info.jobTitle, amount));
           return (
             <>
               <p className="help">{t.payHelp}</p>
@@ -54,6 +54,8 @@ export default function Pay() {
                 <div><dt>{t.colAd}</dt><dd>{job.title}</dd></div>
                 <div><dt>{t.package}</dt><dd>{info.packageName}</dd></div>
                 <div><dt>{t.payAmount}</dt><dd className="pay-amount">{amount}</dd></div>
+                <div><dt>{t.payUpiName}</dt><dd>{info.upiName}</dd></div>
+                <div><dt>{t.payReference}</dt><dd><strong>{info.reference}</strong></dd></div>
                 <div>
                   <dt>{t.payUpi}</dt>
                   <dd className="pay-upi">
@@ -71,6 +73,7 @@ export default function Pay() {
                 <li><span className="step-num">3</span><Icon name="whatsapp" size={28} /><span>{t.payStep3}</span></li>
               </ol>
               <div className="actions">
+                <Button tone="blue" icon="rupee" href={info.upiLink}>{t.payUpiApp}</Button>
                 <Button icon="whatsapp" href={waLink} target="_blank" rel="noopener noreferrer">{t.payPaidButton}</Button>
                 <Button to="/dashboard" tone="outline" icon="list">{t.payLater}</Button>
               </div>

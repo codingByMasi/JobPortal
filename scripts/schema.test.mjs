@@ -12,7 +12,7 @@ describe('database files', () => {
   it('every table has Row Level Security switched on', () => {
     const all = buildSchema();
     const tables = [...all.matchAll(/create table if not exists public\.(\w+)/g)].map((m) => m[1]);
-    expect(tables.sort()).toEqual(['applications', 'jobs', 'packages', 'payments', 'profiles']);
+    expect(tables.sort()).toEqual(['admin_log', 'app_settings', 'applications', 'blocked_contacts', 'change_requests', 'error_log', 'jobs', 'packages', 'payments', 'profiles']);
     for (const t of tables) expect(all).toMatch(new RegExp(String.raw`alter table public\.${t}\s+enable row level security`));
   });
 
@@ -35,7 +35,7 @@ describe('database files', () => {
   it('employers have limits on unpaid ads, stored files and text size', () => {
     const all = buildSchema();
     expect(all).toMatch(/status = 'pending_payment'\) >= 20/);
-    expect(all).toMatch(/storage\.objects o[\s\S]*< 200/);
+    expect(all).toMatch(/storage\.objects o[\s\S]*< 100/);
     expect(all).toContain('profiles_company_name_length');
   });
 

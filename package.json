@@ -5,11 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/prerender.mjs",
+    "build": "node scripts/checkConfig.mjs && vite build && node scripts/headers.mjs && node scripts/prerender.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "schema": "node scripts/schema.mjs"
+    "schema": "node scripts/schema.mjs",
+    "test:e2e": "playwright test",
+    "test:gaps": "vitest run --config vitest.gaps.config.js",
+    "test:lighthouse": "node scripts/lighthouse.mjs",
+    "test:live": "node scripts/live-e2e.mjs",
+    "test:all": "node scripts/test-all.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",
@@ -19,9 +24,14 @@
     "react-router-dom": "^7.18.4"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@electric-sql/pglite": "^0.5.8",
+    "@playwright/test": "^1.63.0",
     "@vitejs/plugin-react": "^6.1.2",
     "vite": "^8.3.2",
     "vitest": "^5.0.3"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

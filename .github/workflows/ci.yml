@@ -15,3 +15,6 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npm audit --omit=dev --audit-level=high
+      # browser tests (phone + desktop widths, accessibility) on the mock-data build; they never touch a real database
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e

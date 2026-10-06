@@ -7,14 +7,15 @@ import Notice from '../../shared/ui/Notice';
 import { api } from '../../shared/data';
 import { friendlyMessage } from '../../shared/lib/friendlyError';
 import { useLang } from '../../shared/i18n/LangContext';
+import { isValidPhone } from '../../shared/lib/phone';
 
-const PHONE = /^[0-9+ -]{7,20}$/;
 const EMPTY = { name: '', phone: '', city: '', message: '' };
 
 /** Candidate apply form for one job. */
 export default function ApplyForm({ job }) {
   const { t } = useLang();
   const [values, setValues] = useState(EMPTY);
+  const [consent, setConsent] = useState(false);
   const [errors, setErrors] = useState({});
   const [state, setState] = useState({ status: 'idle', message: '' });
 
@@ -27,7 +28,8 @@ export default function ApplyForm({ job }) {
     e.preventDefault();
     const next = {};
     if (!values.name.trim()) next.name = t.errNameNeeded;
-    if (!PHONE.test(values.phone.trim())) next.phone = t.errPhoneBad;
+    if (!isValidPhone(values.phone)) next.phone = t.errPhoneBad;
+    if (!consent) next.consent = t.errConsentNeeded;
     setErrors(next);
     if (Object.keys(next).length) return;
     setState({ status: 'sending', message: '' });
@@ -35,6 +37,7 @@ export default function ApplyForm({ job }) {
       await api.submitApplication({ jobId: job.id, ...values });
       setState({ status: 'done', message: '' });
       setValues(EMPTY);
+      setConsent(false);
     } catch (err) {
       setState({ status: 'error', message: friendlyMessage(err, t) });
     }
@@ -69,6 +72,11 @@ export default function ApplyForm({ job }) {
         <Field label={t.applyMessage}>
           <textarea rows={3} value={values.message} onChange={set('message')} maxLength={500} />
         </Field>
+        <label className={`check${errors.consent ? ' has-error' : ''}`}>
+          <input type="checkbox" checked={consent} onChange={(e) => { setConsent(e.target.checked); setErrors((x) => ({ ...x, consent: undefined })); }} />
+          <span>{t.applyConsent}</span>
+        </label>
+        {errors.consent && <p className="field-error" role="alert">{errors.consent}</p>}
         <Notice tone="error">{state.message}</Notice>
         <Button type="submit" icon="check" disabled={state.status === 'sending'}>
           {state.status === 'sending' ? t.applySending : t.applySend}
