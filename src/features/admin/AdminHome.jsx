@@ -11,6 +11,7 @@ import { useAsync } from '../../shared/lib/useAsync';
 export default function AdminHome() {
   const { t } = useLang();
   const counts = useAsync(() => api.adminCounts(), []);
+  const sales = useAsync(() => api.adminSalesStats(), []);
   return (
     <section className="section">
       <AsyncView state={counts} isEmpty={() => false}>
@@ -42,6 +43,31 @@ export default function AdminHome() {
               <span>{t.cRevenue}</span>
             </Link>
           </div>
+        )}
+      </AsyncView>
+      <h2 className="section-title">{t.salesTitle}</h2>
+      <AsyncView state={sales} isEmpty={() => false}>
+        {(s) => (
+          <>
+            <div className="count-grid">
+              <div className="count-card">
+                <Icon name="rupee" size={32} />
+                <span className="count-number">{formatPrice(s.revenuePaise)}</span>
+                <span>{t.salesRevenue}</span>
+              </div>
+              <div className="count-card">
+                <Icon name="badge" size={32} />
+                <span className="count-number">{formatPrice(s.discountPaise)}</span>
+                <span>{t.salesDiscounts}</span>
+              </div>
+            </div>
+            <h3>{t.topOffers}</h3>
+            {s.topOffers.length === 0 ? <p className="muted">{t.noOfferUse}</p> : (
+              <ul className="mini-list">
+                {s.topOffers.map((o) => <li key={o.offerId}><span>{o.name}</span><span>{t.offerUsedTimes(o.uses)} · {formatPrice(o.discountPaise)}</span></li>)}
+              </ul>
+            )}
+          </>
         )}
       </AsyncView>
     </section>

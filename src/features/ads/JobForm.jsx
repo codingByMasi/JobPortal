@@ -8,7 +8,10 @@ import Button from '../../shared/ui/Button';
 import Field from '../../shared/ui/Field';
 import FileField from './FileField';
 import Notice from '../../shared/ui/Notice';
+import CouponBox from './CouponBox';
+import OrderSummary from './OrderSummary';
 import PackagePicker from './PackagePicker';
+import { usePackageQuotes } from './usePackageQuotes';
 import { api } from '../../shared/data';
 import { useAuth } from '../auth/AuthContext';
 import { CATEGORIES, COUNTRIES } from '../../shared/lib/catalog';
@@ -58,6 +61,9 @@ export default function JobForm({ mode, job, renewFrom, packages, onSaved }) {
     clearError(key);
   };
   const choices = isAdmin ? packages : packages.filter((p) => p.active);
+  const [code, setCode] = useState('');
+  const { quotes, codeProblems } = usePackageQuotes(mode === 'new' ? choices : [], code);
+  const codeProblem = code && v.packageId ? codeProblems[v.packageId] : '';
 
   const submit = async (e) => {
     e.preventDefault();
@@ -94,7 +100,15 @@ export default function JobForm({ mode, job, renewFrom, packages, onSaved }) {
         title: v.title, company: v.company, country: v.country, city: v.city, category: v.category, whatsapp: v.whatsapp, details: v.details, ...fileFields,
       };
       let saved;
-      if (mode === 'new') saved = await api.createJob({ ...base, packageId: v.packageId });
+      if (mode === 'new') {
+        saved = await api.createJob({ ...base, packageId: v.packageId });
+        try {
+          await api.createAdOrder(saved.id, v.packageId, codeProblem ? '' : code); // the database saves the price, the offer and a waiting payment
+        } catch (orderErr) {
+          await api.deleteJob(saved).catch(() => {}); // nothing is left half-made; the form stays filled in for another try
+          throw orderErr;
+        }
+      }
       else if (mode === 'edit') {
         saved = await api.updateJob(job.id, base);
         if (job.status === 'rejected') saved = await api.resubmitJob(job.id); // a fixed, rejected ad goes back to review
@@ -150,7 +164,14 @@ export default function JobForm({ mode, job, renewFrom, packages, onSaved }) {
 
       <FileField value={file} onChange={(f) => { setFile(f); clearError('file'); }} error={errors.file} />
 
-      {mode === 'new' && <PackagePicker packages={choices} value={v.packageId} onChange={(id) => { setV((x) => ({ ...x, packageId: id })); clearError('package'); }} error={errors.package} />}
+      {mode === 'new' && (
+        <>
+          <PackagePicker packages={choices} quotes={quotes} value={v.packageId} onChange={(id) => { setV((x) => ({ ...x, packageId: id })); clearError('package'); }} error={errors.package} />
+          <CouponBox packageId={v.packageId} applied={code} onApply={setCode} />
+          {codeProblem && <Notice tone="error">{t[`offer_${codeProblem}`]}</Notice>}
+          <OrderSummary pkg={choices.find((p) => p.id === v.packageId)} quote={quotes[v.packageId]} />
+        </>
+      )}
       {isEdit && !isAdmin && job.package && (
         <p className="help">{t.package}: <strong>{job.package.name}</strong> ({formatPrice(job.package.pricePaise)}, {t.pkgDays(job.package.durationDays)})</p>
       )}

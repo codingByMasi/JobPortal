@@ -25,6 +25,16 @@ Only after a **verified** tick can they see applicants' names and phone numbers.
 ## Reports and complaints
 Job seekers can press **Report this ad**; it opens WhatsApp with the ad code. Open the ad (search the code). If it is bad: **Hide** it, then **Block** the employer if needed, then **Refund** if the money was taken by mistake. Answer the person who reported within 2 days (this is the promise on the Contact page).
 
+## Plans and offers
+- **Packages tab = your plans.** Use the arrows to change the order employers see. Change the price in rupees. **A new price affects only new purchases**: ads already bought keep their old price. A plan that has ads cannot be deleted: turn it off.
+- **Offers tab.** Tap *New offer*. Choose what it gives (percent off, rupees off, extra days, free ad), who gets it (everyone, one plan, one employer), dates, and limits. The blue box shows an example in plain words (like "20% off the 30 Days plan: ₹1,000 becomes ₹800"): read it before saving.
+  - **With a coupon code** the employer must type it (tap *Make a code* for an easy one). **Without a code** the best offer is used by itself. Only one offer is used for one ad; offers never add up.
+  - The status word tells you: Active, Scheduled (not started), Expired, Used up, Off. *Copy* makes a new offer from an old one (it starts Off, without the code). *Uses* shows who used it.
+  - To give one employer a special price: **Employers** tab > *Give offer*.
+- **On one ad (Ads tab):** *More days* (write a reason: it is saved), *Make featured* / *Remove featured*, *Free ad* (only for an ad that is waiting for payment; write why: it is saved with a payment of 0 marked "complimentary").
+- **History tab** shows every change of a plan or an offer: who, when, from what to what. It cannot be edited.
+- **Home tab** shows this month's money after discounts, the discounts you gave, and which offers were used most.
+
 ## Refunds
 - You rejected a paid ad and the employer will not fix it: refund the full amount. Do the bank transfer yourself, then in **Payments** tap **Mark refunded** (tick "Also hide this ad" if it is live).
 - An ad that already ran: no refund, unless the mistake was ours. (This is the rule on the employer terms; confirm it with your accountant.)

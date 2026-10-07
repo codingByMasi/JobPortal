@@ -3,7 +3,7 @@ import { toJob, toPackage } from '../mappers';
 import { ok, raise, supabase } from './client';
 
 export async function listPackages() {
-  return ok(await supabase.from('packages').select('*').order('price_paise')).map(toPackage);
+  return ok(await supabase.from('packages').select('*').order('sort_order').order('price_paise')).map(toPackage);
 }
 
 export async function listLiveJobs() {

@@ -1,5 +1,15 @@
 # Changelog
 
+## Step 9 - Re-run of the release audit and fixes
+- Migration 0019: ads unpaid for 30 days are removed by the daily clean-up (applied to the live project). New test `scripts/rls.cleanup.test.mjs`.
+- Browser tests added: free offer, more days / featured / free ad on one ad, plan order and history; offers and history screens added to the accessibility scan. Full run: 344 unit and database tests, 132 browser runs, Lighthouse 96-98. Secret scan clean. Report updated in `14-release-readiness-report.md`.
+
+## Step 8 - Flexible plans and offers (migration 0018)
+- **Database:** plans got a description, order, badge and file limit; new tables `offers`, `offer_redemptions`, `audit_log`; every ad and payment saves the price it was bought at (list price, discount, final price, offer, final days); `quote_price` is the only place a price is worked out and `create_ad_order` saves the order (a free total is paid at once); admin functions to give more days, set featured on one ad and give a free ad; the plan of an ad stays readable when the plan is turned off; a plan with ads cannot be deleted; changes to plans and offers are logged. The migration is applied to the live project and registered.
+- **Admin screens:** Packages (order, badge, description, safe delete), Offers (status, uses, plain-words example, coupon generator, copy, who used it, "Give offer" from an employer), History (filterable change log), per-ad extra buttons, dashboard money after discounts and top offers.
+- **Employer screens:** plan cards with the crossed-out list price, the best automatic offer and badges; coupon box with plain-words refusals; "what you pay" box; the payment screen shows the saved price. The browser never works out a price.
+- **Tests:** 35 database tests for offers and prices (`scripts/rls.offers.test.mjs`), demo-mode tests, pricing and preview tests, and a browser test for the coupon flow (the old "not built" placeholder is now a real test). Whole-database guard lists updated.
+
 ## Step 6 - Fixes from the project analysis (`00-project-analysis.md`)
 All 91 findings were handled; the status of each is at the end of `00-project-analysis.md`. Items that need your accounts, money or a professional are in `11-owner-checklist.md`.
 - **Database (migrations 0010-0014):**

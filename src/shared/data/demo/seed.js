@@ -39,9 +39,9 @@ export function buildSeed(now = Date.now()) {
       { id: 'u-rec2', email: 'other@example.com', role: 'recruiter', company_name: 'Desert Transport', phone: '919812345678', verified: false, blocked: false, created_at: iso(now - 30 * DAY) },
     ],
     packages: [
-      { id: 'pkg-7', name: '7 Days', price_paise: 29900, duration_days: 7, featured: false, active: true },
-      { id: 'pkg-30', name: '30 Days', price_paise: 79900, duration_days: 30, featured: false, active: true },
-      { id: 'pkg-30f', name: '30 Days Featured', price_paise: 149900, duration_days: 30, featured: true, active: true },
+      { id: 'pkg-7', name: '7 Days', price_paise: 29900, duration_days: 7, featured: false, active: true, description: '', badge_text: '', sort_order: 10, max_files: 1 },
+      { id: 'pkg-30', name: '30 Days', price_paise: 79900, duration_days: 30, featured: false, active: true, description: '', badge_text: '', sort_order: 20, max_files: 1 },
+      { id: 'pkg-30f', name: '30 Days Featured', price_paise: 149900, duration_days: 30, featured: true, active: true, description: '', badge_text: '', sort_order: 30, max_files: 1 },
     ],
     jobs: [
       live(1, 1, 29, { title: 'Plumbers Needed', company: 'Gulf Works', country: 'uae', city: 'Dubai', category: 'plumber', package_id: 'pkg-30f', whatsapp: '919876543210' }),

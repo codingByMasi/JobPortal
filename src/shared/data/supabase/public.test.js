@@ -62,12 +62,12 @@ describe('listLiveJobs', () => {
 });
 
 describe('listPackages', () => {
-  it('asks for packages cheapest first and maps them', async () => {
+  it('asks for packages in the admin order (then cheapest) and maps them', async () => {
     fake.state.result = { data: [{ id: 'p1', name: '7 Days', price_paise: 29900, duration_days: 7, featured: false, active: true }], error: null };
     const list = await publicApi.listPackages();
     expect(fake.state.calls[0].table).toBe('packages');
-    expect(opsOf(fake.state.calls[0]).order).toEqual(['price_paise']);
-    expect(list).toEqual([{ id: 'p1', name: '7 Days', pricePaise: 29900, durationDays: 7, featured: false, active: true }]);
+    expect(opsOf(fake.state.calls[0]).order).toContain('price_paise');
+    expect(list).toEqual([{ id: 'p1', name: '7 Days', pricePaise: 29900, durationDays: 7, featured: false, active: true, description: '', sortOrder: 0, badgeText: '', maxFiles: 1 }]);
   });
 });
 

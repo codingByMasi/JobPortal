@@ -25,6 +25,10 @@ export function toPackage(row) {
     durationDays: row.duration_days,
     featured: Boolean(row.featured),
     active: row.active !== false,
+    description: row.description || '',
+    sortOrder: row.sort_order ?? 0,
+    badgeText: row.badge_text || '',
+    maxFiles: row.max_files ?? 1,
   };
 }
 
@@ -63,6 +67,12 @@ export function toJob(row, { allowData = false } = {}) {
     thumbPath: row.thumb_path || null,
     details: row.details || '',
     priceAtOrder: row.price_paise_at_order ?? null,
+    listPricePaise: row.list_price_paise ?? row.price_paise_at_order ?? null,
+    discountPaise: row.discount_paise ?? 0,
+    finalPricePaise: row.final_price_paise ?? row.price_paise_at_order ?? null,
+    durationDaysFinal: row.duration_days_final ?? row.days_at_order ?? null,
+    offerId: row.offer_id ?? null,
+    featuredOverride: row.featured_override ?? null,
     fileType: row.file_type === 'pdf' ? 'pdf' : 'image',
     whatsapp: normalizeWhatsapp(row.whatsapp),
     posted: toTime(row.posted_date),
@@ -70,7 +80,7 @@ export function toJob(row, { allowData = false } = {}) {
     expiresAt: toTime(row.expires_at),
     status: row.status || 'live', // the public view only has live ads
     rejectReason: row.reject_reason || '',
-    featured: row.featured ?? Boolean(row.package?.featured),
+    featured: row.featured ?? row.featured_override ?? Boolean(row.package?.featured),
     verified: row.recruiter_verified ?? Boolean(row.recruiter?.verified),
     package: row.package ? toPackage(row.package) : null,
     recruiter: row.recruiter ? toProfile(row.recruiter) : null,
@@ -109,7 +119,78 @@ export function toPayment(row) {
     status: row.status,
     note: row.note || '',
     reference: row.reference || '',
+    listPricePaise: row.list_price_paise ?? row.amount_paise,
+    discountPaise: row.discount_paise ?? 0,
+    finalPricePaise: row.final_price_paise ?? row.amount_paise,
     createdAt: toTime(row.created_at),
+  };
+}
+
+export function toOffer(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    type: row.type,
+    value: Number(row.value),
+    appliesTo: row.applies_to,
+    packageId: row.package_id ?? null,
+    recruiterId: row.recruiter_id ?? null,
+    recruiterName: row.recruiter?.company_name || '',
+    couponCode: row.coupon_code || '',
+    startsAt: toTime(row.starts_at),
+    endsAt: toTime(row.ends_at),
+    maxUses: row.max_uses ?? null,
+    maxUsesPerRecruiter: row.max_uses_per_recruiter ?? 1,
+    active: row.active !== false,
+    createdAt: toTime(row.created_at),
+  };
+}
+
+export function toRedemption(row) {
+  return {
+    id: row.id,
+    offerId: row.offer_id,
+    recruiterId: row.recruiter_id,
+    recruiterName: row.recruiter?.company_name || '',
+    jobId: row.job_id,
+    jobTitle: row.job?.title || '',
+    discountPaise: row.discount_paise ?? 0,
+    bonusDays: row.bonus_days ?? 0,
+    createdAt: toTime(row.created_at),
+  };
+}
+
+export function toAuditEntry(row) {
+  return {
+    id: row.id,
+    adminId: row.admin_id ?? null,
+    adminName: row.admin?.company_name || row.admin?.email || '',
+    action: row.action,
+    tableName: row.table_name,
+    recordId: row.record_id ?? null,
+    oldValue: row.old_value ?? null,
+    newValue: row.new_value ?? null,
+    createdAt: toTime(row.created_at),
+  };
+}
+
+/** The answer of quote_price (database) or computeQuote (demo): prices in paise, a short `code` the screens turn into words. */
+export function toQuote(q) {
+  return {
+    ok: Boolean(q.ok),
+    code: q.code,
+    listPricePaise: q.list_price_paise ?? q.listPricePaise ?? 0,
+    discountPaise: q.discount_paise ?? q.discountPaise ?? 0,
+    finalPricePaise: q.final_price_paise ?? q.finalPricePaise ?? 0,
+    bonusDays: q.bonus_days ?? q.bonusDays ?? 0,
+    baseDays: q.base_days ?? q.baseDays ?? 0,
+    finalDays: q.final_days ?? q.finalDays ?? 0,
+    offerId: q.offer_id ?? q.offerId ?? null,
+    offerName: q.offer_name ?? q.offerName ?? '',
+    offerType: q.offer_type ?? q.offerType ?? '',
+    percent: q.percent ?? null,
+    viaCode: Boolean(q.via_code ?? q.viaCode),
+    jobStatus: q.job_status ?? q.jobStatus ?? null,
   };
 }
 

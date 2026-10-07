@@ -4,10 +4,11 @@ Everything that could be done in the code has been done (see the status table at
 
 ## A. Before any real user
 - [ ] **Paid Supabase plan** (about Rs 2,100 a month) so the project never pauses and has daily backups.
-- [ ] **Run the database files** on the real project, in order, if it was set up earlier: `0010` to `0017` (or the whole `schema.sql` on a brand-new project). Then run the one-time line for `storage_base` (`06-deploy.md`, A.2b).
+- [ ] **Run the database files** on the real project, in order, if it was set up earlier: `0010` to `0019` (or the whole `schema.sql` on a brand-new project). Then run the one-time line for `storage_base` (`06-deploy.md`, A.2b).
 - [ ] **Supabase settings** (`06-deploy.md` A.4 to A.8): Confirm email ON; minimum password 8; Site URL and the `/reset-password` redirect; **your own email sender (SMTP)**; CAPTCHA with Cloudflare Turnstile (secret in Supabase, site key in Cloudflare).
 - [ ] **Fill in `src/config.js`**: WhatsApp number, UPI ID, name on the UPI ID, contact email, complaints person and email, site address. The Cloudflare build refuses to publish until you do.
 - [ ] **Cloudflare Pages settings** (`13-cloudflare-pages.md`, section "Set by hand in the dashboard"): project from Git, the Supabase values for Production AND a separate staging project (or preview deployments off) for Preview, custom domain, a deploy hook called every 3 hours.
+- [ ] **Plans and offers hand check (real project, once):** (1) Admin > Packages: set your real prices and the order; (2) Admin > Offers: make a test coupon (20% off, one use per employer); (3) as an employer (a test login) post an ad, type the code, check the "what you pay" box and that the payment screen shows the same amount; (4) try the same code again: it must say "Code already used"; (5) make a free offer, use it: the ad goes straight to "waiting for approval" with no payment; (6) in the Ads tab try *More days*, *Make featured* and *Free ad*; (7) look at the History tab. Then switch the test offers Off.
 - [ ] **Admin safety**: make a second admin; turn on two-step login for both (Admin > Security).
 - [ ] **Backups**: add the two GitHub secrets for the weekly backup; do one test restore.
 - [ ] **Uptime alerts**: UptimeRobot for the site and for the Supabase address.

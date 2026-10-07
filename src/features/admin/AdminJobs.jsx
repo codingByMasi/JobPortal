@@ -5,13 +5,14 @@ import Button from '../../shared/ui/Button';
 import Field from '../../shared/ui/Field';
 import Icon from '../../shared/ui/Icon';
 import { AdFileDialog, DeleteDialog, PaidDialog, RejectDialog } from './AdminJobDialogs';
+import { ExtendDialog, FreeAdDialog } from './AdminJobExtras';
 import Notice from '../../shared/ui/Notice';
 import { StatusBadge } from '../../shared/ui/StatusBadge';
 import { AsyncView } from '../../shared/ui/StateViews';
 import { api } from '../../shared/data';
 import { adReference } from '../../shared/lib/adReference';
 import { candidateWhatsApp, describeStatus, whatsappLink } from '../../shared/lib/format';
-import { adminActions, effectiveStatus, STATUSES } from '../../shared/lib/jobStatus';
+import { adminActions, adminExtraActions, effectiveStatus, STATUSES } from '../../shared/lib/jobStatus';
 import { useLang } from '../../shared/i18n/LangContext';
 import { formatPrice } from '../../shared/lib/money';
 import { useAsync } from '../../shared/lib/useAsync';
@@ -60,6 +61,7 @@ export default function AdminJobs() {
     if (kind === 'approve') run(() => api.adminApprove(job.id), t.adApproved);
     else if (kind === 'hide') run(() => api.adminSetHidden(job.id, true), t.adHidden);
     else if (kind === 'show') run(() => api.adminSetHidden(job.id, false), t.adShown);
+    else if (kind === 'feature' || kind === 'unfeature') run(() => api.adminSetFeatured(job.id, kind === 'feature'), t.adFeaturedSaved);
     else setDialog({ kind: kind === 'markPaid' ? 'paid' : kind, job });
   };
 
@@ -116,7 +118,7 @@ export default function AdminJobs() {
                         {['pending_payment', 'paid_pending_review'].includes(job.status) && isFirstAd(job) && <p className="hint">{t.firstAd}</p>}
                         {sameNumber(job) > 0 && <p className="hint">{t.sameNumber(sameNumber(job))}</p>}
                       </td>
-                      <td data-label={t.colPackage}>{job.package ? `${job.package.name} · ${formatPrice(job.priceAtOrder ?? job.package.pricePaise)}` : "-"}</td>
+                      <td data-label={t.colPackage}>{job.package ? `${job.package.name} · ${formatPrice(job.finalPricePaise ?? job.package.pricePaise)}` : '-'}{job.discountPaise > 0 && <><br /><span className="muted">{t.discountLine(formatPrice(job.discountPaise))}</span></>}</td>
                       <td data-label={t.colStatus}>
                         <StatusBadge job={job} />
                         <br /><span className="muted">{describeStatus(job, t, lang)}</span>
@@ -128,6 +130,9 @@ export default function AdminJobs() {
                           {job.recruiter?.phone && (
                             <Button size="sm" tone="outline" icon="whatsapp" href={whatsappLink(candidateWhatsApp(job.recruiter.phone), t.waToEmployerAd(job.title, describeStatus(job, t, lang)))} target="_blank" rel="noopener noreferrer">{t.whatsappThem}</Button>
                           )}
+                          {adminExtraActions(job).map((kind) => (
+                            <Button key={kind} size="sm" tone="outline" icon={kind === 'freeAd' ? 'badge' : kind === 'extend' ? 'clock' : 'star'} onClick={() => act(kind, job)} disabled={busy}>{t[`extra_${kind}`]}</Button>
+                          ))}
                           {adminActions(job).map((kind) =>
                             kind === 'edit' ? (
                               <Button key={kind} size="sm" tone="outline" icon="edit" to={`/admin/jobs/${job.id}`}>{t.edit}</Button>
@@ -154,6 +159,12 @@ export default function AdminJobs() {
       )}
       {dialog?.kind === 'paid' && (
         <PaidDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={(reference) => run(() => api.adminMarkPaid(dialog.job.id, { reference }), t.adPaid)} />
+      )}
+      {dialog?.kind === 'extend' && (
+        <ExtendDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={(days, reason) => run(() => api.adminExtendJob(dialog.job.id, days, reason), t.adExtended)} />
+      )}
+      {dialog?.kind === 'freeAd' && (
+        <FreeAdDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={(note) => run(() => api.adminGiveFreeAd(dialog.job.id, note), t.adFreeGiven)} />
       )}
       {dialog?.kind === 'delete' && (
         <DeleteDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={() => run(() => api.deleteJob(dialog.job), t.adDeleted)} />

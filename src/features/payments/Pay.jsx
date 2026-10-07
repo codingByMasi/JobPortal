@@ -39,7 +39,7 @@ export default function Pay() {
           if (!canPay(job)) {
             return (
               <>
-                <Notice tone="info">{t.payNotNeeded}</Notice>
+                <Notice tone="info">{job.finalPricePaise === 0 ? t.payFreeDone : t.payNotNeeded}</Notice>
                 <Button to="/dashboard" icon="list">{t.goToAds}</Button>
               </>
             );
@@ -53,6 +53,8 @@ export default function Pay() {
               <dl className="pay-box">
                 <div><dt>{t.colAd}</dt><dd>{job.title}</dd></div>
                 <div><dt>{t.package}</dt><dd>{info.packageName}</dd></div>
+                {info.discountPaise > 0 && <div><dt>{t.summaryPrice}</dt><dd><s>{formatPrice(info.listPricePaise)}</s> · {t.discountLine(formatPrice(info.discountPaise))}</dd></div>}
+                {info.days > 0 && <div><dt>{t.summaryDays}</dt><dd>{t.pkgDays(info.days)}</dd></div>}
                 <div><dt>{t.payAmount}</dt><dd className="pay-amount">{amount}</dd></div>
                 <div><dt>{t.payUpiName}</dt><dd>{info.upiName}</dd></div>
                 <div><dt>{t.payReference}</dt><dd><strong>{info.reference}</strong></dd></div>

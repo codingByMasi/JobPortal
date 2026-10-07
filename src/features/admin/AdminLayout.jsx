@@ -18,9 +18,11 @@ export default function AdminLayout() {
     { to: '/admin/employers', icon: 'users', label: t.tabEmployers },
     { to: '/admin/payments', icon: 'card', label: t.tabAdminPayments },
     { to: '/admin/packages', icon: 'box', label: t.tabPackages },
+    { to: '/admin/offers', icon: 'badge', label: t.tabOffers },
     { to: '/admin/applications', icon: 'file', label: t.tabAdminApps },
     { to: '/admin/requests', icon: 'edit', label: t.tabAdminRequests },
     { to: '/admin/security', icon: 'shield', label: t.tabSecurity },
+    { to: '/admin/history', icon: 'list', label: t.tabAudit },
     { to: '/admin/problems', icon: 'alert', label: t.tabProblems },
   ];
 

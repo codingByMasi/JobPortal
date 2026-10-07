@@ -42,7 +42,7 @@ export async function adminApprove(id) {
   needAdmin();
   const row = findJob(id);
   if (!['paid_pending_review', 'rejected'].includes(row.status)) throw fail('NOT_NOW', 'This ad cannot be approved now.');
-  const { startsAt, expiresAt } = approvalDates(Date.now(), row.days_at_order || pkgOf(row.package_id)?.duration_days || 30);
+  const { startsAt, expiresAt } = approvalDates(Date.now(), row.duration_days_final || row.days_at_order || pkgOf(row.package_id)?.duration_days || 30);
   logAdmin('approve_job', row.id);
   Object.assign(row, { status: 'live', starts_at: new Date(startsAt).toISOString(), expires_at: new Date(expiresAt).toISOString(), reject_reason: null });
   save();
@@ -83,12 +83,17 @@ export async function adminMarkPaid(id, { amountPaise, note = '', reference = ''
   if (row.status !== 'pending_payment') throw fail('NOT_WAITING', 'This ad is not waiting for payment.');
   const ref = String(reference || '').trim() || null;
   if (ref && state.db.payments.some((x) => (x.reference || '').toLowerCase() === ref.toLowerCase())) throw fail('REFERENCE_USED', 'payments_reference_unique');
-  const pay = {
-    id: uid(), job_id: row.id, recruiter_id: row.recruiter_id, amount_paise: amountPaise ?? row.price_paise_at_order ?? pkgOf(row.package_id)?.price_paise ?? 0,
-    currency: 'INR', method: 'manual', status: 'paid', note, reference: ref, created_at: nowIso(),
-  };
-  logAdmin('mark_paid', row.id, `${pay.amount_paise} paise`);
-  state.db.payments.push(pay);
+  const amount = amountPaise ?? row.final_price_paise ?? row.price_paise_at_order ?? pkgOf(row.package_id)?.price_paise ?? 0;
+  // like the database: the waiting payment saved with the order is filled in, not doubled
+  let pay = state.db.payments.find((x) => x.job_id === row.id && x.status === 'created');
+  if (pay) Object.assign(pay, { status: 'paid', method: 'manual', amount_paise: amount, note, reference: ref });
+  else {
+    state.db.payments.push((pay = {
+      id: uid(), job_id: row.id, recruiter_id: row.recruiter_id, amount_paise: amount, currency: 'INR', method: 'manual', status: 'paid', note, reference: ref, created_at: nowIso(),
+      list_price_paise: row.list_price_paise ?? null, discount_paise: row.discount_paise || 0, final_price_paise: row.final_price_paise ?? null, offer_id: row.offer_id ?? null, duration_days_final: row.duration_days_final ?? null,
+    }));
+  }
+  logAdmin('mark_paid', row.id, `${amount} paise`);
   row.status = 'paid_pending_review';
   save();
   return toPayment(pay);
@@ -144,16 +149,6 @@ export async function adminRefund(id, { hideAd = false } = {}) {
   const job = hideAd && row.job_id ? state.db.jobs.find((j) => j.id === row.job_id) : null;
   if (job && job.status === 'live') job.status = 'hidden';
   logAdmin('refund_payment', id, hideAd ? 'ad hidden' : '');
-  save();
-}
-
-export async function adminSavePackage(pkg) {
-  await wait();
-  needAdmin();
-  const fields = { name: pkg.name.trim(), price_paise: pkg.pricePaise, duration_days: pkg.durationDays, featured: pkg.featured, active: pkg.active };
-  const row = pkg.id && state.db.packages.find((x) => x.id === pkg.id);
-  if (row) Object.assign(row, fields);
-  else state.db.packages.push({ id: uid(), ...fields });
   save();
 }
 

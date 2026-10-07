@@ -24,6 +24,7 @@ export async function createJob(input) {
   const row = {
     file_url: null, file_path: null, thumb_url: null, thumb_path: null, details: '', file_type: 'image', company: '', city: '', whatsapp: '', ...fields,
     price_paise_at_order: pkg.price_paise, days_at_order: pkg.duration_days,
+    list_price_paise: pkg.price_paise, discount_paise: 0, final_price_paise: pkg.price_paise, duration_days_final: pkg.duration_days, offer_id: null, featured_override: null,
     id: uid(), recruiter_id: p.id, package_id: pkg.id, status: 'pending_payment', starts_at: null, expires_at: null,
     reject_reason: null, posted_date: new Date().toISOString().slice(0, 10), created_at: new Date().toISOString(),
   };
@@ -77,6 +78,9 @@ export async function deleteJob(job) {
   state.db.jobs = state.db.jobs.filter((j) => j.id !== row.id);
   state.db.applications = state.db.applications.filter((a) => a.job_id !== row.id);
   state.db.change_requests = requestRows().filter((r) => r.job_id !== row.id);
+  // like the database: a waiting payment and the offer use of an unpaid ad go with it; real payments stay with no ad
+  state.db.payments = state.db.payments.filter((x) => !(x.job_id === row.id && x.status === 'created'));
+  state.db.offer_redemptions = (state.db.offer_redemptions || []).filter((r) => r.job_id !== row.id);
   state.db.payments.forEach((x) => {
     if (x.job_id === row.id) x.job_id = null;
   });

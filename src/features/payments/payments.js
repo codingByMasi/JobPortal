@@ -18,15 +18,22 @@ export function upiLink({ upiId, upiName, amountPaise, reference }) {
   return `upi://pay?${q.toString().replace(/\+/g, '%20')}`;
 }
 
-/** Everything the instructions screen shows for one ad. */
+/**
+ * Everything the instructions screen shows for one ad. The amount is the price SAVED with the order (list price, offer, final price),
+ * never worked out again here, so a later change of the plan or the offer cannot change what this ad costs.
+ */
 export function paymentInfo(job, pkg) {
+  const amountPaise = job.finalPricePaise ?? job.priceAtOrder ?? pkg?.pricePaise ?? 0;
   return {
     packageName: pkg?.name || '',
-    amountPaise: pkg?.pricePaise ?? 0,
+    amountPaise,
+    listPricePaise: job.listPricePaise ?? amountPaise,
+    discountPaise: job.discountPaise ?? 0,
+    days: job.durationDaysFinal ?? pkg?.durationDays ?? 0,
     upiId: UPI_ID,
     upiName: UPI_NAME,
     reference: adReference(job.id),
-    upiLink: upiLink({ upiId: UPI_ID, upiName: UPI_NAME, amountPaise: pkg?.pricePaise ?? 0, reference: adReference(job.id) }),
+    upiLink: upiLink({ upiId: UPI_ID, upiName: UPI_NAME, amountPaise, reference: adReference(job.id) }),
     whatsappNumber: WHATSAPP_NUMBER,
     whatsappLink: (message) => whatsappLink(WHATSAPP_NUMBER, message),
     jobId: job.id,

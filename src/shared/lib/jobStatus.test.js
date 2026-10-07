@@ -84,3 +84,15 @@ describe('change requests', () => {
     for (const status of ['paid_pending_review', 'live', 'hidden', 'rejected', 'expired']) expect(canRequestChange({ status })).toBe(true);
   });
 });
+
+describe('adminExtraActions', () => {
+  const live = { status: 'live', expiresAt: Date.now() + 86400000, featured: false };
+  it('gives the right extra buttons per status', async () => {
+    const { adminExtraActions } = await import('./jobStatus');
+    expect(adminExtraActions({ status: 'pending_payment' })).toEqual(['freeAd']);
+    expect(adminExtraActions(live)).toEqual(['extend', 'feature']);
+    expect(adminExtraActions({ ...live, featured: true })).toEqual(['extend', 'unfeature']);
+    expect(adminExtraActions({ status: 'hidden', expiresAt: Date.now() + 86400000 })).toEqual(['extend']);
+    expect(adminExtraActions({ status: 'rejected' })).toEqual([]);
+  });
+});

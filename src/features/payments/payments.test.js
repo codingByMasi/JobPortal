@@ -33,4 +33,12 @@ describe('paymentInfo', () => {
     expect(info.upiLink).toContain('upi://pay?');
     expect(info.upiLink).toContain('tn=AD-ABCDEF12');
   });
+  it('takes the amount from the price saved with the order, not from the plan', () => {
+    const job = { id: 'abcdef12-0000-0000-0000-000000000000', title: 'Plumber', listPricePaise: 100000, discountPaise: 20000, finalPricePaise: 80000, durationDaysFinal: 37 };
+    const info = paymentInfo(job, { name: '30 Days', pricePaise: 250000, durationDays: 30 }); // the plan price changed to 2500 later
+    expect(info.amountPaise).toBe(80000);
+    expect(info.discountPaise).toBe(20000);
+    expect(info.days).toBe(37);
+    expect(info.upiLink).toContain('am=800.00');
+  });
 });

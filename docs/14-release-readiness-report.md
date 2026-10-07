@@ -6,13 +6,15 @@ Date: 2026-10-07. Tester role: QA lead, security reviewer, release manager. Scop
 
 > **What was added (nothing else was changed).** Test files in `e2e/` and `scripts/` (`rls.readiness.test.mjs`, `known-gaps.check.mjs`, `e2e-server.mjs`, `lighthouse.mjs`, `test-all.mjs`), `playwright.config.js`, `vitest.gaps.config.js`, five npm scripts, two development-only tools in `package.json` (`@playwright/test`, `@axe-core/playwright`; reason in `docs/09-decisions.md`), and three lines in `.gitignore` for test output. No application code, schema or hosting settings were changed.
 
+> **Update after the plans-and-offers work (re-run the same day).** `npm run test:all`: 344 unit and database tests pass (36 files), 132 browser runs pass at phone and desktop width (offers, free offer, extra ad buttons, plan order and history added; the two new admin screens pass the accessibility scan), Lighthouse phone 96 / 98 / 98 with layout shift 0, 0 dependency vulnerabilities. Secret scan: no `service_role` or secret key in the code, the built site or the Git history; `.env` and `.dev.vars` are ignored. No unsafe HTML calls in `src`. Fixed since this report: B1 (everything is committed), B6, B9, B10, B13, B14, offers (0018), and GAP-2 (migration 0019: ads unpaid for 30 days are removed daily; applied to the live project). Still open and not fixable from here: B2, B3, B4, B5, B11, B12 (your accounts and settings), B8 (needs Cloudflare Turnstile keys and an Edge Function), and GAP-1 (Supabase does not allow deleting stored files from SQL: Admin > Problems > "Look for unused files" removes them).
+
 ## 1. Verdict: NOT READY today (close). READY WITH CONDITIONS once conditions 1 to 6 are done
 
 1. The code and the database rules are in good shape: 275 automated tests pass, 54 browser tests pass at phone and desktop width, 98 live database checks pass, 0 accessibility violations, 0 security-scan findings.
 2. **Nothing has been committed to Git since the first commit** (about 140 changed or new files). Cloudflare builds from Git, so today it would deploy the old first version.
 3. **Not one real account, real signup, real email or real file upload has ever been tested** on the live project (0 accounts exist). The riskiest single step, the signup trigger under Supabase's own login service, is unproven.
 4. The settings that protect real users are in dashboards nobody has checked yet (Supabase: confirm email, email sender, password rule, backups, paid plan; Cloudflare: variables, domain, preview/production split), and `src/config.js` still holds example payment details (the build will refuse to publish until fixed, which is correct).
-5. The brief's offers and coupon codes are not built, and a few smaller gaps remain (orphan files, no CAPTCHA on the apply form, small tap targets, one layout shift). None of these alone blocks launch.
+5. Offers and coupon codes are now built (migration 0018, see `CHANGELOG.md`; the live hand check is in `11-owner-checklist.md`). A few smaller gaps remain (orphan files, no CAPTCHA on the apply form, small tap targets, one layout shift). None of these alone blocks launch.
 
 ## 2. Test results
 
@@ -38,7 +40,7 @@ Date: 2026-10-07. Tester role: QA lead, security reviewer, release manager. Scop
 | Database rules | Visitors and employers can call only an allow-list of functions | readiness (new) | **Pass** | Visitors: 5 helper functions. Employers: 12. A new function fails this test until added on purpose. |
 | Database rules | Every table has Row Level Security on | readiness (new) + live query | **Pass** | 0 tables without it, local and live. |
 | Pricing and offers | Price saved with the ad; later plan change does not alter it; price cannot be set by the client | hardening + live + browser (plan edit) | **Pass** | Verified also in the browser: plan changed to 999, old ad still charged 799. |
-| Pricing and offers | Percent, flat, bonus-day and free offers; coupon codes (expired, used up, wrong plan, per-employer limit); price never below 0 | known-gaps GAP-3 | **Skipped** | NOT BUILT. The project has plans only: no offers, coupons or discounts (also not in docs 01-11). |
+| Pricing and offers | Percent, flat, bonus-day and free offers; coupon codes (expired, used up, wrong plan, per-employer limit); price never below 0 | `scripts/rls.offers.test.mjs` (35) + known-gaps GAP-3 | **Pass** | Built after this report (migration 0018, applied to the live project). Not yet hand-checked with a real login: see `11-owner-checklist.md`. |
 | File storage | Bucket accepts only JPG, PNG, WebP, PDF, 3 MB limit, public by link only | readiness (new) + live query | **Pass** | Settings confirmed on the live bucket. |
 | File storage | The storage service really refuses a wrong type and an oversized file | needs the real Storage API with a logged-in user | **Not verified** | Cannot be done without a real login. See launch checklist. |
 | File storage | Employer cannot overwrite, rename or delete another employer's file | readiness (new) | **Pass** | Also cannot plant a file in another folder. |
@@ -57,7 +59,7 @@ Date: 2026-10-07. Tester role: QA lead, security reviewer, release manager. Scop
 | Browser (mock data, 390 px and 1440 px) | Admin: mark paid (reference needed, same reference refused), reject with reason, employer fixes and resends, approve, hide, show, delete | Playwright `admin.spec.js` | **Pass** | Visitors see the ad after approval and not after hide. |
 | Browser (mock data, 390 px and 1440 px) | Admin: view the ad file, refund (and hide), block employer, spreadsheet downloads, change requests | Playwright | **Pass** |  |
 | Browser (mock data, 390 px and 1440 px) | Admin: edit plans (price follows on the public page) | Playwright | **Pass** |  |
-| Browser (mock data, 390 px and 1440 px) | Admin: edit offers, apply a coupon | Playwright (marked "not built") | **Skipped** | NOT BUILT (2 skipped runs). |
+| Browser (mock data, 390 px and 1440 px) | Admin: edit offers, apply a coupon | Playwright (coupon flow) | **Pass** | Built after this report: admin makes a coupon, employer uses it, the payment screen shows the discounted price. |
 | Browser (mock data, 390 px and 1440 px) | Refresh on /admin (9 addresses) and /job/:id does not 404 | Playwright | **Pass** | On the preview server. The real Cloudflare behaviour was checked locally with `wrangler pages dev` (docs/13). |
 | Browser (mock data, 390 px and 1440 px) | Role protection: visitor and employer cannot open /admin or /dashboard areas | Playwright | **Pass** |  |
 | Browser (mock data, 390 px and 1440 px) | Hindi / English switch, remembered after reload | Playwright | **Pass** | Hindi wording quality NOT VERIFIED (below). |
@@ -104,13 +106,13 @@ Underneath the rows: 275 unit and database tests (275 pass), 128 of them databas
 
 | # | Severity | Problem | Evidence | What could go wrong (plain words) | Suggested fix | Effort |
 |---|---|---|---|---|---|---|
-| B1 | **High** | Nothing is committed to Git | `git status`: about 135 files changed or new; `git log`: 1 commit | You press deploy and Cloudflare publishes the first version, without the security fixes, change requests, receipts, error log or any of today's work. | Review, then `git add -A` and commit; push to a private GitHub repository; connect Cloudflare to it. | S |
+| B1 (fixed) | **High** | Nothing is committed to Git | `git status`: about 135 files changed or new; `git log`: 1 commit | You press deploy and Cloudflare publishes the first version, without the security fixes, change requests, receipts, error log or any of today's work. | Review, then `git add -A` and commit; push to a private GitHub repository; connect Cloudflare to it. | S |
 | B2 | **High** | First real signup and the real login service never tested | 0 rows in `auth.users`; `docs/12` "could not be proven from here" | If the signup step fails under Supabase's own login service, every new employer sees an error and no profile is created. | Do the first real signup on the live site after Supabase settings (checklist 1-3); I check the database right after. | S |
 | B3 | **High** | Supabase and Cloudflare settings unverified | `docs/11` boxes unticked | Confirm-email off means anyone can register with any email; no email sender means no confirmation or reset emails; the free plan pauses after a week and has no backups; preview builds could write into your real database. | Do `docs/11-owner-checklist.md` section A and `docs/13` "Set by hand". | M |
 | B4 | **High** | Example payment details in `src/config.js` | `scripts/checkConfig.mjs` output | (The build now refuses to publish, which is the protection.) Until real values are set the site cannot go live. | Put the real UPI ID, name, WhatsApp number, emails, site address. | S |
 | B5 | **High** | Real file upload never tested | live bucket settings only | If the browser's upload does not match the database path rule, employers cannot post any ad with a picture. | First real ad with a picture and a PDF, then delete it (checklist). | S |
 | B6 | Medium | Job detail page: layout shift 0.281 | Lighthouse, `job.json` | The page jumps while it loads (footer moves); on slow phones people tap the wrong thing. | Reserve space for the ad area while loading. | S |
-| B7 | Medium | Orphan files and old unpaid ads | known-gaps GAP-1, GAP-2 | Pictures of deleted ads can stay public and cost storage. | A scheduled clean-up using the Storage API (Edge Function) and a 30-day rule for unpaid ads. | M |
+| B7 (half fixed) | Medium | Orphan files (use the Problems tool) and old unpaid ads (now removed after 30 days, 0019) | known-gaps GAP-1, GAP-2 | Pictures of deleted ads can stay public and cost storage. | A scheduled clean-up using the Storage API (Edge Function) and a 30-day rule for unpaid ads. | M |
 | B8 | Medium | No CAPTCHA on the apply form | known gap; `docs/03` | Bots can fill ads with fake applicants below the per-address limits; employers then call wrong people. | Turnstile plus an Edge Function for applications. | M |
 | B9 | Medium | Small tap targets and text | `test-results/a11y/*.json` | Text links on sign-in and sign-up are 21 px tall (rule: 52 px); status labels are 13 px; many users have cheap phones and big fingers. | Make those links block-level 52 px; raise label size to 14 px. | S |
 | B10 | Medium | Language button label does not match its text | Lighthouse `label-content-name-mismatch` | Voice-control users cannot say "हिन्दी" to press it. | Put the visible word in the spoken label. | S |
@@ -130,8 +132,8 @@ Underneath the rows: 275 unit and database tests (275 pass), 128 of them databas
 
 | Item | State |
 |---|---|
-| Offers, coupon codes, discounts, bonus days, free offers | **Not built** and not described in docs 01-11. Plans (packages) only. |
-| Admin "edit offers" | Not built (plans can be edited). |
+| Offers, coupon codes, discounts, bonus days, free offers | Built after this report (0018). |
+| Admin "edit offers" | Built after this report (Admin > Offers). |
 | Phase 2 online payments (Razorpay) | Plan only (`docs/08`); price snapshot, unique reference and one-paid-payment-per-ad are in place as groundwork. |
 | Deleting an ad removes its file in the database | Not built (browser only). |
 | Automatic removal of old unpaid ads and their files | Not built. |

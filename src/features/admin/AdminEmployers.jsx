@@ -101,6 +101,7 @@ export default function AdminEmployers() {
                           {e.blocked ? t.unblock : t.block}
                         </Button>
                         <Button size="sm" tone="outline" icon="list" onClick={() => setDetails(e)}>{t.employerAdsPayments}</Button>
+                        {e.role !== 'admin' && <Button size="sm" tone="outline" icon="badge" to={`/admin/offers?employer=${e.id}`}>{t.giveOffer}</Button>}
                       </div>
                     </td>
                   </tr>

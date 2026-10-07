@@ -73,12 +73,6 @@ export async function adminRefund(id, { hideAd = false } = {}) {
   ok(await supabase.rpc('admin_refund_payment', { p_payment: id, p_hide_job: hideAd }));
 }
 
-export async function adminSavePackage(pkg) {
-  const fields = { name: pkg.name.trim(), price_paise: pkg.pricePaise, duration_days: pkg.durationDays, featured: pkg.featured, active: pkg.active };
-  const query = pkg.id ? supabase.from('packages').update(fields).eq('id', pkg.id) : supabase.from('packages').insert(fields);
-  ok(await query.select('id').single());
-}
-
 export async function adminListApplications() {
   return ok(
     await supabase.from('applications').select('*, job:jobs(id, title, company)').order('created_at', { ascending: false }),

@@ -12,7 +12,7 @@ describe('database files', () => {
   it('every table has Row Level Security switched on', () => {
     const all = buildSchema();
     const tables = [...all.matchAll(/create table if not exists public\.(\w+)/g)].map((m) => m[1]);
-    expect(tables.sort()).toEqual(['admin_log', 'app_settings', 'applications', 'blocked_contacts', 'change_requests', 'error_log', 'jobs', 'packages', 'payments', 'profiles']);
+    expect(tables.sort()).toEqual(['admin_log', 'app_settings', 'applications', 'audit_log', 'blocked_contacts', 'change_requests', 'error_log', 'jobs', 'offer_redemptions', 'offers', 'packages', 'payments', 'profiles']);
     for (const t of tables) expect(all).toMatch(new RegExp(String.raw`alter table public\.${t}\s+enable row level security`));
   });
 

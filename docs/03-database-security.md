@@ -1,14 +1,17 @@
 # 03 - Database and security
 
-Source of truth: the numbered files in `supabase/migrations` (0001 to 0017). Put a new file on the live project only with `node scripts/live-apply.mjs <file>` (tests first, then the file, then the live test). `supabase/schema.sql` is generated from them (`npm run schema`); a test fails if it is out of date. Never edit a migration that has already been run on a real project: add a new one.
+Source of truth: the numbered files in `supabase/migrations` (0001 to 0019). Put a new file on the live project only with `node scripts/live-apply.mjs <file>` (tests first, then the file, then the live test). `supabase/schema.sql` is generated from them (`npm run schema`); a test fails if it is out of date. Never edit a migration that has already been run on a real project: add a new one.
 
 ## Tables
 | Table | Holds | Notes |
 |---|---|---|
 | `profiles` | one row per login: role (`admin`/`recruiter`), company, phone, registration number (`ra_number`), `verified`, `blocked` | created by a trigger at signup, always as `recruiter` |
-| `packages` | name, `price_paise`, `duration_days`, `featured`, `active` | prices are public; 3 placeholder packages in `seed.sql` |
-| `jobs` | the ads: owner, package, title, company, country, city, category, details text, file link/path/type, thumbnail link/path, WhatsApp, dates, `status`, `reject_reason`, **price and days saved at order time** | country and category limited by CHECKs; WhatsApp is 10-15 digits |
-| `payments` | amount (paise), method (`manual`/`razorpay`), status (`created`/`paid`/`refunded`), note, **reference (UTR)** | only admin functions write; reference is unique; one paid payment per ad; kept even if the employer is removed |
+| `packages` (plans) | name, `price_paise`, `duration_days`, `featured`, `active`, **description, `sort_order`, `badge_text`, `max_files`** | visitors and employers read only plans that are ON, plus the plan of their own ads; a plan that has ads cannot be deleted (a trigger refuses; turn it off); every change goes to `audit_log` (0018) |
+| `offers` | name, `type` (`percent`/`flat`/`bonus_days`/`free`), `value` (percent, paise, or days), `applies_to` (`all`/`package`/`recruiter`) + `package_id`/`recruiter_id`, optional `coupon_code` (unique, any case), start/end, `max_uses`, `max_uses_per_recruiter`, `active` | admin writes; an employer reads only ON offers with no code that are for everyone or one plan, and offers made for them; never another offer's coupon code (0018) |
+| `offer_redemptions` | offer, employer, ad, discount (paise), bonus days | written only by `create_ad_order`; admin reads all, an employer reads their own; deleting an unpaid ad gives the use back (0018) |
+| `audit_log` | admin, action (insert/update/delete), table, record, old value, new value | filled by triggers on `packages` and `offers`; admin reads; nobody writes through the website (0018) |
+| `jobs` | the ads (**also the price saved at order: list price, discount, final price, offer, final days, and an admin "featured" override**): owner, package, title, company, country, city, category, details text, file link/path/type, thumbnail link/path, WhatsApp, dates, `status`, `reject_reason`, **price and days saved at order time** | country and category limited by CHECKs; WhatsApp is 10-15 digits |
+| `payments` | amount (paise), method (`manual`/`razorpay`/`free_offer`/`complimentary`), status (`created`/`paid`/`refunded`), note, **reference (UTR)**, **the same price snapshot as the ad** | only admin functions write; reference is unique; one paid payment per ad; kept even if the employer is removed |
 | `applications` | candidate name, phone, city, message | no login to insert; one per ad per phone, at most 1000 per ad; deleted after 180 days |
 | `change_requests` | an employer asks us to change a paid ad (message, `open`/`done`/`declined`) | migration 0011 |
 | `admin_log` | who did what (approve, reject, hide, show, mark paid, refund) | written only by the admin functions; read only by admins |
@@ -49,10 +52,16 @@ Source of truth: the numbered files in `supabase/migrations` (0001 to 0017). Put
 - Internal trigger functions cannot be called from outside (0015); the table rules use `(select auth.uid())` so the caller is worked out once per request (0016).
 - The public view `public_jobs` is read-only for everyone. It runs with owner rights on purpose (so visitors can see the verified tag without reading `profiles`); Supabase's checker may warn about it, which is expected.
 
+## Prices and offers (migration 0018)
+- **Price rule in one place:** `quote_price(package, coupon)` (what the website calls) and its internal twin `quote_price_for(employer, package, coupon)` (not callable from the website; Phase 2's order function calls it). It checks: plan is ON; offer is ON; dates; total and per-employer limits; plan match; employer match. No code: the single best automatic offer (never several). A code replaces the automatic offer. Percent = rounded share of the list price; flat is capped at the price; free = whole price; bonus days add days at the same price. The final price is never below 0. The answer carries a short `code` (`not_found`, `inactive`, `not_started`, `expired`, `wrong_plan`, `wrong_recruiter`, `used_up`, `already_used`, `plan_unavailable`) that the website turns into plain words in English and Hindi.
+- **`create_ad_order(job, package, coupon)`** (own waiting ad only): takes a lock so offer limits hold when two orders come together; gives back an earlier use for the same ad; quotes; saves the snapshot on the ad (also in `price_paise_at_order` / `days_at_order`, so older code keeps working); saves or updates ONE waiting (`created`) payment; writes the redemption; if the total is 0 the payment becomes `paid` with method `free_offer` and the ad goes to `paid_pending_review`. A transaction-only switch (`app.order_in_progress`) lets this function change the locked columns; employers cannot set it for anything else because only this function turns it on.
+- **Old ads keep their price:** the snapshot is saved at order time; later changes to a plan or an offer never touch it. Approve uses the saved days (bonus days included); Mark as paid fills the waiting payment (no second row) and uses the saved final price.
+- **Admin only:** `admin_extend_job(job, days, reason)` (live or hidden ads, reason needed), `admin_set_featured(job, on/off)`, `admin_give_free_ad(job, note)` (payment of 0, method `complimentary`). All write to `admin_log`.
+
 ## Functions
 - `is_admin()` (also checks the two-step login), `is_blocked()` - helpers for the rules.
 - `admin_*` functions above; `job_accepts_applications(job)` (used by the apply rule); `employer_may_see_applicants()`, `count_my_applications()`.
-- `expire_jobs()` - sets `expired` on live ads past their end time. `cleanup_old_data()` - deletes applications older than 180 days.
+- `expire_jobs()` - sets `expired` on live ads past their end time. `cleanup_old_data()` - daily: deletes applications older than 180 days, error lines older than 30 days, and ads still waiting for payment after 30 days (their waiting payment and offer use go with them; their files stay until Admin > Problems > unused files removes them) (0019).
 - Phase 2 will turn `admin_mark_paid` into a shared `mark_job_paid` used by the webhook too.
 
 ## How the rules are tested
@@ -71,6 +80,7 @@ Security check list (all automated unless noted):
 10. Expiry and clean-up functions only touch what they should.
 11. An admin with the authenticator app on cannot act without the code.
 12. An unverified employer cannot read applicants' names or phones.
+13. Offers and prices (`scripts/rls.offers.test.mjs`, 35 tests): percent, flat, bonus days and free offers; expired, not started, switched off, used-up, already-used, wrong-plan and wrong-employer codes; the per-employer and total limits; a price never below 0; one automatic offer only; an unpaid ad deleted gives the use back; a free total is paid at once; employers cannot change plans, offers, saved prices, payments or redemptions, cannot see other offers' codes, other employers' redemptions or the audit log; old ads keep their price after a plan or offer change; plan delete rule; audit log content; extend, featured and free-ad functions are admin only.
 
 **Not covered by these tests (needs the real project, once):** Supabase's own services: Auth (email confirmation, password rules, CAPTCHA, the real MFA tables), Storage's enforcement of the bucket's file type and size limits, pg_cron actually running, and that the keys in `.env` are right. `06-deploy.md` and the hand checklist in `07-testing.md` cover these.
 

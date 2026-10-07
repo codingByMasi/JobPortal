@@ -43,7 +43,7 @@ export function RejectDialog({ job, busy, onClose, onConfirm }) {
 export function PaidDialog({ job, busy, onClose, onConfirm }) {
   const { t } = useLang();
   const [reference, setReference] = useState('');
-  const price = job.priceAtOrder ?? job.package?.pricePaise ?? 0;
+  const price = job.finalPricePaise ?? job.priceAtOrder ?? job.package?.pricePaise ?? 0;
   return (
     <Modal title={t.markPaidTitle} onClose={onClose}>
       <p className="modal-text"><strong>{job.title}</strong> <span className="muted">{adReference(job.id)}</span></p>

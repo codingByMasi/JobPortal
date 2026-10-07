@@ -20,6 +20,10 @@ export function errorKey(err) {
   if (/payments_reference|payments_one_paid/i.test(msg)) return 'errReferenceUsed';
   if (/has ended/i.test(msg)) return 'errEnded';
   if (/cannot be (approved|rejected|refunded)|not hidden|only a live ad/i.test(msg)) return 'errNotNow';
+  const offer = msg.match(/offer: (\w+)/);
+  if (offer) return `offer_${offer[1]}`;
+  if (/has ads/i.test(msg) || code === '23503' || code === 'PLAN_HAS_ADS') return 'errPlanHasAds';
+  if (code === 'CODE_TAKEN' || /offers_coupon_unique/i.test(msg)) return 'errCodeTaken';
   if (code === '23505') return 'errAlreadyApplied';
   if (code === '54000') return 'errTooManyApplications';
   if (code === '54001') return 'errTooFast';

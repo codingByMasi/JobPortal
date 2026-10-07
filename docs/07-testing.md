@@ -63,3 +63,6 @@ Run the 8-point list in `03-database-security.md` with two employer accounts and
 
 ## Accessibility
 Automated axe scan (WCAG 2.1 AA) at 375 px in English and Hindi: **clean on every public, employer and admin screen** (one finding on the turned-off package row was fixed). Re-run after any visual change.
+
+
+**Latest full run (`npm run test:all`):** 344 unit and database tests (36 files, includes `rls.offers.test.mjs` 35 and `rls.cleanup.test.mjs`), 132 browser runs at 390 and 1440 px including the accessibility scan of every screen (offers and history added), Lighthouse phone 96-98 with layout shift 0, `npm audit` clean. Known gaps: GAP-1 only (stored files cannot be deleted from SQL; use Admin > Problems).

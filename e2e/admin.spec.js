@@ -1,6 +1,6 @@
 // Browser tests for the admin: approve, reject (and the employer fixing it), hide, show, delete, mark paid, refund, block, packages, requests, CSV.
 import { expect, test } from '@playwright/test';
-import { fillAd, login, picture } from './helpers.js';
+import { fillAd, login, logout, picture } from './helpers.js';
 
 /** An employer posts an ad (as the demo employer); returns its payment code. */
 async function postAd(page, title) {
@@ -169,7 +169,102 @@ test.describe('admin', () => {
     }
   });
 
-  test('offers, coupon codes and discounts', async () => {
-    test.fixme(true, 'NOT BUILT: the project has no offers, coupon codes, discounts or bonus days (see docs/14-release-readiness-report.md).');
+  test('offers: admin makes a coupon, an employer uses it, a wrong code is refused in plain words, the payment screen shows the discounted price', async ({ page }) => {
+    await login(page, 'admin');
+    await page.goto('/admin/offers');
+    await page.getByRole('button', { name: 'New offer' }).click();
+    const form = page.getByRole('dialog');
+    await form.getByLabel('Offer name').fill('E2E twenty');
+    await form.getByLabel('Percent (1 to 100)').fill('20');
+    await form.getByLabel('Coupon code').fill('E2E20');
+    await expect(form.getByText(/20% off every plan/)).toBeVisible();
+    await form.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('Offer saved.')).toBeVisible();
+    await expect(page.getByRole('row', { name: /E2E twenty/ })).toContainText('Active');
+    await page.goto('/admin/history');
+    await expect(page.getByText(/E2E twenty/).first()).toBeVisible();
+    await logout(page);
+
+    await login(page, 'employer');
+    await page.goto('/dashboard/new');
+    await fillAd(page, 'E2E Coupon Ad');
+    await page.locator('input[type=file]').setInputFiles(picture());
+    await expect(page.getByText(/ad\.png \(\d+ KB\)/)).toBeVisible({ timeout: 15000 });
+    await page.locator('input[name=package]').nth(1).check({ force: true });
+    await page.getByLabel('Have a coupon code?').fill('WRONGCODE');
+    await page.getByRole('button', { name: 'Apply' }).click();
+    await expect(page.getByText(/not correct/)).toBeVisible();
+    await page.getByLabel('Have a coupon code?').fill('e2e20');
+    await page.getByRole('button', { name: 'Apply' }).click();
+    await expect(page.getByText('Coupon E2E20 is applied.')).toBeVisible();
+    await expect(page.locator('.order-summary')).toContainText('₹639.20');
+    await page.getByRole('button', { name: 'Save and go to payment' }).click();
+    await expect(page.getByText('Name on the UPI ID')).toBeVisible();
+    await expect(page.locator('.pay-amount')).toHaveText('₹639.20');
+  });
+
+  test('free offer: the employer pays nothing and the ad goes to review; wrong plan code gives plain words', async ({ page }) => {
+    await login(page, 'admin');
+    await page.goto('/admin/offers');
+    await page.getByRole('button', { name: 'New offer' }).click();
+    const form = page.getByRole('dialog');
+    await form.getByLabel('Offer name').fill('E2E free');
+    await form.getByLabel('What does it give?').selectOption('free');
+    await form.getByLabel('Coupon code').fill('E2EFREE');
+    await form.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('Offer saved.')).toBeVisible();
+    await logout(page);
+
+    await login(page, 'employer');
+    await page.goto('/dashboard/new');
+    await fillAd(page, 'E2E Free Ad');
+    await page.locator('input[type=file]').setInputFiles(picture());
+    await expect(page.getByText(/ad\.png \(\d+ KB\)/)).toBeVisible({ timeout: 15000 });
+    await page.locator('input[name=package]').nth(1).check({ force: true });
+    await page.getByLabel('Have a coupon code?').fill('E2EFREE');
+    await page.getByRole('button', { name: 'Apply' }).click();
+    await expect(page.locator('.order-summary')).toContainText('Free');
+    await page.getByRole('button', { name: 'Save and go to payment' }).click();
+    await expect(page.getByText(/This ad is free/)).toBeVisible();
+    await page.goto('/dashboard');
+    await expect(page.getByText('E2E Free Ad')).toBeVisible();
+  });
+
+  test('one ad: more days (reason needed), featured on and off, free ad (note needed)', async ({ page }) => {
+    await login(page, 'admin');
+    await page.goto('/admin/jobs?status=live');
+    const live = page.locator('tbody tr').first();
+    await live.getByRole('button', { name: 'More days' }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.getByRole('button', { name: 'Add days' })).toBeDisabled();
+    await dialog.getByLabel('Reason').fill('site was down');
+    await dialog.getByRole('button', { name: 'Add days' }).click();
+    await expect(page.getByText('Days were added to the ad.')).toBeVisible();
+    await page.locator('tbody tr').first().getByRole('button', { name: /Make featured|Remove featured/ }).click();
+    await expect(page.getByText('The featured setting was saved.')).toBeVisible();
+
+    await page.goto('/admin/jobs?status=pending_payment');
+    await page.locator('tbody tr').first().getByRole('button', { name: 'Free ad' }).click();
+    const free = page.getByRole('dialog');
+    await expect(free.getByRole('button', { name: 'Give free ad' })).toBeDisabled();
+    await free.getByLabel('Note').fill('launch gift');
+    await free.getByRole('button', { name: 'Give free ad' }).click();
+    await expect(page.getByText(/The ad is free/)).toBeVisible();
+  });
+
+  test('plans: move down and back, add a badge; the history shows the change', async ({ page }) => {
+    await login(page, 'admin');
+    await page.goto('/admin/packages');
+    const names = async () => page.locator('tbody tr td:nth-child(2) strong').allInnerTexts();
+    await expect(page.locator('tbody tr').first()).toBeVisible();
+    const before = await names();
+    await page.getByRole('button', { name: `Move down: ${before[0]}` }).click();
+    await expect.poll(names).toEqual([before[1], before[0], ...before.slice(2)]);
+    await page.getByRole('button', { name: 'Edit' }).first().click();
+    await page.getByRole('dialog').getByLabel('Badge (optional)').fill('Best value');
+    await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('Package saved.')).toBeVisible();
+    await page.goto('/admin/history');
+    await expect(page.getByText(/badge_text/).first()).toBeVisible();
   });
 });

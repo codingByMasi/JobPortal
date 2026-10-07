@@ -50,6 +50,15 @@ export function publicJobs(jobs, now = Date.now()) {
   return sortForPublic(jobs.filter((j) => isPubliclyVisible({ ...j, status: 'live' }, now)));
 }
 
+/** The extra admin buttons (more days, featured on or off, free ad). Kept apart from adminActions so those stay simple. */
+export function adminExtraActions(job, now = Date.now()) {
+  const s = effectiveStatus(job, now);
+  if (s === 'pending_payment') return ['freeAd'];
+  if (s === 'live') return ['extend', job.featured ? 'unfeature' : 'feature'];
+  if (s === 'hidden') return ['extend'];
+  return [];
+}
+
 /** Which admin buttons make sense for an ad in this status. */
 export function adminActions(job, now = Date.now()) {
   const s = effectiveStatus(job, now);

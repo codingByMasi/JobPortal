@@ -200,3 +200,19 @@ tfoot td { background: var(--blue-card); }
 
 /* while an ad page loads, keep the page tall so the footer does not jump when the ad appears (layout shift) */
 .page.loading-tall { min-height: 90vh; }
+
+/* plans and offers (migration 0018) */
+.package-was { color: var(--muted); font-size: 14px; }
+.tag-badge, .tag-offer { align-self: flex-start; background: #fff4d6; color: #6b4a00; border: 1px solid #d49a00; }
+.tag-offer { background: #e6f6ec; color: var(--green-dark); border-color: var(--green); }
+.coupon { display: flex; flex-direction: column; gap: 8px; }
+.coupon-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; }
+.coupon-row input { flex: 1 1 200px; text-transform: uppercase; }
+.order-summary { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; background: #fff; border: 2px solid var(--line-strong); border-radius: var(--radius); margin: 0; }
+.order-summary div { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.order-summary dt { color: var(--muted); }
+.order-summary dd { margin: 0; font-weight: 700; }
+.order-total { font-size: 20px; border-top: 1px solid var(--line-strong); padding-top: 8px; }
+.order-total dt { color: var(--ink); font-weight: 700; }
+.filter-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; margin-bottom: 12px; }
+.filter-row .field { flex: 1 1 160px; }

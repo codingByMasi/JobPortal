@@ -4,7 +4,7 @@ import { asJob, fail, isLive, save, state, uid, wait } from './store';
 
 export async function listPackages() {
   await wait();
-  return state.db.packages.map(toPackage);
+  return state.db.packages.map(toPackage).sort((a, b) => a.sortOrder - b.sortOrder || a.pricePaise - b.pricePaise);
 }
 
 export async function listLiveJobs() {
