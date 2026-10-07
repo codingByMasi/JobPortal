@@ -206,3 +206,6 @@ Not covered (cannot be tested without the real services): email confirmation lin
 ## 10. Tested
 
 Commit `d532c08` (functionality identical to the commit with this report), 2026-10-08. Node 22. Browser tests on Chromium at 390 and 1440 px against the mock-data build; database tests on a real Postgres engine (PGlite) with the real migrations; the Mumbai project read with SELECT statements only; no write was made to any real service in this run.
+
+## 11. Owner confirmations (2026-10-08, no screenshots)
+The owner confirmed in chat: minimum password 8 set, Pro plan with backups and a usage alert, and the custom email sender (SMTP) set up. These are recorded as **owner-confirmed, not verified by me** (G3 and G6 and items 2 to 6 of section 4). The email test (items 21 and 22) is still to be done.
