@@ -4,7 +4,8 @@ import { useParams } from 'react-router-dom';
 import Button from '../../shared/ui/Button';
 import Icon from '../../shared/ui/Icon';
 import Notice from '../../shared/ui/Notice';
-import { AsyncView } from '../../shared/ui/StateViews';
+import { AsyncView, Loading } from '../../shared/ui/StateViews';
+import { whatsappLink } from '../../shared/lib/format';
 import { api } from '../../shared/data';
 import { useAuth } from '../auth/AuthContext';
 import { canPay } from '../../shared/lib/jobStatus';
@@ -12,6 +13,7 @@ import { useLang } from '../../shared/i18n/LangContext';
 import { formatPrice } from '../../shared/lib/money';
 import { paymentInfo } from './payments';
 import { useAsync } from '../../shared/lib/useAsync';
+import { useSettings } from '../../shared/settings/SettingsContext';
 
 /** Copies text to the clipboard (falls back to selecting it when the browser refuses). */
 async function copyText(text) {
@@ -28,6 +30,7 @@ export default function Pay() {
   const { id } = useParams();
   const { t } = useLang();
   const { user } = useAuth();
+  const { settings, ready, has } = useSettings();
   const [copied, setCopied] = useState(null); // null = not tried, true = copied, false = browser refused
   const data = useAsync(async () => (await api.listMyJobs(user.id)).find((j) => j.id === id) || null, [id, user.id]);
 
@@ -44,7 +47,17 @@ export default function Pay() {
               </>
             );
           }
-          const info = paymentInfo(job, job.package);
+          if (!ready) return <Loading />;
+          if (!has('upiId') || !has('upiName')) {
+            return (
+              <>
+                <Notice tone="info">{t.payNotReady}</Notice>
+                {has('whatsappNumber') && <Button icon="whatsapp" href={whatsappLink(settings.whatsappNumber)} target="_blank" rel="noopener noreferrer">{t.contactWhatsapp}</Button>}
+                <Button to="/dashboard" tone="outline" icon="list">{t.goToAds}</Button>
+              </>
+            );
+          }
+          const info = paymentInfo(job, job.package, settings);
           const amount = formatPrice(info.amountPaise);
           const waLink = info.whatsappLink(t.payWaMessage(info.reference, info.jobTitle, amount));
           return (

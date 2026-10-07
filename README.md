@@ -23,11 +23,11 @@ Open the address it prints. A yellow banner says **Demo mode**: sample ads, pack
 | `npm run dev` | run on your computer |
 | `npm test` | unit and database-rule tests (344, including about 200 security tests that run the real database rules) |
 | `npm run test:all` | everything: tests, build, audit, browser tests, accessibility, Lighthouse (see `docs/07-testing.md`) |
-| `npm run build` | production build into `dist/`: checks `src/config.js` (stops on Cloudflare Pages if it has example values), writes the security headers, and writes search pages and sitemap when Supabase and `SITE_URL` are set |
+| `npm run build` | production build into `dist/`: checks the database connection (stops on Cloudflare Pages if the two Supabase values are missing), writes the security headers, and writes search pages and sitemap when Supabase and `SITE_URL` are set |
 | `npm run schema` | rebuild `supabase/schema.sql` after changing a migration |
 
 ## Settings you must change before launch
-`src/config.js`: `WHATSAPP_NUMBER`, `UPI_ID`, `UPI_NAME`, `CONTACT_EMAIL`, `GRIEVANCE_NAME`, `GRIEVANCE_EMAIL`, `SITE_URL` (all marked `PLACEHOLDER`; the Cloudflare build refuses to publish until they are filled in). Then read `docs/11-owner-checklist.md`. Prices and package days are changed in the Admin > Packages screen.
+The WhatsApp number, UPI ID, name on the UPI ID, emails, company name and site address are filled in by the admin in the app: **Admin > Settings** (no code change, no new release). Until a setting is filled in, the site hides the button or text that needs it. Then read `docs/11-owner-checklist.md`. Prices and package days are changed in the Admin > Packages screen.
 
 ## Documents
 | File | About |

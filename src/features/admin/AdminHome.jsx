@@ -1,19 +1,34 @@
 // /admin - four big numbers: live ads, waiting for approval, waiting for payment, money this month.
 import { Link } from 'react-router-dom';
+import Button from '../../shared/ui/Button';
 import Icon from '../../shared/ui/Icon';
 import { AsyncView } from '../../shared/ui/StateViews';
 import { api } from '../../shared/data';
 import { useLang } from '../../shared/i18n/LangContext';
 import { formatPrice } from '../../shared/lib/money';
+import Notice from '../../shared/ui/Notice';
+import { isDemo } from '../../shared/data';
+import { missingSettings } from '../../shared/lib/siteSettings';
 import { useAsync } from '../../shared/lib/useAsync';
+import { useSettings } from '../../shared/settings/SettingsContext';
 
 /** Admin dashboard counts. Each number links to the matching list. */
 export default function AdminHome() {
   const { t } = useLang();
   const counts = useAsync(() => api.adminCounts(), []);
   const sales = useAsync(() => api.adminSalesStats(), []);
+  const { settings, ready } = useSettings();
+  const missing = ready ? missingSettings(settings, isDemo) : [];
   return (
     <section className="section">
+      {missing.length > 0 && (
+        <>
+        <Notice tone="error">
+          <strong>{t.settingsMissingTitle}</strong> {t.settingsMissingText(missing.map((n) => t.settingLabel[n]).join(', '))}
+        </Notice>
+        <Button to="/admin/settings" icon="settings" tone="outline">{t.settingsMissingLink}</Button>
+        </>
+      )}
       <AsyncView state={counts} isEmpty={() => false}>
         {(c) => (
           <div className="count-grid">

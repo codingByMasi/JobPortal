@@ -2,24 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { configProblems } from './checkConfig.mjs';
 import { buildHeaders } from './headers.mjs';
 
-const GOOD = {
-  WHATSAPP_NUMBER: '919812345678', UPI_ID: 'shop@okbank', UPI_NAME: 'Jobs Abroad Services', CONTACT_EMAIL: 'help@jobsabroad.in',
-  GRIEVANCE_NAME: 'A. Kumar', GRIEVANCE_EMAIL: 'grievance@jobsabroad.in', SITE_URL: 'https://jobsabroad.in',
-};
 const ENV = { VITE_SUPABASE_URL: 'https://abc.supabase.co', VITE_SUPABASE_ANON_KEY: 'key' };
 
-describe('configProblems (the build stops on example values)', () => {
-  it('has nothing to say when everything is filled in', () => {
-    expect(configProblems(GOOD, ENV)).toEqual([]);
+describe('configProblems (the hosted build needs only the database connection)', () => {
+  it('has nothing to say when the two Supabase values are set; the shop details are filled in the app, not here', () => {
+    expect(configProblems({}, ENV)).toEqual([]);
   });
-  it('catches every example value', () => {
-    const bad = { ...GOOD, WHATSAPP_NUMBER: '919999999999', UPI_ID: 'yourname@upi', UPI_NAME: 'Your Business Name', CONTACT_EMAIL: 'help@example.com',
-      GRIEVANCE_NAME: 'Your Name', GRIEVANCE_EMAIL: 'grievance@example.com', SITE_URL: 'PASTE_SITE_URL_HERE' };
-    expect(configProblems(bad, ENV)).toHaveLength(7);
-  });
-  it('catches missing Supabase settings and empty values', () => {
-    expect(configProblems(GOOD, {})).toHaveLength(1);
-    expect(configProblems({ ...GOOD, UPI_ID: '  ' }, ENV)).toHaveLength(1);
+  it('catches missing Supabase settings', () => {
+    expect(configProblems({}, {})).toHaveLength(1);
+    expect(configProblems({}, { VITE_SUPABASE_URL: 'https://abc.supabase.co' })).toHaveLength(1);
   });
 });
 

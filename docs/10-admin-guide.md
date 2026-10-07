@@ -35,6 +35,12 @@ Job seekers can press **Report this ad**; it opens WhatsApp with the ad code. Op
 - **History tab** shows every change of a plan or an offer: who, when, from what to what. It cannot be edited.
 - **Home tab** shows this month's money after discounts, the discounts you gave, and which offers were used most.
 
+## Settings tab (your shop details)
+- Fill in once, change any time: WhatsApp number, contact email, complaints person and email, UPI ID, the name on the UPI ID, company name and site address. Nothing else is needed: no developer, no new release.
+- **Check the UPI ID twice.** Employers pay to it. A wrong ID sends money to someone else. Every change is saved in the admin log (Supabase > `admin_log`) with the old and the new value.
+- If something is empty the site hides it (for example no WhatsApp button, or "payment details are not ready" on the payment screen). The home tab shows a red reminder until everything is filled in.
+- The site address is used for the search pages and sitemap the next time the site is built (up to 3 hours, or press the deploy hook).
+
 ## Reports and deletion requests (Reports tab)
 - **Reports about ads:** a visitor tapped "Report this ad". Read the reason and message. Tap *Find the ad* to open it in the Ads tab. If the ad looks fake or asks for money: hide it (*Hide*), block the employer in the Employers tab, then tap *Mark done*. If the report is wrong or silly, tap *Dismiss*. Do this daily at the start; reports about money demands first.
 - **Account deletion requests:** anyone can send one with any email, so **never delete only because of a request**. Write to that email first and ask the owner to confirm (or confirm from the phone number on the account). Then ask your developer to delete the account (or in Supabase delete the employer's user), and tap *Mark done*. Payment records stay (the law may need them).

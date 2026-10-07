@@ -267,4 +267,37 @@ test.describe('admin', () => {
     await page.goto('/admin/history');
     await expect(page.getByText(/badge_text/).first()).toBeVisible();
   });
+
+  test('settings: the admin changes the UPI ID and the WhatsApp number, the payment screen follows; an empty UPI ID hides payment details', async ({ page }) => {
+    await login(page, 'admin');
+    await page.goto('/admin/settings');
+    await page.getByLabel('UPI ID for payments').fill('no-at-sign');
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('Please correct the boxes marked in red.')).toBeVisible();
+    await page.getByLabel('UPI ID for payments').fill('e2eshop@okbank');
+    await page.getByLabel('WhatsApp number').fill('98123 45678');
+    await page.getByLabel('Company name').fill('E2E Services Pvt Ltd');
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('Settings saved.')).toBeVisible();
+    await logout(page);
+
+    await login(page, 'employer');
+    await page.goto('/dashboard/pay/job-7');
+    await expect(page.getByText('e2eshop@okbank').first()).toBeVisible();
+    await expect(page.getByRole('link', { name: /Pay with my UPI app/ })).toHaveAttribute('href', /pa=e2eshop%40okbank/);
+    await logout(page);
+    expect(await page.getByRole('link', { name: /WhatsApp us/ }).first().getAttribute('href')).toContain('919812345678');
+
+    await login(page, 'admin');
+    await page.goto('/admin/settings');
+    await page.getByLabel('UPI ID for payments').fill('');
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('Settings saved.')).toBeVisible();
+    await page.goto('/admin');
+    await expect(page.getByText('Fill in the Settings before you take payments')).toBeVisible();
+    await logout(page);
+    await login(page, 'employer');
+    await page.goto('/dashboard/pay/job-7');
+    await expect(page.getByText(/Payment details are not ready/)).toBeVisible();
+  });
 });

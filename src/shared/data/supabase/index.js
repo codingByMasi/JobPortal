@@ -5,6 +5,7 @@ import * as files from './files';
 import * as offers from './offers';
 import * as publicApi from './public';
 import * as recruiter from './recruiter';
+import * as settings from './settings';
 import * as trust from './trust';
 
-export const supabaseApi = { ...auth, ...publicApi, ...files, ...recruiter, ...admin, ...offers, ...trust };
+export const supabaseApi = { ...auth, ...publicApi, ...files, ...recruiter, ...admin, ...offers, ...trust, ...settings };

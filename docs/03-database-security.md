@@ -1,6 +1,6 @@
 # 03 - Database and security
 
-Source of truth: the numbered files in `supabase/migrations` (0001 to 0020). Put a new file on the live project only with `node scripts/live-apply.mjs <file>` (tests first, then the file, then the live test). `supabase/schema.sql` is generated from them (`npm run schema`); a test fails if it is out of date. Never edit a migration that has already been run on a real project: add a new one.
+Source of truth: the numbered files in `supabase/migrations` (0001 to 0021). Put a new file on the live project only with `node scripts/live-apply.mjs <file>` (tests first, then the file, then the live test). `supabase/schema.sql` is generated from them (`npm run schema`); a test fails if it is out of date. Never edit a migration that has already been run on a real project: add a new one.
 
 ## Tables
 | Table | Holds | Notes |
@@ -19,6 +19,7 @@ Source of truth: the numbered files in `supabase/migrations` (0001 to 0020). Put
 | `error_log` | crashes reported by the website: message, page, how many times | anyone can report through a function (limited); only admins read (0017) |
 | `reports` | a visitor reports a live ad: reason (`asked_money`, `fake_company`, `wrong_details`, `other`), short message, optional phone, status (`open`/`done`/`dismissed`), scrambled address | anyone may insert for a live ad (once per ad and 10 an hour per address); only admins read or change; deleted with the ad; closed ones forgotten after a year (0020) |
 | `deletion_requests` | someone asks us to delete their account and data: email, note, status | anyone may insert (one open request per email, 5 a day per address); only admins read or change; an admin must check that the writer owns the email (0020) |
+| `site_settings` | WhatsApp number, UPI ID, name on the UPI ID, contact email, complaints person and email, company name, site address (one row per setting) | public ones readable by everyone; the UPI ID and its name only by logged-in people; nobody writes the table directly: only `admin_save_settings()` (admin only) writes, checks each value and logs old and new value in `admin_log` (0021) |
 | `app_settings` | private settings: `storage_base` (our storage address), optional `applicants_need_verified` | no browser access at all; set in the SQL editor |
 | view `public_jobs` | live, not-ended ads + `featured` + `recruiter_verified` + the employer's registration number **only when admin has verified the employer** + the job facts + thumbnail + details | the ONLY way visitors read ads; hides owner ids and internal fields |
 
@@ -83,6 +84,7 @@ Security check list (all automated unless noted):
 10. Expiry and clean-up functions only touch what they should.
 11. An admin with the authenticator app on cannot act without the code.
 12. An unverified employer cannot read applicants' names or phones.
+15. Site settings (`scripts/rls.settings.test.mjs`, 6 tests): the admin saves and changes are logged with old and new value; wrong values refused; employers and visitors cannot save or write the table; a visitor reads only the public settings.
 14. Job facts, reports, deletion requests, counters (`scripts/rls.trust.test.mjs`, 14 tests): wrong salary order, currency, experience, vacancies refused; an employer sets the facts only on their own waiting ad; the registration number is public only for a verified employer and an employer cannot verify themselves; a visitor can report only a live ad, once, with a valid reason, 10 an hour; reports and deletion requests are unreadable for visitors and employers; deletion requests are cleaned and limited; the counters give three numbers and ignore blocked employers.
 13. Offers and prices (`scripts/rls.offers.test.mjs`, 35 tests): percent, flat, bonus days and free offers; expired, not started, switched off, used-up, already-used, wrong-plan and wrong-employer codes; the per-employer and total limits; a price never below 0; one automatic offer only; an unpaid ad deleted gives the use back; a free total is paid at once; employers cannot change plans, offers, saved prices, payments or redemptions, cannot see other offers' codes, other employers' redemptions or the audit log; old ads keep their price after a plan or offer change; plan delete rule; audit log content; extend, featured and free-ad functions are admin only.
 

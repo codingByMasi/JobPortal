@@ -5,6 +5,7 @@ import * as files from './files';
 import * as offers from './offers';
 import * as publicApi from './public';
 import * as recruiter from './recruiter';
+import * as settings from './settings';
 import * as trust from './trust';
 import { resetState } from './store';
 
@@ -16,6 +17,7 @@ export const demoApi = {
   ...admin,
   ...offers,
   ...trust,
+  ...settings,
   /** For the "Start again" button in the demo banner. */
   async resetDemo() {
     resetState();

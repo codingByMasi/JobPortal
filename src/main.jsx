@@ -8,6 +8,7 @@ import { startAnalytics } from './app/analytics';
 import { reportError } from './app/errorReport';
 import { AuthProvider } from './features/auth/AuthContext';
 import { JobsProvider } from './features/jobs/JobsContext';
+import { SettingsProvider } from './shared/settings/SettingsContext';
 import { appMode } from './shared/data/env';
 import { LangProvider } from './shared/i18n/LangContext';
 import './styles/base.css';
@@ -40,9 +41,11 @@ const content =
       <ErrorBoundary>
         <BrowserRouter>
           <AuthProvider>
-            <JobsProvider>
-              <App />
-            </JobsProvider>
+            <SettingsProvider>
+              <JobsProvider>
+                <App />
+              </JobsProvider>
+            </SettingsProvider>
           </AuthProvider>
         </BrowserRouter>
       </ErrorBoundary>

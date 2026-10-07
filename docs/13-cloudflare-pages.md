@@ -7,7 +7,7 @@ Date: 2026-10-07. Target: **Cloudflare Pages** (static files; no Pages Functions
 - Free plan: 500 builds a month, 20,000 files per site, 25 MiB per file, 100 header rules (2,000 characters each), 2,000 static redirects, unlimited preview deployments, 20-minute builds. Static asset requests are free.
 - Cloudflare now steers new projects to "Workers with static assets" and describes Workers as the broader platform; Pages stays supported. Our output is plain static files plus `_headers`, which both understand, so moving later needs no code change.
 - Not recommended here: Vercel (its free plan is not for commercial use), GitHub Pages (no custom security headers).
-- Bigger lever than the host: the Supabase project is in Seoul (`ap-northeast-2`) while users are in India. A Mumbai (`ap-south-1`) project would be faster. The region cannot be changed later; recreate the project (no real data yet) if you want it.
+- Done: the Supabase project was moved from Seoul to Mumbai (`ap-south-1`) in step 13. It used to be in Seoul (`ap-northeast-2`) while users are in India. A Mumbai (`ap-south-1`) project would be faster. The region cannot be changed later; recreate the project (no real data yet) if you want it.
 
 ## What was checked and fixed
 | Area | Result |
@@ -26,7 +26,7 @@ Date: 2026-10-07. Target: **Cloudflare Pages** (static files; no Pages Functions
 | CORS | No API routes of our own, so nothing to configure. Supabase handles CORS for the browser calls (allowed by the CSP `connect-src`). |
 | Custom 404 | Unknown addresses show the app's own "page not found" screen with status 200 (soft 404). Accepted: a real 404 page would break deep links. |
 | After a new release | A page left open during a deploy may ask for a file that is gone. The app now reloads itself once (`vite:preloadError`) instead of showing a blank error. |
-| Hosted build checks | The build stops on Cloudflare (it sets `CF_PAGES=1`) if `src/config.js` still has example values, the Supabase values are missing, or the search/share pages cannot be written. Tested. |
+| Hosted build checks | The build stops on Cloudflare (it sets `CF_PAGES=1`) if the Supabase values are missing or the search/share pages cannot be written. (The shop details are no longer checked at build time: the admin fills them in Admin > Settings and the site hides what is empty.) Tested. |
 | Framework adapters | Not applicable: plain Vite + React, no Next.js/SvelteKit/Astro/Remix/Nuxt. |
 
 ## Differences found with `wrangler pages dev` compared with a Node server

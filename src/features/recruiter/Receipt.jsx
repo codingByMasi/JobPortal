@@ -2,7 +2,6 @@
 import { useParams } from 'react-router-dom';
 import Button from '../../shared/ui/Button';
 import { AsyncView } from '../../shared/ui/StateViews';
-import { UPI_NAME } from '../../config';
 import { api } from '../../shared/data';
 import { useAuth } from '../auth/AuthContext';
 import { adReference } from '../../shared/lib/adReference';
@@ -11,12 +10,14 @@ import { useLang } from '../../shared/i18n/LangContext';
 import { formatPrice } from '../../shared/lib/money';
 import { useAsync } from '../../shared/lib/useAsync';
 import { usePageMeta } from '../../shared/lib/usePageMeta';
+import { useSettings } from '../../shared/settings/SettingsContext';
 
 /** One receipt. */
 export default function Receipt() {
   const { id } = useParams();
   const { t, lang } = useLang();
   const { user, profile } = useAuth();
+  const { settings } = useSettings();
   usePageMeta(t.receiptTitle, undefined, { noindex: true });
   const data = useAsync(async () => (await api.listMyPayments(user.id)).find((p) => p.id === id) || null, [id, user.id]);
 
@@ -28,7 +29,7 @@ export default function Receipt() {
             <h2 className="section-title">{t.receiptTitle}</h2>
             <p className="help">{t.receiptNote}</p>
             <dl className="pay-box">
-              <div><dt>{t.receiptFrom}</dt><dd>{UPI_NAME}</dd></div>
+              <div><dt>{t.receiptFrom}</dt><dd>{settings.companyName || settings.upiName}</dd></div>
               <div><dt>{t.receiptTo}</dt><dd>{profile?.companyName}</dd></div>
               <div><dt>{t.receiptNumber}</dt><dd>{adReference(p.id)}</dd></div>
               <div><dt>{t.colDate}</dt><dd>{formatDate(p.createdAt, lang)}</dd></div>

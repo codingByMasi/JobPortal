@@ -8,7 +8,6 @@
 // to create a Razorpay order for this job, open Razorpay Checkout, and let a webhook mark the
 // ad paid. Nothing else in the app needs to change.
 // ============================================================================
-import { UPI_ID, UPI_NAME, WHATSAPP_NUMBER } from '../../config';
 import { adReference } from '../../shared/lib/adReference';
 import { whatsappLink } from '../../shared/lib/format';
 
@@ -22,7 +21,7 @@ export function upiLink({ upiId, upiName, amountPaise, reference }) {
  * Everything the instructions screen shows for one ad. The amount is the price SAVED with the order (list price, offer, final price),
  * never worked out again here, so a later change of the plan or the offer cannot change what this ad costs.
  */
-export function paymentInfo(job, pkg) {
+export function paymentInfo(job, pkg, settings) {
   const amountPaise = job.finalPricePaise ?? job.priceAtOrder ?? pkg?.pricePaise ?? 0;
   return {
     packageName: pkg?.name || '',
@@ -30,12 +29,12 @@ export function paymentInfo(job, pkg) {
     listPricePaise: job.listPricePaise ?? amountPaise,
     discountPaise: job.discountPaise ?? 0,
     days: job.durationDaysFinal ?? pkg?.durationDays ?? 0,
-    upiId: UPI_ID,
-    upiName: UPI_NAME,
+    upiId: settings.upiId,
+    upiName: settings.upiName,
     reference: adReference(job.id),
-    upiLink: upiLink({ upiId: UPI_ID, upiName: UPI_NAME, amountPaise, reference: adReference(job.id) }),
-    whatsappNumber: WHATSAPP_NUMBER,
-    whatsappLink: (message) => whatsappLink(WHATSAPP_NUMBER, message),
+    upiLink: upiLink({ upiId: settings.upiId, upiName: settings.upiName, amountPaise, reference: adReference(job.id) }),
+    whatsappNumber: settings.whatsappNumber,
+    whatsappLink: (message) => whatsappLink(settings.whatsappNumber, message),
     jobId: job.id,
     jobTitle: job.title,
   };

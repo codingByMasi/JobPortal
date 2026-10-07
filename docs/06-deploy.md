@@ -3,7 +3,7 @@
 A short "what only you can do" list is in `11-owner-checklist.md`. This file explains each step.
 
 ## A. Supabase (once)
-1. Make a Supabase account and create a project. Choose a region near India (Mumbai). Save the database password somewhere safe. **Use the paid (Pro) plan for the real site** (see F).
+1. Make a Supabase account and create a project (or move an existing empty one to another region with `node scripts/move-project.mjs <new-ref>`; it needs the new project's database password in `SUPABASE_DB_PASSWORD`). Choose a region near India (Mumbai). Save the database password somewhere safe. **Use the paid (Pro) plan for the real site** (see F).
 2. **SQL Editor > New query**: open `supabase/schema.sql`, paste all of it, press **Run**. It creates tables, security rules, functions, the `job-files` storage bucket, 3 placeholder packages, and (when pg_cron is available) the schedule for ad expiry and old-data clean-up. It is the sum of migrations 0001 to 0017.
    - If your project already ran some migrations, apply only the newer numbered files with `node scripts/live-apply.mjs supabase/migrations/<file>.sql` (tests first, then the file, then the live test). With the CLI linked, `npx supabase db push --linked` also works because the history is registered. Do not run the whole file twice on a project that has real data.
 2b. **One-time storage address.** In the SQL Editor run (with your own project address, the same as `VITE_SUPABASE_URL`, no slash at the end): `insert into public.app_settings (key, value) values ('storage_base', 'https://YOUR-PROJECT-ID.supabase.co') on conflict (key) do update set value = excluded.value;` Without this, employers cannot save ads that have a file.
@@ -49,7 +49,7 @@ Full details and the dashboard checklist: `13-cloudflare-pages.md`.
 1. Push the project to GitHub (a **private** repository).
 2. Cloudflare dashboard > Workers & Pages > Create > Pages > Connect to Git. Framework preset **None**, build command `npm run build`, output directory `dist`. The Node version (22) comes from the file `.node-version`.
 3. **Settings > Variables and Secrets**: add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (**both required**) and, if you use the CAPTCHA, `VITE_TURNSTILE_SITE_KEY`. Add them for **Production**. For **Preview** use a different (staging) Supabase project, or turn preview deployments off (see `13`). A published site missing the two Supabase values shows a "This site is not ready yet" page (never fake data). Only for a public *demo* site on purpose, add `VITE_ALLOW_DEMO=true` instead.
-4. In `src/config.js` set your real `WHATSAPP_NUMBER`, `UPI_ID`, `UPI_NAME`, `CONTACT_EMAIL`, `GRIEVANCE_NAME`, `GRIEVANCE_EMAIL` and `SITE_URL`; commit and push. **The build on Cloudflare stops with a clear message if any of them still has its example value** (so no money can go to the example UPI ID).
+4. Log in as admin and open **Admin > Settings**: fill in the WhatsApp number, UPI ID, name on the UPI ID, contact email, complaints person and email, company name and site address. No code change and no new build is needed for the site to use them. **Until the UPI ID and its name are filled in, the payment screen shows "payment details are not ready"** (so no money can go to a wrong or example UPI ID). The home page of the admin area shows a red reminder while anything is missing. Search pages and the sitemap use the site address at the next build (or set the hosting variable `SITE_URL`).
 5. **Keep share previews and search pages fresh:** Settings > Builds > **Deploy hooks**: create one and call it every 3 hours with a free cron service (for example cron-job.org). New ads then get their own page and picture preview within about 3 hours, and ended ads leave search results. (The free plan allows 500 builds a month; hourly would need 720, so do not go below every 2 hours.)
 6. **Custom domain:** Custom domains > Set up a domain. Then put the same address in `SITE_URL`, in Supabase (Authentication > URL configuration: Site URL and the `/reset-password` redirect), and in the Turnstile widget's allowed hostnames.
 7. Submit `https://YOUR-SITE/sitemap.xml` in Google Search Console.
@@ -68,7 +68,7 @@ Written at build time (see E.7). They allow connections only to your site and yo
 ## Troubleshooting
 | Problem | Likely cause |
 |---|---|
-| The Cloudflare build stops with "config check FAILED" | A setting in `src/config.js` still has its example value, or the two Supabase values are missing in the Cloudflare settings |
+| The Cloudflare build stops with "config check FAILED" | The two Supabase values are missing in the Cloudflare settings |
 | Site shows "This site is not ready yet" | The two `VITE_...` values are missing or mistyped in the Cloudflare settings for that environment (fix them and redeploy) |
 | Site shows "Demo mode" online | `VITE_ALLOW_DEMO=true` is set. Remove it and add the two real values |
 | "Email or password is not correct" for a new account | "Confirm email" is on and the email link was not tapped |

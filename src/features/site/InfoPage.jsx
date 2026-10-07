@@ -3,12 +3,14 @@ import Icon from '../../shared/ui/Icon';
 import SectionHeading from '../../shared/ui/SectionHeading';
 import { useLang } from '../../shared/i18n/LangContext';
 import { usePageMeta } from '../../shared/lib/usePageMeta';
+import { useSettings } from '../../shared/settings/SettingsContext';
 
 /** `kind` is "about", "faq" or "refund". */
 export default function InfoPage({ kind }) {
   const { t } = useLang();
+  const { settings, has } = useSettings();
   const page = {
-    about: { title: t.aboutTitle, meta: t.metaAbout, icon: 'home', items: t.aboutSections.map((s) => ({ h: s.h, p: s.p })) },
+    about: { title: t.aboutTitle, meta: t.metaAbout, icon: 'home', items: t.aboutSections.map((s, i) => ({ h: s.h, p: i === t.aboutSections.length - 1 && has('companyName') ? t.aboutWho(settings.companyName) : s.p })) },
     faq: { title: t.faqTitle, meta: t.metaFaq, icon: 'search', items: t.faqItems.map((s) => ({ h: s.q, p: s.a })) },
     refund: { title: t.refundTitle, meta: t.metaRefund, icon: 'rupee', items: t.refundSections.map((s) => ({ h: s.h, p: s.p })) },
   }[kind];

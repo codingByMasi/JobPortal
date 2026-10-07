@@ -2,11 +2,11 @@
 import { useEffect } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import Icon from '../shared/ui/Icon';
-import { WHATSAPP_NUMBER } from '../config';
 import { api, isDemo } from '../shared/data';
 import { useAuth } from '../features/auth/AuthContext';
 import { whatsappLink } from '../shared/lib/format';
 import { useLang } from '../shared/i18n/LangContext';
+import { useSettings } from '../shared/settings/SettingsContext';
 
 const NAV = [
   { to: '/', icon: 'home', label: 'navHome', end: true },
@@ -19,6 +19,7 @@ export default function Layout() {
   const { t, toggle } = useLang();
   const { user, isAdmin } = useAuth();
   const { pathname } = useLocation();
+  const { settings, has } = useSettings();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -66,9 +67,11 @@ export default function Layout() {
 
       <footer className="site-footer">
         <div className="footer-brand"><Icon name="briefcase" size={28} /><span>{t.siteName}</span></div>
-        <a className="footer-link" href={whatsappLink(WHATSAPP_NUMBER)} target="_blank" rel="noopener noreferrer">
-          <Icon name="phone" size={22} /><span>{t.footerHelp}</span>
-        </a>
+        {has('whatsappNumber') && (
+          <a className="footer-link" href={whatsappLink(settings.whatsappNumber)} target="_blank" rel="noopener noreferrer">
+            <Icon name="phone" size={22} /><span>{t.footerHelp}</span>
+          </a>
+        )}
         <Link className="footer-link" to="/post-job"><Icon name="upload" size={22} /><span>{t.postTitle}</span></Link>
         <nav className="legal-links" aria-label={t.footerPages}>
           <Link className="footer-link" to="/about"><Icon name="home" size={22} /><span>{t.aboutLink}</span></Link>

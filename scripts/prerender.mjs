@@ -10,7 +10,7 @@ import { dirname } from 'node:path';
 import { SITE_URL as CONFIG_SITE_URL, isPlaceholder } from '../src/config.js';
 
 // A build (or a test) can name the site address in the environment; otherwise the one in src/config.js is used.
-const SITE_URL = (process.env.SITE_URL || CONFIG_SITE_URL).replace(/\/$/, '');
+let SITE_URL = (process.env.SITE_URL || (isPlaceholder(CONFIG_SITE_URL) ? '' : CONFIG_SITE_URL)).replace(/\/$/, '');
 import { toJob } from '../src/shared/data/mappers.js';
 import { STATIC_PAGES, countryPages, jobPageHtml, sitemapXml, withMeta } from './pages.mjs';
 
@@ -39,11 +39,21 @@ async function writePage(urlPath, html) {
   await writeFile(file, html);
 }
 
+/** The site address the admin saved in Admin > Settings (a public setting). Empty when not set. */
+async function savedSiteUrl(url, key) {
+  const res = await fetch(`${url}/rest/v1/site_settings?select=value&key=eq.site_url`, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+  if (!res.ok) return '';
+  const rows = await res.json();
+  return String(rows[0]?.value || '').replace(/\/$/, '');
+}
+
 async function main() {
   const url = setting('VITE_SUPABASE_URL');
   const key = setting('VITE_SUPABASE_ANON_KEY');
-  if (!url || !key || isPlaceholder(SITE_URL)) {
-    console.log('prerender: skipped (set the two Supabase values and SITE_URL in src/config.js to enable job pages and sitemap)');
+  // the address comes from the hosting setting SITE_URL, else from Admin > Settings, else from src/config.js
+  if (url && key && !SITE_URL) SITE_URL = await savedSiteUrl(url, key).catch(() => '');
+  if (!url || !key || !SITE_URL) {
+    console.log('prerender: skipped (needs the two Supabase values and a site address: the SITE_URL hosting setting, or Admin > Settings > Site address)');
     return;
   }
   const base = await readFile('dist/index.html', 'utf8');

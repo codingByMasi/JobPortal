@@ -1,5 +1,14 @@
 # Changelog
 
+## Step 13 - Moved to a Mumbai database
+- A new Supabase project **JobPortal-Mumbai** (`nvjoiomubxtqnnlmfzkb`, region `ap-south-1`) was created and `scripts/move-project.mjs` moved the app to it: all 21 migrations, the sample plans, the project's own storage address, the public key in `.env`. The live test passes 98 of 98 on the new project; 16 tables all have row security; the expiry and clean-up schedules are running; the bucket exists; no users and no data yet (nothing to copy). The old Seoul project (`nxdwnmoqtyfosrxbpmze`) is untouched and can be paused or deleted once you are happy. Steps still to do by hand in the new project: `docs/11-owner-checklist.md`.
+
+## Step 12 - Shop details changed by the admin (migration 0021)
+- New table `site_settings` and function `admin_save_settings` (migration 0021): WhatsApp number, UPI ID and its name, emails, complaints person, company name and site address are now saved in the database and changed in **Admin > Settings**; no code change or release needed. Values are checked; every change is logged with old and new value; the UPI details are readable only by logged-in people.
+- The site reads them with `useSettings()`; whatever is empty is hidden (no WhatsApp button, "payment details are not ready" on the payment screen), so an example value can never reach a visitor. The admin home shows a red reminder while any are missing.
+- The hosted build no longer stops on example values in `src/config.js` (they are only demo defaults now); it still needs the two Supabase values. The pre-render takes the site address from `SITE_URL`, else from Admin > Settings, else from `src/config.js`.
+- Tests: 6 database tests, demo and lib tests, a browser test; the new screen is in the accessibility scan.
+
 ## Step 11 - Production tidy-up
 - ESLint added (`npm run lint`, in CI and `test:all`); fixed a duplicate text key; the prerender can take the site address from the environment (`SITE_URL`) and was run once for real against the live public view (job facts view, country and fixed pages, sitemap all written); a read-only browser check of the real-mode build against the live project found no errors; CLAUDE.md folder note corrected; repository moved to `codingByMasi/JobPortal` and pushed.
 

@@ -11,6 +11,7 @@ Every screen that loads data has **loading, empty and error** states (shared `St
 | `/jobs/:country` (uae, saudi-arabia, qatar, kuwait, oman, other-countries) | all | `features/jobs/CountryJobs` + `Jobs` | the ads of one country with its own title and text; same filters; unknown country = not-found page | demo tests, browser tests, accessibility scan |
 | `/about`, `/faq`, `/refund-policy` | all | `features/site/InfoPage` | headed plain text from the language files (draft words for a professional) | browser tests, accessibility scan |
 | `/delete-account` | all | `features/site/DeleteAccount` | email + note; saved as an open request; the page explains what is deleted | demo tests, browser tests |
+| `/admin/settings` | admin | `features/admin/AdminSettings` | the shop details (WhatsApp, UPI ID and name, emails, company, site address) with a help line each; checks before saving; red reminder on the admin home while any is missing | demo tests, browser test |
 | `/admin/reports` | admin | `features/admin/AdminReports` | reports about ads (reason, message, contact, find the ad, mark done, dismiss) and account deletion requests | demo tests, browser tests |
 | `/post-job` | all | `features/site/PostJob` | 3 steps + the prices of the packages + the right button | demo, axe clean |
 | `/contact`, `/privacy`, `/terms`, 404 | all | `features/site` | simple pages | by hand (earlier version) |

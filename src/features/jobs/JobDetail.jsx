@@ -12,13 +12,13 @@ import Button from '../../shared/ui/Button';
 import Icon from '../../shared/ui/Icon';
 import { JobTags } from '../../shared/ui/StatusBadge';
 import { JobsStatus } from '../../shared/ui/StateViews';
-import { WHATSAPP_NUMBER } from '../../config';
 import { countryById } from '../../shared/lib/catalog';
 import { downloadLink, relativeDate, whatsappLink } from '../../shared/lib/format';
 import { useJobs } from './JobsContext';
 import { useLang } from '../../shared/i18n/LangContext';
 import { useAdImage } from './useAdImage';
 import { usePageMeta } from '../../shared/lib/usePageMeta';
+import { useSettings } from '../../shared/settings/SettingsContext';
 
 /** Full-screen picture viewer. Tap anywhere or press Esc to close; focus stays inside and returns on close. */
 function Lightbox({ src, onClose }) {
@@ -57,6 +57,7 @@ function Lightbox({ src, onClose }) {
 export default function JobDetail() {
   const { id } = useParams();
   const { t, lang } = useLang();
+  const { settings } = useSettings();
   const { jobs, status, reload } = useJobs();
   const [zoomed, setZoomed] = useState(false);
   const listed = jobs.find((j) => j.id === id);
@@ -86,7 +87,7 @@ export default function JobDetail() {
   const hasFile = Boolean(job.fileUrl);
   const rel = relativeDate(job.startsAt || job.posted, t, lang);
   const postedText = !rel ? '' : rel === t.today ? t.postedToday : t.postedOn(rel);
-  const waLink = whatsappLink(job.whatsapp || WHATSAPP_NUMBER, t.waMessage(job.id, job.title, job.city));
+  const waLink = whatsappLink(job.whatsapp || settings.whatsappNumber, t.waMessage(job.id, job.title, job.city));
 
   return (
     <div className="page detail">
