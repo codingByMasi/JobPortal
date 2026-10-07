@@ -20,7 +20,7 @@ supabase/
   seed.sql                sample packages
   schema.sql              GENERATED from the above (npm run schema). Paste-once file.
   functions/              Phase 2 only (Edge Functions). Does not exist yet.
-public/                   images, icons, manifest, _redirects
+public/                   images, icons, manifest (no _redirects: Cloudflare Pages serves the app for unknown addresses by itself)
 scripts/                  build-time helpers: prerender (search pages + sitemap), schema builder, images
 src/
   main.jsx, App.jsx       start-up and the route table ONLY
@@ -78,6 +78,7 @@ Tests sit next to the code they test (`*.test.js`) and in `scripts/*.test.mjs` (
 ## Commands
 ```
 npm run dev       demo mode (no Supabase needed) or real mode when .env has the two Supabase values
+npm run lint     code checker (ESLint)
 npm test          unit and database-rule tests
 npm run test:all  everything incl. browser tests, accessibility, Lighthouse (docs/07-testing.md)
 npm run build     production build (+ search pages when Supabase and SITE_URL are set)

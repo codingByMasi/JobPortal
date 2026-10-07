@@ -7,7 +7,7 @@ import { ANALYTICS_DOMAIN, isPlaceholder } from '../src/config.js';
 
 /** The text of the _headers file. */
 export function buildHeaders({ supabaseUrl = '', turnstile = false, plausible = false } = {}) {
-  let supabase = '';
+  let supabase;
   try {
     supabase = supabaseUrl ? new URL(supabaseUrl).origin : '';
   } catch {

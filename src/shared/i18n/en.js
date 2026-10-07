@@ -332,7 +332,6 @@ export const en = {
   deactivate: 'Turn off',
   packageSaved: 'Package saved.',
   employerSaved: 'Saved.',
-  exportCsv: 'Download CSV',
   searchApps: 'Search name, phone, city or ad',
   adsOf: (name) => `Ads of ${name}`,
   paymentsOf: (name) => `Payments of ${name}`,

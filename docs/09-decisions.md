@@ -43,3 +43,7 @@
 
 ## Changed from the first plan
 - Data access is one folder (`shared/data`) split by area, instead of one `api.js` per feature. Reason: the demo copy must stay in sync with the real one, and one folder makes that easy to see.
+
+
+## ESLint added as a development tool (step 11)
+Why: the project had no code checker. It found a real mistake on its first run (a text key written twice, so the first text was silently ignored). It is a development tool only (`eslint`, `@eslint/js`, `eslint-plugin-react-hooks`, `globals`): nothing is added to the website the visitors download. Two style rules of the newest hooks plugin are switched off because they flag data-loading patterns that work correctly here. Run it with `npm run lint`; it also runs in CI and in `npm run test:all`.

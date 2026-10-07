@@ -331,7 +331,6 @@ export const hi = {
   deactivate: 'बंद करें',
   packageSaved: 'पैकेज सेव हो गया।',
   employerSaved: 'सेव हो गया।',
-  exportCsv: 'CSV डाउनलोड करें',
   searchApps: 'नाम, फ़ोन, शहर या विज्ञापन खोजें',
   adsOf: (name) => `${name} के विज्ञापन`,
   paymentsOf: (name) => `${name} के भुगतान`,

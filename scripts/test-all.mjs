@@ -8,6 +8,7 @@ import { spawnSync } from 'node:child_process';
 const live = process.argv.includes('--live');
 const skipSlow = process.argv.includes('--skip-slow');
 const steps = [
+  { name: 'Code checker (ESLint)', cmd: 'npm run lint', must: true },
   { name: 'Unit and database-rule tests', cmd: 'npm test', must: true },
   { name: 'Production build', cmd: 'npm run build', must: true },
   { name: 'Dependency audit (npm audit)', cmd: 'npm audit --audit-level=high', must: true },

@@ -7,7 +7,10 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import { SITE_URL, isPlaceholder } from '../src/config.js';
+import { SITE_URL as CONFIG_SITE_URL, isPlaceholder } from '../src/config.js';
+
+// A build (or a test) can name the site address in the environment; otherwise the one in src/config.js is used.
+const SITE_URL = (process.env.SITE_URL || CONFIG_SITE_URL).replace(/\/$/, '');
 import { toJob } from '../src/shared/data/mappers.js';
 import { STATIC_PAGES, countryPages, jobPageHtml, sitemapXml, withMeta } from './pages.mjs';
 

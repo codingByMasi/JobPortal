@@ -23,7 +23,7 @@ Date: 2026-10-07. Tester role: QA lead, security reviewer, release manager. Scop
 | Build | Clean install and build from scratch (no node_modules, no dist) | fresh copy: `npm ci` then `npm run build` (done earlier today, Cloudflare check) | **Pass** | 0 vulnerabilities; build stops on Cloudflare while example settings remain (tested with CF_PAGES=1) |
 | Build | Production build | `npm run build` | **Pass** | 1.7 s. Only message: "config check: example values" (expected on your computer; on Cloudflare it stops the build). Search pages skipped locally (no SITE_URL). |
 | Build | Bundle size | measured `dist/assets` | **Pass** | 699 KB raw, 205 KB compressed in 33 files; main app 113 KB + database library 56 KB compressed. Largest single file 380 KB (limit 25 MiB). |
-| Build | Lint | none configured | **Skipped** | No ESLint config in the project (known, FE-04). |
+| Build | Lint | `npm run lint` (added after this report) | **Pass** | ESLint now configured; found and fixed one duplicate text key. |
 | Build | Type check | none configured | **Skipped** | Plain JavaScript, no TypeScript. |
 | Build | Dependency audit | `npm audit` (all dependencies) | **Pass** | 0 vulnerabilities. |
 | Unit and component | Money, status rules, files, CSV, links, errors, mappers, i18n (Hindi = English keys), phone, time limits, UPI link, page builder, headers | `npm test` (147 tests in 21 files) | **Pass** | All pass. No React component rendering tests (screens are covered by the browser tests). |

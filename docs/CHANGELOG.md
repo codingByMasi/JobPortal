@@ -1,5 +1,8 @@
 # Changelog
 
+## Step 11 - Production tidy-up
+- ESLint added (`npm run lint`, in CI and `test:all`); fixed a duplicate text key; the prerender can take the site address from the environment (`SITE_URL`) and was run once for real against the live public view (job facts view, country and fixed pages, sitemap all written); a read-only browser check of the real-mode build against the live project found no errors; CLAUDE.md folder note corrected; repository moved to `codingByMasi/JobPortal` and pushed.
+
 ## Step 10 - Job facts, trust, pages, SEO, counters (migration 0020)
 - **Job facts:** salary range and currency, experience, vacancies, last date, visa type (all optional) in the employer form, admin edit, list card, ad page and public list; experience filter; "New" tag for ads under 3 days.
 - **Trust:** fraud banner on Home and ad pages; "Report this ad" is now a form saved in a new `reports` table (limits per visitor address) with an admin Reports screen; the employer's registration number is shown with the Verified badge only after admin verifies.
