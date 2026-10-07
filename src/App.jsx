@@ -7,6 +7,9 @@ import RequireRole from './features/auth/RequireRole';
 import ResetPassword from './features/auth/ResetPassword';
 import { Loading } from './shared/ui/StateViews';
 import Contact from './features/site/Contact';
+import CountryJobs from './features/jobs/CountryJobs';
+import DeleteAccount from './features/site/DeleteAccount';
+import InfoPage from './features/site/InfoPage';
 import Home from './features/jobs/Home';
 import JobDetail from './features/jobs/JobDetail';
 import Jobs from './features/jobs/Jobs';
@@ -29,6 +32,7 @@ const AdminHome = lazy(() => import('./features/admin/AdminHome'));
 const AdminJobForm = lazy(() => import('./features/admin/AdminJobForm'));
 const AdminJobs = lazy(() => import('./features/admin/AdminJobs'));
 const AdminLayout = lazy(() => import('./features/admin/AdminLayout'));
+const AdminReports = lazy(() => import('./features/admin/AdminReports'));
 const AdminAudit = lazy(() => import('./features/admin/AdminAudit'));
 const AdminOffers = lazy(() => import('./features/admin/AdminOffers'));
 const AdminPackages = lazy(() => import('./features/admin/AdminPackages'));
@@ -45,6 +49,7 @@ export default function App() {
       <Route element={<Layout />}>
         <Route index element={<Home />} />
         <Route path="jobs" element={<Jobs />} />
+        <Route path="jobs/:countrySlug" element={<CountryJobs />} />
         <Route path="job/:id" element={<JobDetail />} />
         <Route path="post-job" element={<PostJob />} />
         <Route path="contact" element={<Contact />} />
@@ -52,6 +57,10 @@ export default function App() {
         <Route path="signup" element={<Signup />} />
         <Route path="forgot-password" element={<ForgotPassword />} />
         <Route path="reset-password" element={<ResetPassword />} />
+        <Route path="about" element={<InfoPage kind="about" />} />
+        <Route path="faq" element={<InfoPage kind="faq" />} />
+        <Route path="refund-policy" element={<InfoPage kind="refund" />} />
+        <Route path="delete-account" element={<DeleteAccount />} />
         <Route path="privacy" element={<Legal kind="privacy" />} />
         <Route path="terms" element={<Legal kind="terms" />} />
 
@@ -79,6 +88,7 @@ export default function App() {
             <Route path="packages" element={<AdminPackages />} />
             <Route path="offers" element={<AdminOffers />} />
             <Route path="history" element={<AdminAudit />} />
+            <Route path="reports" element={<AdminReports />} />
             <Route path="applications" element={<AdminApplications />} />
             <Route path="requests" element={<AdminRequests />} />
             <Route path="security" element={<AdminSecurity />} />

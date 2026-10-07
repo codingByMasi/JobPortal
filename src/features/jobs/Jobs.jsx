@@ -6,7 +6,7 @@ import Icon from '../../shared/ui/Icon';
 import JobCard from './JobCard';
 import SectionHeading from '../../shared/ui/SectionHeading';
 import { Empty, JobsStatus } from '../../shared/ui/StateViews';
-import { CATEGORIES, COUNTRIES } from '../../shared/lib/catalog';
+import { CATEGORIES, COUNTRIES, EXPERIENCE } from '../../shared/lib/catalog';
 import { useJobs } from './JobsContext';
 import { useLang } from '../../shared/i18n/LangContext';
 import { usePageMeta } from '../../shared/lib/usePageMeta';
@@ -15,14 +15,16 @@ import { withParam } from '../../shared/lib/urlParams';
 const PAGE = 5;
 
 /** Jobs list screen. Filters live in the URL (?country=uae&category=driver&q=dubai) so links can be shared. */
-export default function Jobs() {
+export default function Jobs({ fixedCountry = '' }) {
   const { t } = useLang();
   const { jobs, status, reload } = useJobs();
   const [params, setParams] = useSearchParams();
   const [shown, setShown] = useState(PAGE);
-  usePageMeta(t.jobsTitle, t.metaJobs);
+  const fixed = fixedCountry ? COUNTRIES.find((c) => c.id === fixedCountry) : null;
+  usePageMeta(fixed ? t.countryJobsTitle(t.country[fixed.id]) : t.jobsTitle, fixed ? t.metaCountry(t.country[fixed.id]) : t.metaJobs);
 
-  const country = params.get('country') || '';
+  const country = fixedCountry || params.get('country') || '';
+  const experience = params.get('experience') || '';
   const category = params.get('category') || '';
   const q = params.get('q') || '';
 
@@ -36,16 +38,17 @@ export default function Jobs() {
     return jobs.filter((j) => {
       if (country && j.country !== country) return false;
       if (category && j.category !== category) return false;
+      if (experience && j.experienceLevel !== experience) return false;
       if (!needle) return true;
       return [j.title, j.city, j.company, t.country[j.country], t.category[j.category]].join(' ').toLowerCase().includes(needle);
     });
-  }, [jobs, country, category, q, t]);
+  }, [jobs, country, category, experience, q, t]);
 
-  const filtered = country || category || q;
+  const filtered = (!fixedCountry && country) || category || experience || q;
 
   return (
     <div className="page">
-      <SectionHeading as="h1" icon="briefcase" title={t.jobsTitle} help={t.jobsHelp} />
+      <SectionHeading as="h1" icon="briefcase" title={fixed ? t.countryJobsTitle(t.country[fixed.id]) : t.jobsTitle} help={fixed ? t.countryJobsIntro(t.country[fixed.id]) : t.jobsHelp} />
 
       <div className="filters">
         <label className="search">
@@ -60,6 +63,7 @@ export default function Jobs() {
           />
         </label>
 
+        {!fixedCountry && (
         <fieldset className="chips">
           <legend>{t.countryFilter}</legend>
           <button type="button" className="chip" aria-pressed={!country} onClick={() => setParam('country', '')}>
@@ -71,6 +75,7 @@ export default function Jobs() {
             </button>
           ))}
         </fieldset>
+        )}
 
         <fieldset className="chips">
           <legend>{t.workFilter}</legend>
@@ -80,6 +85,17 @@ export default function Jobs() {
           {CATEGORIES.map((c) => (
             <button key={c.id} type="button" className="chip" aria-pressed={category === c.id} onClick={() => setParam('category', c.id)}>
               <Icon name={c.icon} size={22} />{t.category[c.id]}
+            </button>
+          ))}
+        </fieldset>
+        <fieldset className="chips">
+          <legend>{t.experienceFilter}</legend>
+          <button type="button" className="chip" aria-pressed={!experience} onClick={() => setParam('experience', '')}>
+            <Icon name="grid" size={22} />{t.allExperience}
+          </button>
+          {EXPERIENCE.map((x) => (
+            <button key={x} type="button" className="chip" aria-pressed={experience === x} onClick={() => setParam('experience', x)}>
+              <Icon name="hardhat" size={22} />{t.exp[x]}
             </button>
           ))}
         </fieldset>

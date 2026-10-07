@@ -2,10 +2,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../../shared/data';
-import { adReference } from '../../shared/lib/adReference';
 import { useAsync } from '../../shared/lib/useAsync';
 import AdPoster from './AdPoster';
 import ApplyForm from './ApplyForm';
+import FraudBanner from './FraudBanner';
+import JobFacts from './JobFacts';
+import ReportAd from './ReportAd';
 import Button from '../../shared/ui/Button';
 import Icon from '../../shared/ui/Icon';
 import { JobTags } from '../../shared/ui/StatusBadge';
@@ -127,6 +129,8 @@ export default function JobDetail() {
         <span>{place}</span>
       </p>
       {job.company && <p className="help">{job.company}</p>}
+      {job.verified && job.raNumber && <p className="help ra-line"><Icon name="badge" size={20} />{t.raNumberShown(job.raNumber)}</p>}
+      <JobFacts job={job} />
       {job.details && (
         <section className="job-details">
           <h2>{t.detailsTitle}</h2>
@@ -145,8 +149,9 @@ export default function JobDetail() {
 
       <ApplyForm job={job} />
 
+      <FraudBanner />
       <p className="notice"><Icon name="alert" size={26} /><span>{t.safety}</span></p>
-      <Button tone="outline" icon="alert" href={whatsappLink(WHATSAPP_NUMBER, t.waReportMessage(adReference(job.id), job.title))} target="_blank" rel="noopener noreferrer">{t.reportAd}</Button>
+      <ReportAd job={job} />
 
       {zoomed && <Lightbox src={image.src} onClose={() => setZoomed(false)} />}
     </div>

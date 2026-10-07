@@ -216,3 +216,25 @@ tfoot td { background: var(--blue-card); }
 .order-total dt { color: var(--ink); font-weight: 700; }
 .filter-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; margin-bottom: 12px; }
 .filter-row .field { flex: 1 1 160px; }
+
+/* job facts, trust, pages, counters (migration 0020) */
+.facts { border: 2px solid var(--line-strong); border-radius: var(--radius); padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; margin: 0; min-width: 0; }
+.facts legend { font-weight: 700; font-size: 16px; padding: 0 6px; }
+.job-facts-line { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; font-weight: 700; color: var(--ink); }
+.job-facts-line span { display: inline-flex; align-items: center; gap: 6px; }
+.job-facts { display: grid; gap: 8px; margin: 12px 0; padding: 14px 16px; background: #fff; border: 2px solid var(--line-strong); border-radius: var(--radius); }
+.job-facts div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; }
+.job-facts dt { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); }
+.job-facts dd { margin: 0; font-weight: 700; }
+.ra-line { display: flex; align-items: center; gap: 8px; }
+.tag-new { background: #e8f1ff; color: var(--blue-dark); border: 1px solid var(--blue); }
+.fraud-banner { display: flex; gap: 14px; align-items: flex-start; padding: 16px; background: #fff4d6; border: 2px solid #d49a00; border-radius: var(--radius); color: #5c3d00; margin: 16px 0; }
+.fraud-banner strong { font-size: 18px; }
+.fraud-banner p { margin: 4px 0 0; }
+.counters { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); padding: 0; margin: 0; list-style: none; }
+.counters li { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px; background: #fff; border: 2px solid var(--line-strong); border-radius: var(--radius); text-align: center; }
+.counter-number { font-size: 30px; font-weight: 700; color: var(--blue-dark); line-height: 1.1; }
+.info-page { display: flex; flex-direction: column; gap: 14px; }
+.info-block { padding: 14px 16px; background: #fff; border: 2px solid var(--line-strong); border-radius: var(--radius); }
+.info-block h2 { display: flex; align-items: center; gap: 8px; font-size: 19px; margin: 0 0 6px; }
+.info-block p { margin: 0; }

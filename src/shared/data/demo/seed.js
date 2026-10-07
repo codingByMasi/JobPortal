@@ -35,7 +35,7 @@ export function buildSeed(now = Date.now()) {
     ],
     profiles: [
       { id: 'u-admin', email: DEMO_LOGINS.admin.email, role: 'admin', company_name: 'Jobs Abroad Team', phone: '919999999999', verified: true, blocked: false, created_at: iso(now - 90 * DAY) },
-      { id: 'u-rec', email: DEMO_LOGINS.recruiter.email, role: 'recruiter', company_name: 'Gulf Works', phone: '919876543210', verified: true, blocked: false, created_at: iso(now - 60 * DAY) },
+      { id: 'u-rec', email: DEMO_LOGINS.recruiter.email, role: 'recruiter', company_name: 'Gulf Works', phone: '919876543210', ra_number: 'B-1234/DEL/2020', verified: true, blocked: false, created_at: iso(now - 60 * DAY) },
       { id: 'u-rec2', email: 'other@example.com', role: 'recruiter', company_name: 'Desert Transport', phone: '919812345678', verified: false, blocked: false, created_at: iso(now - 30 * DAY) },
     ],
     packages: [
@@ -44,8 +44,8 @@ export function buildSeed(now = Date.now()) {
       { id: 'pkg-30f', name: '30 Days Featured', price_paise: 149900, duration_days: 30, featured: true, active: true, description: '', badge_text: '', sort_order: 30, max_files: 1 },
     ],
     jobs: [
-      live(1, 1, 29, { title: 'Plumbers Needed', company: 'Gulf Works', country: 'uae', city: 'Dubai', category: 'plumber', package_id: 'pkg-30f', whatsapp: '919876543210' }),
-      live(2, 2, 28, { recruiter_id: 'u-rec2', title: 'Heavy Driver', company: 'Desert Transport', country: 'saudi', city: 'Riyadh', category: 'driver', file_type: 'pdf', whatsapp: '919812345678' }),
+      live(1, 1, 29, { title: 'Plumbers Needed', company: 'Gulf Works', country: 'uae', city: 'Dubai', category: 'plumber', package_id: 'pkg-30f', whatsapp: '919876543210', salary_min: 1500, salary_max: 2200, currency: 'AED', experience_level: '2-5', vacancies: 6, last_date: ymd(now + 20 * DAY), visa_type: 'Employment visa' }),
+      live(2, 2, 28, { recruiter_id: 'u-rec2', title: 'Heavy Driver', company: 'Desert Transport', country: 'saudi', city: 'Riyadh', category: 'driver', file_type: 'pdf', whatsapp: '919812345678', salary_min: 2500, salary_max: 3500, currency: 'SAR', experience_level: '1-2', vacancies: 3 }),
       live(3, 3, 27, { title: 'Building Electrician', company: 'Gulf Works', country: 'qatar', city: 'Doha', category: 'electrician' }),
       live(4, 4, 3, { recruiter_id: 'u-rec2', title: 'Restaurant Cook', company: 'Spice Garden', country: 'kuwait', city: 'Kuwait City', category: 'cook', package_id: 'pkg-7', file_type: 'pdf' }),
       live(5, 5, 25, { title: 'AC Technician', company: 'Cool Air Services', country: 'oman', city: 'Muscat', category: 'technician' }),

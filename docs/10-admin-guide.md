@@ -35,6 +35,11 @@ Job seekers can press **Report this ad**; it opens WhatsApp with the ad code. Op
 - **History tab** shows every change of a plan or an offer: who, when, from what to what. It cannot be edited.
 - **Home tab** shows this month's money after discounts, the discounts you gave, and which offers were used most.
 
+## Reports and deletion requests (Reports tab)
+- **Reports about ads:** a visitor tapped "Report this ad". Read the reason and message. Tap *Find the ad* to open it in the Ads tab. If the ad looks fake or asks for money: hide it (*Hide*), block the employer in the Employers tab, then tap *Mark done*. If the report is wrong or silly, tap *Dismiss*. Do this daily at the start; reports about money demands first.
+- **Account deletion requests:** anyone can send one with any email, so **never delete only because of a request**. Write to that email first and ask the owner to confirm (or confirm from the phone number on the account). Then ask your developer to delete the account (or in Supabase delete the employer's user), and tap *Mark done*. Payment records stay (the law may need them).
+- Employers' **registration number** shows to visitors only when you have tapped *Verify* in the Employers tab. Check the number first (the government list of registered agents) before you verify.
+
 ## Refunds
 - You rejected a paid ad and the employer will not fix it: refund the full amount. Do the bank transfer yourself, then in **Payments** tap **Mark refunded** (tick "Also hide this ad" if it is live).
 - An ad that already ran: no refund, unless the mistake was ours. (This is the rule on the employer terms; confirm it with your accountant.)

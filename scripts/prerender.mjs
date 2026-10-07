@@ -9,7 +9,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { SITE_URL, isPlaceholder } from '../src/config.js';
 import { toJob } from '../src/shared/data/mappers.js';
-import { STATIC_PAGES, jobPageHtml, sitemapXml, withMeta } from './pages.mjs';
+import { STATIC_PAGES, countryPages, jobPageHtml, sitemapXml, withMeta } from './pages.mjs';
 
 /** Value from the environment (the hosting build) or from the local .env file. */
 function setting(name) {
@@ -20,7 +20,7 @@ function setting(name) {
 }
 
 async function fetchLiveJobs(url, key) {
-  const columns = 'id,title,company,country,city,category,file_url,file_type,details,posted_date,starts_at,expires_at';
+  const columns = 'id,title,company,country,city,category,file_url,file_type,details,posted_date,starts_at,expires_at,salary_min,salary_max,currency,experience_level,vacancies,last_date,visa_type';
   const res = await fetch(`${url}/rest/v1/public_jobs?select=${columns}&order=starts_at.desc&limit=1000`, {
     headers: { apikey: key, Authorization: `Bearer ${key}` },
   });
@@ -54,6 +54,9 @@ async function main() {
   }));
   for (const p of STATIC_PAGES) {
     await writePage(p.path, withMeta(base, { ...p, url: `${SITE_URL}${p.path}`, image: `${SITE_URL}/hero.jpg` }));
+  }
+  for (const p of countryPages(jobs, SITE_URL)) {
+    await writePage(p.path, withMeta(base, { ...p, image: `${SITE_URL}/hero.jpg` }));
   }
   for (const job of jobs) await writePage(`/job/${encodeURIComponent(job.id)}`, jobPageHtml(base, job, SITE_URL));
 

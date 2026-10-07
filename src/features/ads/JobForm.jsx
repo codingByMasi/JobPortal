@@ -7,6 +7,7 @@ import { useState } from 'react';
 import Button from '../../shared/ui/Button';
 import Field from '../../shared/ui/Field';
 import FileField from './FileField';
+import JobFactsFields, { factsStart } from './JobFactsFields';
 import Notice from '../../shared/ui/Notice';
 import CouponBox from './CouponBox';
 import OrderSummary from './OrderSummary';
@@ -19,6 +20,7 @@ import { friendlyMessage } from '../../shared/lib/friendlyError';
 import { useLang } from '../../shared/i18n/LangContext';
 import { toDateString } from '../../shared/data/mappers';
 import { formatPrice } from '../../shared/lib/money';
+import { checkFacts, factsFromForm } from '../../shared/lib/jobFacts';
 import { isValidWhatsapp, normalizeWhatsapp } from '../../shared/lib/phone';
 
 const endOfDay = (dateString) => {
@@ -42,6 +44,7 @@ export default function JobForm({ mode, job, renewFrom, packages, onSaved }) {
     category: source?.category || 'plumber',
     whatsapp: normalizeWhatsapp(source?.whatsapp || profile?.phone || ''),
     details: source?.details || '',
+    ...factsStart(source),
     packageId: job?.packageId || renewFrom?.packageId || '',
     days: '30',
     expires: job?.expiresAt ? toDateString(job.expiresAt) : '',
@@ -72,6 +75,7 @@ export default function JobForm({ mode, job, renewFrom, packages, onSaved }) {
     if (!isValidWhatsapp(v.whatsapp)) next.whatsapp = t.errPhoneBad;
     if (mode === 'new' && !v.packageId) next.package = t.errNeedPackage;
     if (!isAdmin && !file) next.file = t.errNeedFile;
+    for (const [field, key] of Object.entries(checkFacts(v))) next[field] = t[key];
     if (mode === 'admin-new' && !(Number.isInteger(+v.days) && +v.days >= 1 && +v.days <= 365)) next.days = t.errRequired;
     setErrors(next);
     if (Object.keys(next).length) return;
@@ -97,7 +101,7 @@ export default function JobForm({ mode, job, renewFrom, packages, onSaved }) {
         };
       }
       const base = {
-        title: v.title, company: v.company, country: v.country, city: v.city, category: v.category, whatsapp: v.whatsapp, details: v.details, ...fileFields,
+        title: v.title, company: v.company, country: v.country, city: v.city, category: v.category, whatsapp: v.whatsapp, details: v.details, ...factsFromForm(v), ...fileFields,
       };
       let saved;
       if (mode === 'new') {
@@ -161,6 +165,8 @@ export default function JobForm({ mode, job, renewFrom, packages, onSaved }) {
       <Field label={t.fDetails} help={t.fDetailsHelp}>
         <textarea rows={4} value={v.details} onChange={set('details')} maxLength={600} />
       </Field>
+
+      <JobFactsFields v={v} set={set} errors={errors} />
 
       <FileField value={file} onChange={(f) => { setFile(f); clearError('file'); }} error={errors.file} />
 

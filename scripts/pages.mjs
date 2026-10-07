@@ -45,7 +45,16 @@ export function jobPostingJson(job, siteUrl) {
     url: `${siteUrl}/job/${encodeURIComponent(job.id)}`,
   };
   if (job.posted) data.datePosted = day(job.posted);
-  if (job.expiresAt) data.validThrough = day(job.expiresAt);
+  const end = job.lastDate && (!job.expiresAt || job.lastDate < job.expiresAt) ? job.lastDate : job.expiresAt;
+  if (end) data.validThrough = day(end);
+  if (job.vacancies) data.totalJobOpenings = job.vacancies;
+  if (job.salaryMin != null || job.salaryMax != null) {
+    data.baseSalary = {
+      '@type': 'MonetaryAmount',
+      currency: job.currency || undefined,
+      value: { '@type': 'QuantitativeValue', minValue: job.salaryMin ?? job.salaryMax, maxValue: job.salaryMax ?? job.salaryMin, unitText: 'MONTH' },
+    };
+  }
   return JSON.stringify(data).replace(/</g, '\\u003c'); // never let a cell close the script tag
 }
 
@@ -67,13 +76,30 @@ export const STATIC_PAGES = [
   { path: '/post-job', title: 'Post a Job | Jobs Abroad', description: 'Employers can post a job ad in 3 easy steps. Making an account is free; you pay when you post an ad.' },
   { path: '/privacy', title: 'Privacy | Jobs Abroad', description: 'No login to see jobs. If you apply, your name and phone go to the employer and are deleted after 180 days.' },
   { path: '/terms', title: 'Terms and safety | Jobs Abroad', description: 'Stay safe: never pay before checking the employer.' },
+  { path: '/about', title: 'About us | Jobs Abroad', description: 'About Jobs Abroad: a free place to see job ads for work in the Gulf, with checks on every ad.' },
+  { path: '/faq', title: 'Questions and answers | Jobs Abroad', description: 'Is it free, how to apply, how to stay safe from fake job offers.' },
+  { path: '/refund-policy', title: 'Refund policy | Jobs Abroad', description: 'Refund policy for employers who buy a job ad. Job seekers never pay.' },
+  { path: '/delete-account', title: 'Delete my account | Jobs Abroad', description: 'Ask us to delete your account and your data.' },
 ];
+
+/** One landing page per country: /jobs/uae, /jobs/saudi-arabia ... with its own title and the list of ads written into the page text. */
+export function countryPages(jobs, siteUrl) {
+  return COUNTRIES.map((c) => {
+    const list = jobs.filter((j) => j.country === c.id);
+    const title = `Jobs in ${c.name} | Jobs Abroad`;
+    const description = `Latest job ads in ${c.name} for plumber, electrician, driver, cook and helper jobs. See the full ad. No login, no payment.`;
+    const items = list.slice(0, 50).map((j) => `<li><a href="/job/${encodeURIComponent(j.id)}">${escapeHtml(j.title)}${j.city ? ` - ${escapeHtml(j.city)}` : ''}</a></li>`).join('');
+    const body = `<main><h1>Jobs in ${escapeHtml(c.name)}</h1><p>${escapeHtml(description)}</p><ul>${items}</ul></main>`;
+    return { path: `/jobs/${c.slug}`, title, description, body, url: `${siteUrl}/jobs/${c.slug}` };
+  });
+}
 
 /** sitemap.xml text for the fixed pages plus every job. */
 export function sitemapXml(jobs, siteUrl) {
   const urls = [
     { loc: `${siteUrl}/` },
     ...STATIC_PAGES.map((p) => ({ loc: `${siteUrl}${p.path}` })),
+    ...COUNTRIES.map((c) => ({ loc: `${siteUrl}/jobs/${c.slug}` })),
     ...jobs.map((j) => ({ loc: `${siteUrl}/job/${encodeURIComponent(j.id)}`, lastmod: j.posted ? day(j.posted) : '' })),
   ];
   const rows = urls.map((u) => `  <url><loc>${escapeHtml(u.loc)}</loc>${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ''}</url>`).join('\n');

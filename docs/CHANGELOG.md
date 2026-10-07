@@ -1,5 +1,14 @@
 # Changelog
 
+## Step 10 - Job facts, trust, pages, SEO, counters (migration 0020)
+- **Job facts:** salary range and currency, experience, vacancies, last date, visa type (all optional) in the employer form, admin edit, list card, ad page and public list; experience filter; "New" tag for ads under 3 days.
+- **Trust:** fraud banner on Home and ad pages; "Report this ad" is now a form saved in a new `reports` table (limits per visitor address) with an admin Reports screen; the employer's registration number is shown with the Verified badge only after admin verifies.
+- **Pages:** About, FAQ, Refund policy, Delete my account (saved in `deletion_requests`), all in English and Hindi, linked in the footer. Texts are drafts with marked placeholders (`11-owner-checklist.md` B2).
+- **SEO:** country landing pages (`/jobs/uae` ...), page titles and descriptions, sitemap with the new pages, salary in Google job data, plan and trade-offs in `15-seo-plan.md`.
+- **Counters:** live ads, verified employers and applications on Home, from `public_counts()`, shown only above zero.
+- **Research:** `14-competitor-comparison.md` (public pages of a competing site; no code changed for it).
+- **Tests:** 14 database tests (`scripts/rls.trust.test.mjs`), demo tests, facts/page/sitemap tests, 8 browser tests; new pages added to the accessibility scan.
+
 ## Step 9 - Re-run of the release audit and fixes
 - Migration 0019: ads unpaid for 30 days are removed by the daily clean-up (applied to the live project). New test `scripts/rls.cleanup.test.mjs`.
 - Browser tests added: free offer, more days / featured / free ad on one ad, plan order and history; offers and history screens added to the accessibility scan. Full run: 344 unit and database tests, 132 browser runs, Lighthouse 96-98. Secret scan clean. Report updated in `14-release-readiness-report.md`.

@@ -70,14 +70,14 @@ describe('whole-database guards', () => {
   it('visitors may call only these functions (an allow-list: a new function must be added here on purpose; phone_last10 is a pure text helper)', async () => {
     const fns = await rowsOf(db, `select p.proname, has_function_privilege('anon', p.oid, 'execute') as anon from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' order by 1`);
     const allowed = fns.filter((f) => f.anon).map((f) => f.proname);
-    expect(allowed.sort()).toEqual(['is_admin', 'is_blocked', 'job_accepts_applications', 'log_client_error', 'phone_last10']);
+    expect(allowed.sort()).toEqual(['is_admin', 'is_blocked', 'job_accepts_applications', 'log_client_error', 'phone_last10', 'public_counts']);
   });
 
   it('signed-in employers may call only these functions (admin functions refuse non-admins on their own)', async () => {
     const fns = await rowsOf(db, `select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and has_function_privilege('authenticated', p.oid, 'execute') order by 1`);
     expect(fns.map((f) => f.proname)).toEqual([
       'admin_approve_job', 'admin_extend_job', 'admin_give_free_ad', 'admin_mark_paid', 'admin_refund_payment', 'admin_reject_job', 'admin_set_featured', 'admin_set_hidden',
-      'count_my_applications', 'create_ad_order', 'employer_may_see_applicants', 'is_admin', 'is_blocked', 'job_accepts_applications', 'log_client_error', 'phone_last10', 'quote_price',
+      'count_my_applications', 'create_ad_order', 'employer_may_see_applicants', 'is_admin', 'is_blocked', 'job_accepts_applications', 'log_client_error', 'phone_last10', 'public_counts', 'quote_price',
     ]);
   });
 

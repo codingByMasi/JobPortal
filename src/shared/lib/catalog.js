@@ -1,12 +1,12 @@
 // The fixed lists of countries and kinds of work shown as buttons across the app.
 
 export const COUNTRIES = [
-  { id: 'uae', name: 'UAE', iso: 'AE', flag: '🇦🇪' },
-  { id: 'saudi', name: 'Saudi Arabia', iso: 'SA', flag: '🇸🇦' },
-  { id: 'qatar', name: 'Qatar', iso: 'QA', flag: '🇶🇦' },
-  { id: 'kuwait', name: 'Kuwait', iso: 'KW', flag: '🇰🇼' },
-  { id: 'oman', name: 'Oman', iso: 'OM', flag: '🇴🇲' },
-  { id: 'others', name: 'Others', flag: '🌍' },
+  { id: 'uae', slug: 'uae', name: 'UAE', iso: 'AE', flag: '🇦🇪' },
+  { id: 'saudi', slug: 'saudi-arabia', name: 'Saudi Arabia', iso: 'SA', flag: '🇸🇦' },
+  { id: 'qatar', slug: 'qatar', name: 'Qatar', iso: 'QA', flag: '🇶🇦' },
+  { id: 'kuwait', slug: 'kuwait', name: 'Kuwait', iso: 'KW', flag: '🇰🇼' },
+  { id: 'oman', slug: 'oman', name: 'Oman', iso: 'OM', flag: '🇴🇲' },
+  { id: 'others', slug: 'other-countries', name: 'Others', flag: '🌍' },
 ];
 
 // `match` words are looked for inside the sheet's category text, so "Office job" still finds "office".
@@ -40,3 +40,12 @@ export function categoryId(text = '') {
 }
 
 export const countryById = (id) => COUNTRIES.find((c) => c.id === id) || COUNTRIES[COUNTRIES.length - 1];
+
+/** The country for an address like /jobs/saudi-arabia (null when unknown). */
+export const countryBySlug = (slug) => COUNTRIES.find((c) => c.slug === slug) || null;
+
+/** Experience levels of the structured job fields (the ids are saved in the database). */
+export const EXPERIENCE = ['fresher', '1-2', '2-5', '5+'];
+
+/** Salary currencies the form offers (Gulf currencies, rupee and dollar). */
+export const CURRENCIES = ['AED', 'SAR', 'QAR', 'KWD', 'OMR', 'BHD', 'INR', 'USD'];

@@ -37,8 +37,7 @@ test.describe('visitor', () => {
     const wa = await page.getByRole('link', { name: 'Apply on WhatsApp' }).getAttribute('href');
     expect(wa).toMatch(/^https:\/\/wa\.me\/919876543210/);
     await expect(page.getByText(/Do not pay anyone/)).toBeVisible();
-    const report = await page.getByRole('link', { name: 'Report this ad' }).getAttribute('href');
-    expect(decodeURIComponent(report)).toContain('AD-JOB1');
+    await expect(page.getByRole('button', { name: 'Report this ad' })).toBeVisible();
   });
 
   test('apply form: consent is needed, details are sent, the same phone cannot apply twice', async ({ page }) => {

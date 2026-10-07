@@ -88,9 +88,9 @@ describe('hardening rules in demo mode (same as migration 0012)', () => {
 
   it('a verified employer who changes the company name loses the verified tag', async () => {
     await asEmployer();
-    await api.updateProfile('u-rec', { companyName: 'Gulf Works', phone: '9000000000', raNumber: '' });
+    await api.updateProfile('u-rec', { companyName: 'Gulf Works', phone: '9000000000', raNumber: 'B-1234/DEL/2020' });
     expect((await api.getProfile('u-rec')).verified).toBe(true);
-    await api.updateProfile('u-rec', { companyName: 'Famous Group', phone: '9000000000', raNumber: '' });
+    await api.updateProfile('u-rec', { companyName: 'Famous Group', phone: '9000000000', raNumber: 'B-1234/DEL/2020' });
     expect((await api.getProfile('u-rec')).verified).toBe(false);
   });
 

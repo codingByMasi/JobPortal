@@ -70,6 +70,12 @@ export default function Layout() {
           <Icon name="phone" size={22} /><span>{t.footerHelp}</span>
         </a>
         <Link className="footer-link" to="/post-job"><Icon name="upload" size={22} /><span>{t.postTitle}</span></Link>
+        <nav className="legal-links" aria-label={t.footerPages}>
+          <Link className="footer-link" to="/about"><Icon name="home" size={22} /><span>{t.aboutLink}</span></Link>
+          <Link className="footer-link" to="/faq"><Icon name="search" size={22} /><span>{t.faqLink}</span></Link>
+          <Link className="footer-link" to="/refund-policy"><Icon name="rupee" size={22} /><span>{t.refundLink}</span></Link>
+          <Link className="footer-link" to="/delete-account"><Icon name="trash" size={22} /><span>{t.deleteLink}</span></Link>
+        </nav>
         <div className="legal-links">
           <Link className="footer-link" to="/privacy"><Icon name="shield" size={22} /><span>{t.privacyLink}</span></Link>
           <Link className="footer-link" to="/terms"><Icon name="shield" size={22} /><span>{t.termsLink}</span></Link>

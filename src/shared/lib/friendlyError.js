@@ -24,6 +24,10 @@ export function errorKey(err) {
   if (offer) return `offer_${offer[1]}`;
   if (/has ads/i.test(msg) || code === '23503' || code === 'PLAN_HAS_ADS') return 'errPlanHasAds';
   if (code === 'CODE_TAKEN' || /offers_coupon_unique/i.test(msg)) return 'errCodeTaken';
+  if (code === 'ALREADY_REPORTED' || /already reported/i.test(msg)) return 'errAlreadyReported';
+  if (code === 'ALREADY_REQUESTED' || /already have your request/i.test(msg)) return 'errAlreadyRequested';
+  if (code === 'AD_NOT_OPEN' || /ad is not open/i.test(msg)) return 'errAdNotOpen';
+  if (code === 'TOO_FAST') return 'errTooFast';
   if (code === '23505') return 'errAlreadyApplied';
   if (code === '54000') return 'errTooManyApplications';
   if (code === '54001') return 'errTooFast';

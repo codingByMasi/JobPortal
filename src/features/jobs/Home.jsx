@@ -2,6 +2,8 @@
 import { Link } from 'react-router-dom';
 import Button from '../../shared/ui/Button';
 import Icon from '../../shared/ui/Icon';
+import FraudBanner from './FraudBanner';
+import HomeCounters from './HomeCounters';
 import JobCard from './JobCard';
 import SectionHeading from '../../shared/ui/SectionHeading';
 import { Empty, JobsStatus } from '../../shared/ui/StateViews';
@@ -39,6 +41,8 @@ export default function Home() {
         </div>
       </section>
 
+      <FraudBanner />
+
       <ul className="trust">
         <li><Icon name="shield" size={24} />{t.trustLogin}</li>
         <li><Icon name="download" size={24} />{t.trustFree}</li>
@@ -49,7 +53,7 @@ export default function Home() {
         <SectionHeading icon="flag" title={t.chooseCountry} help={t.chooseCountryHelp} />
         <div className="grid grid-country">
           {COUNTRIES.map((c) => (
-            <Link key={c.id} to={`/jobs?country=${c.id}`} className="country-btn">
+            <Link key={c.id} to={`/jobs/${c.slug}`} className="country-btn">
               <span className="flag" aria-hidden="true">{c.flag}</span>
               <span className="country-name">{t.country[c.id]}</span>
               <Icon name="chevron" size={22} />
@@ -88,6 +92,8 @@ export default function Home() {
           </>
         )}
       </section>
+
+      <HomeCounters />
 
       <section className="section">
         <Button to="/post-job" tone="blue" icon="upload">{t.postJobCall}</Button>

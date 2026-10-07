@@ -16,6 +16,12 @@ export function toDateString(ts) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+/** Midnight (local time) of a YYYY-MM-DD text from the database. */
+function dayStartOf(text) {
+  const [y, m, d] = String(text).slice(0, 10).split('-').map(Number);
+  return new Date(y, m - 1, d).getTime();
+}
+
 export function toPackage(row) {
   if (!row) return null;
   return {
@@ -66,6 +72,14 @@ export function toJob(row, { allowData = false } = {}) {
     thumbUrl: safeFileUrl(row.thumb_url, allowData),
     thumbPath: row.thumb_path || null,
     details: row.details || '',
+    salaryMin: row.salary_min ?? null,
+    salaryMax: row.salary_max ?? null,
+    currency: row.currency || null,
+    experienceLevel: row.experience_level || null,
+    vacancies: row.vacancies ?? null,
+    lastDate: row.last_date ? dayStartOf(row.last_date) : null,
+    visaType: row.visa_type || null,
+    raNumber: row.recruiter_ra_number || (row.recruiter?.verified ? row.recruiter?.ra_number : '') || '',
     priceAtOrder: row.price_paise_at_order ?? null,
     listPricePaise: row.list_price_paise ?? row.price_paise_at_order ?? null,
     discountPaise: row.discount_paise ?? 0,
@@ -94,6 +108,8 @@ export function toJobRow(input) {
     title: 'title', company: 'company', country: 'country', city: 'city', category: 'category',
     whatsapp: 'whatsapp', fileUrl: 'file_url', filePath: 'file_path', fileType: 'file_type', packageId: 'package_id',
     details: 'details', thumbUrl: 'thumb_url', thumbPath: 'thumb_path',
+    salaryMin: 'salary_min', salaryMax: 'salary_max', currency: 'currency', experienceLevel: 'experience_level',
+    vacancies: 'vacancies', lastDate: 'last_date', visaType: 'visa_type',
   };
   for (const [from, to] of Object.entries(map)) {
     if (input[from] !== undefined) row[to] = input[from] === '' && (from === 'fileUrl' || from === 'filePath' || from === 'thumbUrl' || from === 'thumbPath') ? null : input[from];
@@ -232,5 +248,32 @@ export function toChangeRequest(row) {
     status: row.status,
     createdAt: toTime(row.created_at),
     handledAt: toTime(row.handled_at),
+  };
+}
+
+export function toReport(row) {
+  return {
+    id: row.id,
+    jobId: row.job_id,
+    jobTitle: row.job?.title || '',
+    employerName: row.job?.recruiter?.company_name || '',
+    reason: row.reason,
+    message: row.message || '',
+    contact: row.contact || '',
+    status: row.status,
+    createdAt: toTime(row.created_at),
+  };
+}
+
+export function toDeletionRequest(row) {
+  return { id: row.id, email: row.email, note: row.note || '', status: row.status, createdAt: toTime(row.created_at) };
+}
+
+/** What the home page counters get from public_counts (or the demo copy). */
+export function toCounts(c) {
+  return {
+    liveAds: Number(c.live_ads ?? c.liveAds ?? 0),
+    verifiedRecruiters: Number(c.verified_recruiters ?? c.verifiedRecruiters ?? 0),
+    applications: Number(c.applications ?? 0),
   };
 }

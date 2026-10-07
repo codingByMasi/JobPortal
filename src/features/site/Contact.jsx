@@ -9,7 +9,7 @@ import { CONTACT_EMAIL, GRIEVANCE_EMAIL, GRIEVANCE_NAME, WHATSAPP_NUMBER } from 
 /** Contact screen. */
 export default function Contact() {
   const { t } = useLang();
-  usePageMeta(t.contactTitle);
+  usePageMeta(t.contactTitle, t.metaContact);
   return (
     <div className="page">
       <SectionHeading as="h1" icon="phone" title={t.contactTitle} help={t.contactHelp} />

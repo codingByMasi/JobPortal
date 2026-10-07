@@ -1,5 +1,6 @@
 // One job ad in a list: thumbnail, type + date, tags, title, place, big View button.
 import AdPoster from './AdPoster';
+import JobFacts from './JobFacts';
 import Button from '../../shared/ui/Button';
 import Icon from '../../shared/ui/Icon';
 import { JobTags } from '../../shared/ui/StatusBadge';
@@ -37,6 +38,7 @@ export default function JobCard({ job, headingLevel = 3 }) {
         </div>
         <JobTags job={job} />
         <Heading className="job-title">{job.title}</Heading>
+        <JobFacts job={job} compact />
         <p className="job-place">
           <span className="flag" aria-hidden="true">{country.flag}</span>
           <Icon name="pin" size={20} />
