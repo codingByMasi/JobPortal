@@ -51,3 +51,10 @@ Nothing below can be done from the code:
 
 ## Not tested here (needs the real Cloudflare account)
 The real Git build, the real custom domain and TLS, the Deploy hook, Cloudflare's edge behaviour for `_headers` (parsed correctly by Wrangler: "6 valid header rules"), and the Preview/Production variable split.
+
+## DNS notes for deshduniyanaukri.com (kept so a change can be undone)
+- **Before the site went to Cloudflare Pages (2026-10-08):** the root name `deshduniyanaukri.com` had an `A` record pointing to the old server `2.57.91.91` (Proxied), and `www` was a CNAME to the root (Proxied). Both showed a warning because they pointed away from Pages.
+- **What was done:** both records were deleted; the custom domains `deshduniyanaukri.com` and `www.deshduniyanaukri.com` were then added in Workers & Pages > project > Custom domains, which creates the correct CNAME records to the `*.pages.dev` address.
+- **To undo:** add an `A` record, name `@`, content `2.57.91.91`, Proxied, and remove the Pages custom domain.
+- **Keep:** the Resend email records (the `resend._domainkey` TXT, plus the MX and SPF TXT records on the `send` name if present) and any MX records. They carry the email sender. Never delete them when cleaning up.
+- Public information only; there is no secret in this note.
