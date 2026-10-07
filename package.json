@@ -15,7 +15,8 @@
     "test:lighthouse": "node scripts/lighthouse.mjs",
     "test:live": "node scripts/live-e2e.mjs",
     "test:all": "node scripts/test-all.mjs",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "release:gate": "node scripts/release-gate.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",
