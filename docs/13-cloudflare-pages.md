@@ -41,7 +41,7 @@ Nothing below can be done from the code:
    - **Production:** `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, optional `VITE_TURNSTILE_SITE_KEY`.
    - **Preview:** use a **different Supabase project** (staging), never the production one; or switch preview deployments off (Settings > Builds > Branch control > Preview branches: None). Otherwise any pull request or branch would write into your real database.
    - Do not create a variable for the service-role key or any payment secret here.
-3. **If the dashboard greys out variables** because `wrangler.toml` exists (ASSUMPTION, not tested): delete `wrangler.toml`; it is only needed for local `wrangler pages dev`/`deploy`, not for Git builds.
+3. **Found on the first real build (2026-10-08):** because `wrangler.toml` exists, Cloudflare reads the build variables from that file and ignores the dashboard list (log line "Build environment variables: (none found)"). So the two PUBLIC values (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) are now written in the `[vars]` block of `wrangler.toml`. They are public by design. Never put a secret there. To change the database project later, edit that block (or run `scripts/move-project.mjs`, then copy the new values).
 4. **Custom domain:** Custom domains > Set up a domain. Turn on "Always Use HTTPS" and set the minimum TLS version to 1.2 for the zone. Then use the same address in `SITE_URL` (`src/config.js`), Supabase (Site URL, `/reset-password` redirect) and the Turnstile widget's hostnames.
 5. **Deploy hook:** Settings > Builds > Deploy hooks. Call it every 3 hours from a free cron service (500 builds a month on the free plan).
 6. **Preview protection (optional):** Cloudflare Access on preview deployments, so staging is not public.
