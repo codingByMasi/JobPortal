@@ -4,7 +4,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync } from 'node:fs';
 
 const PORT = 4189;
-const pages = [['home', '/'], ['jobs', '/jobs'], ['job', '/job/job-1']];
+const pages = [['home', '/'], ['jobs', '/jobs'], ['job', '/job/job-1'], ['postjob', '/post-job']];
 mkdirSync('test-results/lighthouse', { recursive: true });
 
 const up = async () => {

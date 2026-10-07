@@ -119,7 +119,7 @@ const JWT = /eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/g;
     lines(f).forEach((l, i) => {
       for (const [name, re] of rules) {
         if (!re.test(l)) continue;
-        if (/(for example|example:|like name@example\.com)/i.test(l) && name !== 'placeholder marker') continue; // help lines that show how to write a value
+        if (/(for example|example:|like name@example\.com|जैसे|उदाहरण)/i.test(l) && name !== 'placeholder marker') continue; // help lines that show how to write a value
         const isDefault = /^src\/config\.js|^src\/shared\/lib\/siteSettings\.js|^src\/shared\/data\/env\.js/.test(r);
         (isDefault ? hits.defaults : hits.visible).push(`${r}:${i + 1} (${name})`);
       }
