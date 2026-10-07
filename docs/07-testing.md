@@ -70,3 +70,9 @@ Automated axe scan (WCAG 2.1 AA) at 375 px in English and Hindi: **clean on ever
 **Code checker:** `npm run lint` (ESLint) runs first in `npm run test:all` and in CI.
 
 **After step 10 (job facts, trust, pages, SEO):** `npm run test:all` passes: 376 unit and database tests, all browser runs at 390 and 1440 px (with the new pages in the accessibility scan), Lighthouse phone 94-98, `npm audit` clean. Known gap still open: GAP-1.
+
+**Final release gate (step 14):** three commands.
+- `npm run test:all`: lint, unit and database tests, build, audit, browser tests (phone and desktop, accessibility), Lighthouse on Home, Jobs, Job and Post a job, known gaps.
+- `npm run release:gate -- --live-readonly`: secrets (code, docs, built site, git history), placeholder text, build guards, headers, search output, abuse limits, commit and tag state, and a SELECT-only look at the linked Supabase project. Result in `test-results/release-gate.json`.
+- `npm run smoke:live -- https://your-domain.com --lighthouse`: read-only checks of the live site after launch (HTTPS, www redirect, headers, sitemap, robots, deep links, share tags, console errors, phone score). It never logs in or submits anything.
+The extra browser tests for the gate are in `e2e/gate.spec.js` (every private route, every deep link, Hindi on every public screen, picture zoom and PDF, coupon cases, no sideways scrolling). The report is `15-final-release-gate.md`.

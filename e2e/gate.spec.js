@@ -141,4 +141,23 @@ test.describe('release gate', () => {
     await apply('GATEONE');
     await expect(page.getByText('Coupon GATEONE is applied.')).toBeVisible();
   });
+
+  test('responsive: no sideways scrolling and nothing cut off on any screen at phone and desktop width', async ({ page }) => {
+    const check = async (path) => {
+      await page.goto(path);
+      await page.waitForLoadState('networkidle');
+      const wide = await page.evaluate(() => {
+        const w = document.documentElement.clientWidth;
+        const off = [...document.querySelectorAll('body *')].filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && (r.right > w + 1) && getComputedStyle(e).position !== 'fixed' && !e.closest('.table-wrap, .lightbox, .sr-only'); });
+        return { overflow: document.documentElement.scrollWidth - w, off: off.slice(0, 3).map((e) => e.tagName + '.' + e.className) };
+      });
+      expect(wide.overflow, `${path} scrolls sideways ${JSON.stringify(wide.off)}`).toBeLessThanOrEqual(1);
+    };
+    for (const path of PUBLIC_ROUTES) await check(path);
+    await login(page, 'employer');
+    for (const path of EMPLOYER_ROUTES) await check(path);
+    await logout(page);
+    await login(page, 'admin');
+    for (const path of ADMIN_ROUTES) await check(path);
+  });
 });

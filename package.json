@@ -16,7 +16,8 @@
     "test:live": "node scripts/live-e2e.mjs",
     "test:all": "node scripts/test-all.mjs",
     "lint": "eslint .",
-    "release:gate": "node scripts/release-gate.mjs"
+    "release:gate": "node scripts/release-gate.mjs",
+    "smoke:live": "node scripts/smoke-live.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",
