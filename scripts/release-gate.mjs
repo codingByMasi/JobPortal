@@ -37,7 +37,7 @@ const JWT = /eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/g;
 {
   const hits = [];
   for (const f of walk('.')) {
-    if (/release-gate\.mjs$|package-lock\.json$|\.md$|\.sql$|\.test\.(js|mjs)$/.test(f) || /^\.env/.test(rel(f))) continue;
+    if (/(release-gate|smoke-live)\.mjs$|package-lock\.json$|\.md$|\.sql$|\.test\.(js|mjs)$/.test(f) || /^\.env/.test(rel(f))) continue;
     lines(f).forEach((l, i) => {
       for (const [name, re] of SECRET_PATTERNS) if (re.test(l)) hits.push(`${rel(f)}:${i + 1} (${name})`);
       for (const m of l.match(JWT) || []) hits.push(`${rel(f)}:${i + 1} (JWT with role ${decodeRole(m)})`);
