@@ -40,7 +40,7 @@ const JWT = /eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/g;
     if (/(release-gate|smoke-live)\.mjs$|package-lock\.json$|\.md$|\.sql$|\.test\.(js|mjs)$/.test(f) || /^\.env/.test(rel(f))) continue;
     lines(f).forEach((l, i) => {
       for (const [name, re] of SECRET_PATTERNS) if (re.test(l)) hits.push(`${rel(f)}:${i + 1} (${name})`);
-      for (const m of l.match(JWT) || []) hits.push(`${rel(f)}:${i + 1} (JWT with role ${decodeRole(m)})`);
+      for (const m of l.match(JWT) || []) if (decodeRole(m) !== 'anon') hits.push(`${rel(f)}:${i + 1} (JWT with role ${decodeRole(m)})`); // the public anon key is allowed (wrangler.toml)
     });
   }
   add('Secrets', 'Working tree has no secret keys or tokens (code, config, scripts)', hits.length ? 'FAIL' : 'PASS', hits.length ? hits.join('; ') : 'pattern scan of all text files except docs, SQL and tests');

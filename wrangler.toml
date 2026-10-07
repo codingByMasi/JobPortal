@@ -3,8 +3,9 @@
 # In the Cloudflare dashboard (Workers & Pages > Create > Pages > Connect to Git) use:
 #   Framework preset: None        Build command: npm run build        Build output directory: dist
 # The Node version comes from the file .node-version in the project (22).
-# Build-time settings (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, optional VITE_TURNSTILE_SITE_KEY) are typed in the dashboard under
-# Settings > Variables and Secrets, SEPARATELY for "Production" and "Preview" (see docs/13-cloudflare-pages.md).
+# Build-time settings: when this file exists, Cloudflare Pages reads the build variables from it (the dashboard list is not used).
+# The two values below are PUBLIC on purpose: the project address and the public "anon" key (every table is protected by Row Level Security).
+# Never put the private (secret) key here. Optional: VITE_TURNSTILE_SITE_KEY (public site key of Cloudflare Turnstile).
 #
 # There are no runtime bindings (KV, D1, R2) and no secrets in this project. Anything secret (service-role key, Razorpay secret) lives
 # only in Supabase (Edge Function secrets), never here.
@@ -12,3 +13,7 @@
 name = "jobs-abroad"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-10-01"
+
+[vars]
+VITE_SUPABASE_URL = "https://nvjoiomubxtqnnlmfzkb.supabase.co"
+VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52am9pb211Ynh0cW5ubG1memtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzODk4NDMsImV4cCI6MjEwNjk2NTg0M30.cAlE99L93jk8LlTl37KktVGBguYKDAMNWSxb-RmK7w4"
