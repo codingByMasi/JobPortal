@@ -1,6 +1,6 @@
 # 15 - Final release gate
 
-> **Update after the first run (same day).** Fixed in code: placeholder text replaced with plain draft wording (English and Hindi); one automatic retry for browser tests (a test that needs it is reported as "flaky", so it stays visible); a release-candidate tag `v1.0.0-rc1` on the tested commit; the offline check was run on the real-mode build (`npm run test:offline`: plain "No internet" sentence, no technical words, no crash, other screens still work). Still failing: GAP-1 only. The numbers in section 2 are from the first run; the gate script now shows 0 placeholder failures and 0 tag failures.
+> **Update after the first run (same day).** Fixed in code: placeholder text replaced with plain draft wording (English and Hindi); one automatic retry for browser tests (a test that needs it is reported as "flaky", so it stays visible); a release-candidate tag `v1.0.0-rc2` on the tested commit; the offline check was run on the real-mode build (`npm run test:offline`: plain "No internet" sentence, no technical words, no crash, other screens still work). Still failing: GAP-1 only. The numbers in section 2 are from the first run; the gate script now shows 0 placeholder failures and 0 tag failures.
 
 Date: 2026-10-08. **Commit tested: `d532c08`** (the report and two small test files were committed after it; no application code changed after `d532c08`). Branch `main`, repository `codingByMasi/JobPortal`. Code freeze kept: only test files, scripts and this report were added.
 
@@ -63,7 +63,7 @@ Commands: `npm run test:all` (lint, unit and database, build, audit, browser, Li
 | 10c | HTTPS redirect | | NOT VERIFIED | needs the live site (Part B) |
 | 10d | Scheduled deploy hook | | NOT VERIFIED | not created yet (G13). If the caller fails, the site keeps working; new ads simply have no search page or good preview until the next successful build |
 | 10e | Rollback method | | documented below | Cloudflare keeps every deployment |
-| 10f | Release tag or commit recorded | `git tag` | **Pass (after fix)** | tag `v1.0.0-rc1` on the tested commit; make `v1.0.0` on launch day (G8) |
+| 10f | Release tag or commit recorded | `git tag` | **Pass (after fix)** | tag `v1.0.0-rc2` on the tested commit; make `v1.0.0` on launch day (G8) |
 
 ### 3a. Earlier blockers (from `docs/14-release-readiness-report.md`)
 
@@ -146,7 +146,7 @@ Not covered (cannot be tested without the real services): email confirmation lin
 
 | ID | Item | Deadline | Owner |
 |---|---|---|---|
-| G8 | `v1.0.0-rc1` exists; add `v1.0.0` on the launch commit (`git tag -a v1.0.0 -m "First release" && git push origin v1.0.0`) | launch day | me (or tell me to do it) |
+| G8 | `v1.0.0-rc2` exists; add `v1.0.0` on the launch commit (`git tag -a v1.0.0 -m "First release" && git push origin v1.0.0`) | launch day | me (or tell me to do it) |
 | G9 | CAPTCHA on the apply form, login and password reset (Turnstile keys + one Edge Function); check Auth rate limits | day 30 | me (keys) + code |
 | G10 | A free staging Supabase project so live-style tests never touch production | day 14 | me |
 | G11 | The one intermittent browser failure: retry is on (`retries: 1`); if a test shows as "flaky" in the next runs, fix that test | day 14 | code |
