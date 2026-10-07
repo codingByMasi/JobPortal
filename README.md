@@ -21,7 +21,7 @@ Open the address it prints. A yellow banner says **Demo mode**: sample ads, pack
 | Command | What it does |
 |---|---|
 | `npm run dev` | run on your computer |
-| `npm test` | unit and database-rule tests (275, including 128 security tests that run the real database rules) |
+| `npm test` | unit and database-rule tests (344, including about 200 security tests that run the real database rules) |
 | `npm run test:all` | everything: tests, build, audit, browser tests, accessibility, Lighthouse (see `docs/07-testing.md`) |
 | `npm run build` | production build into `dist/`: checks `src/config.js` (stops on Cloudflare Pages if it has example values), writes the security headers, and writes search pages and sitemap when Supabase and `SITE_URL` are set |
 | `npm run schema` | rebuild `supabase/schema.sql` after changing a migration |
