@@ -4,7 +4,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: 'e2e',
   timeout: 60000,
-  retries: 0,
+  retries: 1, // one retry: a test that passes on the second try is reported as "flaky" so it is still visible
   workers: 3,
   fullyParallel: true,
   reporter: [['list'], ['json', { outputFile: 'test-results/e2e.json' }]],

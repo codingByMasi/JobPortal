@@ -1,13 +1,15 @@
 # 15 - Final release gate
 
+> **Update after the first run (same day).** Fixed in code: placeholder text replaced with plain draft wording (English and Hindi); one automatic retry for browser tests (a test that needs it is reported as "flaky", so it stays visible); a release-candidate tag `v1.0.0-rc1` on the tested commit; the offline check was run on the real-mode build (`npm run test:offline`: plain "No internet" sentence, no technical words, no crash, other screens still work). Still failing: GAP-1 only. The numbers in section 2 are from the first run; the gate script now shows 0 placeholder failures and 0 tag failures.
+
 Date: 2026-10-08. **Commit tested: `d532c08`** (the report and two small test files were committed after it; no application code changed after `d532c08`). Branch `main`, repository `codingByMasi/JobPortal`. Code freeze kept: only test files, scripts and this report were added.
 
 > **File names.** Your brief says "docs/12 readiness report", "docs/13 email setup" and "docs/08-testing-checklist.md". In this project the readiness report is `docs/14-release-readiness-report.md`, `docs/13` is the Cloudflare guide (the email sender is in `docs/06-deploy.md`), and the testing guide is `docs/07-testing.md`. This report is `docs/15-final-release-gate.md` and the new commands are written in `docs/07-testing.md`.
 
-## 1. Verdict: NO-GO today. It becomes GO WITH CONDITIONS when blockers G1 to G7 are closed
+## 1. Verdict: NO-GO today. It becomes GO WITH CONDITIONS when blockers G2 to G7 are closed (G1 was fixed in code after the first run; see the update below)
 
 1. The code is in good shape: 390 unit and database tests, 178 browser runs (phone and desktop), 4 Lighthouse pages at 94 to 97, 0 dependency problems, no secrets anywhere, all tables protected.
-2. The Refund policy page still shows the words `[PLACEHOLDER: ...]` to every visitor (and so does the About page until a company name is saved). That cannot go public.
+2. The Refund policy and About pages showed the words `[PLACEHOLDER: ...]` to visitors. **Fixed after the first run:** they now carry plain draft wording (full refund within 7 days if the ad is not yet live; "company details shown once our registration is complete"). A lawyer must still approve the words (G16).
 3. Nothing has been run on the real services yet: no real signup, no real email, no real picture upload, no admin account exists (0 users), and the shop details (UPI ID, WhatsApp) are empty, so the site correctly hides payment details.
 4. Supabase is probably still on the 6-letter minimum password, the paid plan and backups are not confirmed, and there is no staging project and no release tag.
 5. Everything above is quick and mostly yours to do (section 6). After that, run the controlled test in Part B and launch.
@@ -17,9 +19,9 @@ Date: 2026-10-08. **Commit tested: `d532c08`** (the report and two small test fi
 | | Count | What |
 |---|---|---|
 | Passed | **597** | 390 unit and database-rule tests, 178 browser runs, 4 Lighthouse pages, 25 gate checks |
-| Failed | **3** | gate: visible placeholder text (G1), no release tag (G8); known gap GAP-1 (picture files left behind after deleting an ad) |
-| Intermittent | 1 | one browser test failed once in 3 full runs and passed twice after (name not captured; retries are 0). See G11 |
-| Skipped on purpose | 2 | the live database test (it writes, even though it rolls back: no safe staging project exists), real offline test (needs the real site) |
+| Failed | **3** at first run, **1** now | placeholder text (G1) and no release tag (G8) are fixed; known gap GAP-1 (picture files left behind after deleting an ad) stays |
+| Intermittent | 1 | one browser test failed once in 3 full runs and passed twice after (name not captured). One automatic retry is now on, so a repeat will be listed as "flaky" with its name (G11) |
+| Skipped on purpose | 1 | the live database test (it writes, even though it rolls back: no safe staging project exists). The offline check was done afterwards on the real-mode build |
 | Not verified | **33** | the settings I cannot see (section 4) |
 | Information only | 5 | |
 
@@ -36,7 +38,7 @@ Commands: `npm run test:all` (lint, unit and database, build, audit, browser, Li
 | 2d | Bundle size | measured `dist/assets` | **Pass** | 813 KB raw, 237 KB compressed; largest file 128 KB |
 | 2e | Hosted build stops without the Supabase values | `CF_PAGES=1 node scripts/checkConfig.mjs` | **Pass** | exit 1 without values, exit 0 with |
 | 2f | "Build refuses while src/config.js has placeholders" | | **Changed by design** | since step 12 the shop details are saved in Admin > Settings and the site hides what is empty. Placeholders in `config.js` are demo defaults only |
-| 2g | No placeholder text on screens, translations (English and Hindi), public files | `release-gate` scan | **FAIL** | `[PLACEHOLDER` in About (en.js:712, hi.js:711) and Refund policy (en.js:729, hi.js:728). Help lines such as "for example 919876543210" are examples, not placeholders |
+| 2g | No placeholder text on screens, translations (English and Hindi), public files | `release-gate` scan | **Pass (after fix)** | first run found `[PLACEHOLDER` in About and Refund policy; replaced with draft wording. Help lines such as "for example 919876543210" are examples, not placeholders. Lawyer approval still open (G16) |
 | 3a | Variables the browser reads | grep of `import.meta.env` | **Pass** | only `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_TURNSTILE_SITE_KEY` and the yes/no switch `VITE_ALLOW_DEMO` (must not be set on Cloudflare) |
 | 3b | No secret or service_role key in code, docs, built site, git history | pattern scan, JWT roles decoded | **Pass** | the only key-like word in the built site is the Supabase library checking key prefixes; no key value |
 | 3c | `.env` ignored, not tracked | `git check-ignore`, `git ls-files` | **Pass** | `.env`, `.dev.vars` ignored |
@@ -61,7 +63,7 @@ Commands: `npm run test:all` (lint, unit and database, build, audit, browser, Li
 | 10c | HTTPS redirect | | NOT VERIFIED | needs the live site (Part B) |
 | 10d | Scheduled deploy hook | | NOT VERIFIED | not created yet (G13). If the caller fails, the site keeps working; new ads simply have no search page or good preview until the next successful build |
 | 10e | Rollback method | | documented below | Cloudflare keeps every deployment |
-| 10f | Release tag or commit recorded | `git tag` | **FAIL** | commit `d532c08` is pushed; there is no tag (G8) |
+| 10f | Release tag or commit recorded | `git tag` | **Pass (after fix)** | tag `v1.0.0-rc1` on the tested commit; make `v1.0.0` on launch day (G8) |
 
 ### 3a. Earlier blockers (from `docs/14-release-readiness-report.md`)
 
@@ -123,7 +125,7 @@ Not covered (cannot be tested without the real services): email confirmation lin
 | 27 | Accountant review | GST on fees, receipts | their answer |
 | 28 | Business bank account and UPI ID | fill Admin > Settings; pay yourself Rs 1 from another phone and check the name shown in the UPI app | screenshot of the UPI payee name |
 | 29 | Expired and reused email links | use a password-reset link twice | the message shown |
-| 30 | Offline behaviour on the real site | open the site, switch the phone to flight mode, tap around | what you see |
+| 30 | Offline behaviour on the real site | done on the real-mode build with `npm run test:offline` (pass); on the live site open it, switch the phone to flight mode, tap around | what you see |
 | 31 | Link preview in WhatsApp | paste an approved ad link and a country link into "message yourself" | screenshot |
 | 32 | Failed payments / failed emails place | Admin > Payments shows payments; email failures are in Supabase > Authentication > Logs and the Resend dashboard | confirm you can find them |
 | 33 | Uptime alerts | UptimeRobot (free) for the site and the Supabase address | screenshot |
@@ -132,7 +134,7 @@ Not covered (cannot be tested without the real services): email confirmation lin
 
 | ID | Severity | Evidence | Plain-words risk | Fix | Effort | Owner |
 |---|---|---|---|---|---|---|
-| G1 | High | `[PLACEHOLDER` at `en.js:712, 729`, `hi.js:711, 728` | Visitors read "[PLACEHOLDER: ...]" on the Refund page (and on About until a company name is saved). Looks unfinished and the refund rule is not real yet | Lawyer-approved Refund text in both languages; save the company name in Admin > Settings for About | S | professional + code (I swap the text) |
+| G1 (fixed in code, needs approval) | High | `[PLACEHOLDER` at `en.js:712, 729`, `hi.js:711, 728` | Visitors read "[PLACEHOLDER: ...]" on the Refund page (and on About until a company name is saved). Looks unfinished and the refund rule is not real yet | Lawyer-approved Refund text in both languages; save the company name in Admin > Settings for About | S | professional + code (I swap the text) |
 | G2 | High | live `site_settings`: 0 rows | Until the UPI ID, its name and the WhatsApp number are saved, employers see "payment details are not ready" and no WhatsApp button | Fill Admin > Settings (check the UPI ID twice) | S | me |
 | G3 | High | earlier Auth diff showed the default length; screenshot needed | People can pick 6-letter passwords | Set minimum password length 8 | S | me |
 | G4 | High | not tested | Signup and reset emails may land in spam or fail | Section 4 items 6, 7, 21, 22 | S | me |
@@ -144,10 +146,10 @@ Not covered (cannot be tested without the real services): email confirmation lin
 
 | ID | Item | Deadline | Owner |
 |---|---|---|---|
-| G8 | Release tag `v1.0.0` on the launch commit (`git tag -a v1.0.0 -m "First release" && git push origin v1.0.0`) | launch day | me (or tell me to do it) |
+| G8 | `v1.0.0-rc1` exists; add `v1.0.0` on the launch commit (`git tag -a v1.0.0 -m "First release" && git push origin v1.0.0`) | launch day | me (or tell me to do it) |
 | G9 | CAPTCHA on the apply form, login and password reset (Turnstile keys + one Edge Function); check Auth rate limits | day 30 | me (keys) + code |
 | G10 | A free staging Supabase project so live-style tests never touch production | day 14 | me |
-| G11 | The one intermittent browser failure: turn retries on in CI (`retries: 1`) and capture the test name | day 14 | code |
+| G11 | The one intermittent browser failure: retry is on (`retries: 1`); if a test shows as "flaky" in the next runs, fix that test | day 14 | code |
 | G12 | Orphan picture files: run Admin > Problems > "Look for unused files" weekly | weekly | me |
 | G13 | Scheduled deploy hook (every 3 hours) so new ads get search pages and good previews | launch week | me |
 | G14 | Part B live smoke test and the first-week checks | launch day | me + code |
