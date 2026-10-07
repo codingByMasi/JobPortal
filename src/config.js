@@ -14,7 +14,7 @@ export const CONTACT_EMAIL = 'help@example.com';
 
 // PLACEHOLDER: the final address of your site, no slash at the end (example: https://jobsabroad.example.com).
 // Used at build time for the sitemap, share previews and Google job data. Leave as is until you know it.
-export const SITE_URL = 'PASTE_SITE_URL_HERE';
+export const SITE_URL = 'https://deshduniyanaukri.com';
 
 // PLACEHOLDER (optional): your Plausible Analytics domain, e.g. jobsabroad.example.com. Empty = no analytics.
 export const ANALYTICS_DOMAIN = '';
