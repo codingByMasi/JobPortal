@@ -1,6 +1,6 @@
 # 03 - Database and security
 
-Source of truth: the numbered files in `supabase/migrations` (0001 to 0021). Put a new file on the live project only with `node scripts/live-apply.mjs <file>` (tests first, then the file, then the live test). `supabase/schema.sql` is generated from them (`npm run schema`); a test fails if it is out of date. Never edit a migration that has already been run on a real project: add a new one.
+Source of truth: the numbered files in `supabase/migrations` (0001 to 0022). Put a new file on the live project only with `node scripts/live-apply.mjs <file>` (tests first, then the file, then the live test). `supabase/schema.sql` is generated from them (`npm run schema`); a test fails if it is out of date. Never edit a migration that has already been run on a real project: add a new one.
 
 ## Tables
 | Table | Holds | Notes |
@@ -20,6 +20,7 @@ Source of truth: the numbered files in `supabase/migrations` (0001 to 0021). Put
 | `reports` | a visitor reports a live ad: reason (`asked_money`, `fake_company`, `wrong_details`, `other`), short message, optional phone, status (`open`/`done`/`dismissed`), scrambled address | anyone may insert for a live ad (once per ad and 10 an hour per address); only admins read or change; deleted with the ad; closed ones forgotten after a year (0020) |
 | `deletion_requests` | someone asks us to delete their account and data: email, note, status | anyone may insert (one open request per email, 5 a day per address); only admins read or change; an admin must check that the writer owns the email (0020) |
 | `site_settings` | WhatsApp number, UPI ID, name on the UPI ID, contact email, complaints person and email, company name, site address (one row per setting) | public ones readable by everyone; the UPI ID and its name only by logged-in people; nobody writes the table directly: only `admin_save_settings()` (admin only) writes, checks each value and logs old and new value in `admin_log` (0021) |
+| `guides` | the four guides (admin, employer, job seeker, features) as text | only admins read them; nobody writes through the website; published with `npm run guides:publish` (0022) |
 | `app_settings` | private settings: `storage_base` (our storage address), optional `applicants_need_verified` | no browser access at all; set in the SQL editor |
 | view `public_jobs` | live, not-ended ads + `featured` + `recruiter_verified` + the employer's registration number **only when admin has verified the employer** + the job facts + thumbnail + details | the ONLY way visitors read ads; hides owner ids and internal fields |
 

@@ -50,3 +50,5 @@ The WhatsApp number, UPI ID, name on the UPI ID, emails, company name and site a
 | `docs/CHANGELOG.md` | what changed in each step |
 
 `design/` holds screenshots from the original Figma design for reference.
+
+**Guides for the people who use the app** (`docs/16-employer-guide.md`, `docs/17-job-seeker-guide.md` in English and Hindi, `docs/10-admin-guide.md`, `docs/18-app-features.md`) are saved in the database and shown only to admins in **Admin > Guides**; publish changes with `npm run guides:publish`. Make someone an admin with `node scripts/make-admin.mjs person@example.com`.

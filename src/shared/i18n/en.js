@@ -791,4 +791,12 @@ Problem: `,
   settingsMissingLink: 'Open Settings',
   payNotReady: 'Payment details are not ready yet. Please contact us and we will help you.',
   aboutWho: (name) => `Jobs Abroad is run by ${name}.`,
+  /* guides for admins (migration 0022) */
+  tabGuides: 'Guides',
+  guidesHelp: 'Guides for you, your employers and job seekers. Only admins can read them here. Tap Copy to send a guide on WhatsApp or by email.',
+  guidesNone: 'No guides have been published yet. Ask your developer to publish them.',
+  guideMissing: 'This guide has not been published.',
+  guideCopy: 'Copy the text',
+  guideCopied: 'Copied',
+  guideUpdated: (date) => `Last updated ${date}`,
 };

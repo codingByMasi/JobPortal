@@ -238,3 +238,14 @@ tfoot td { background: var(--blue-card); }
 .info-block { padding: 14px 16px; background: #fff; border: 2px solid var(--line-strong); border-radius: var(--radius); }
 .info-block h2 { display: flex; align-items: center; gap: 8px; font-size: 19px; margin: 0 0 6px; }
 .info-block p { margin: 0; }
+
+/* guides (migration 0022) */
+.markdown { display: flex; flex-direction: column; gap: 10px; }
+.markdown h2, .markdown h3, .markdown h4, .markdown h5 { margin: 14px 0 0; }
+.markdown p, .markdown li { line-height: 1.5; }
+.markdown ul, .markdown ol { padding-left: 24px; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.markdown blockquote { margin: 0; padding: 10px 14px; border-left: 4px solid var(--blue); background: #eef4ff; border-radius: 8px; }
+.markdown code { background: #f1f1f1; padding: 1px 6px; border-radius: 6px; word-break: break-word; }
+.markdown pre { overflow-x: auto; padding: 12px; background: #f1f1f1; border-radius: 8px; }
+.markdown hr { border: 0; border-top: 1px solid var(--line-strong); width: 100%; }
+@media print { .no-print, .site-header, .site-footer, .sub-nav { display: none !important; } }

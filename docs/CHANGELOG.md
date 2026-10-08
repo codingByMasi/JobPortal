@@ -1,5 +1,10 @@
 # Changelog
 
+## Step 15 - Guides (admin only) and the admin helper (migration 0022)
+- New guides in `docs/`: `16-employer-guide.md`, `17-job-seeker-guide.md` (English and Hindi), `18-app-features.md`; `10-admin-guide.md` got "First day as admin", "Making someone an admin" and "Updating the guides".
+- **Guides are for admins only:** they are saved in a new table `guides` that only admins can read (migration 0022), shown in **Admin > Guides** with a Copy button, and published from `docs/` with `npm run guides:publish`. They are not in the website files (a file there could be downloaded by anyone who knows its address). 4 database tests and a browser test check that visitors and employers cannot read them.
+- New script `scripts/make-admin.mjs` (`--list`, make admin, `--remove`): works only for an account that exists, has a confirmed email and is not blocked; writes `admin_log`. Used once on the live project for the owner's account.
+
 ## Step 13 - Moved to a Mumbai database
 - A new Supabase project **JobPortal-Mumbai** (`nvjoiomubxtqnnlmfzkb`, region `ap-south-1`) was created and `scripts/move-project.mjs` moved the app to it: all 21 migrations, the sample plans, the project's own storage address, the public key in `.env`. The live test passes 98 of 98 on the new project; 16 tables all have row security; the expiry and clean-up schedules are running; the bucket exists; no users and no data yet (nothing to copy). The old Seoul project (`nxdwnmoqtyfosrxbpmze`) was checked (0 users, 0 ads, 0 applications, 0 payments, 0 files) and then deleted at the owner's request. Steps still to do by hand in the new project: `docs/11-owner-checklist.md`.
 

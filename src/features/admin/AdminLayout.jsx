@@ -21,6 +21,7 @@ export default function AdminLayout() {
     { to: '/admin/offers', icon: 'badge', label: t.tabOffers },
     { to: '/admin/applications', icon: 'file', label: t.tabAdminApps },
     { to: '/admin/requests', icon: 'edit', label: t.tabAdminRequests },
+    { to: '/admin/guides', icon: 'file', label: t.tabGuides },
     { to: '/admin/settings', icon: 'settings', label: t.tabSettings },
     { to: '/admin/security', icon: 'shield', label: t.tabSecurity },
     { to: '/admin/reports', icon: 'alert', label: t.tabReports },

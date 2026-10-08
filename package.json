@@ -18,7 +18,8 @@
     "lint": "eslint .",
     "release:gate": "node scripts/release-gate.mjs",
     "smoke:live": "node scripts/smoke-live.mjs",
-    "test:offline": "node scripts/offline-check.mjs"
+    "test:offline": "node scripts/offline-check.mjs",
+    "guides:publish": "node scripts/publish-guides.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",

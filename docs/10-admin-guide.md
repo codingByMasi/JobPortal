@@ -1,6 +1,27 @@
 # 10 - Admin guide (plain words)
 
-For the person who runs the site every day. No technical knowledge needed. Use the **Admin** tabs: Dashboard, All ads, Employers, Payments, Packages, Applications, Change requests, Security.
+For the person who runs the site every day. No technical knowledge needed. Use the **Admin** tabs: Dashboard, All ads, Employers, Payments, Packages, Offers, Applications, Change requests, Guides, Settings, Security, Reports, History, Problems. A short description of every feature is in the **Guides** tab ("What the app does"). The guides are saved in the database and **only admins can read them** (Admin > Guides); the employer and job seeker guides are there too, with a **Copy the text** button so you can send them on WhatsApp.
+
+## First day as admin (do once)
+1. Log in. Open **Security** and turn on two-step login (scan the QR code with an authenticator app, type the code). Save the app's recovery option.
+2. Open **Settings** and fill in the WhatsApp number, UPI ID and its name, emails, complaints person, company name and site address. Check the UPI ID twice.
+3. Open **Packages** and set your real plan prices. Open **Offers** only when you want a discount.
+4. Make a second admin (below) and have them turn on two-step login too.
+
+## Making someone an admin
+An admin can do everything, including changing the UPI ID, so give it to as few people as possible (two or three) and only to people you trust. Each admin must turn on two-step login.
+1. The person signs up on the site like an employer and confirms their email.
+2. **On the computer with the project** (Supabase already linked): open a terminal in the project folder and run
+   `node scripts/make-admin.mjs person@example.com`
+   It refuses if the person has no account, has not confirmed their email, or is blocked. It writes a line in the admin log.
+3. The person logs out and in again, and opens **Admin > Security** to turn on two-step login.
+- **See everyone:** `node scripts/make-admin.mjs --list`
+- **Take admin away:** `node scripts/make-admin.mjs person@example.com --remove` (they become a normal employer again).
+- **Without the computer:** Supabase dashboard > Table Editor > `profiles` > find the row (the email is in Authentication > Users; match by the id) > change `role` from `recruiter` to `admin` > Save. To remove, change it back.
+- When someone leaves the team, remove their admin role the same day.
+
+## Updating the guides
+The guides are written in `docs/10-admin-guide.md`, `16-employer-guide.md`, `17-job-seeker-guide.md` and `18-app-features.md`. After you change one, run `npm run guides:publish` on the computer with the project: it saves the new text in the database for Admin > Guides.
 
 ## Every day (about 15 minutes)
 1. **Dashboard**: look at the four numbers. Tap "Waiting for approval", "Change requests".

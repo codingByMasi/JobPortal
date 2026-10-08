@@ -113,3 +113,24 @@ test.describe('trust and facts', () => {
     await logout(page);
   });
 });
+
+test.describe('guides are for admins only', () => {
+  test('an admin reads and copies a guide; an employer and a visitor cannot open the page', async ({ page, context }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => {});
+    await page.goto('/admin/guides');
+    await expect(page).toHaveURL(/\/login/);
+    await login(page, 'employer');
+    await page.goto('/admin/guides');
+    await expect(page.getByRole('heading', { name: 'This page is not for you' })).toBeVisible();
+    await page.goto('/dashboard');
+    await logout(page);
+    await login(page, 'admin');
+    await page.goto('/admin/guides');
+    await expect(page.getByRole('button', { name: 'Admin guide' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Every day' })).toBeVisible();
+    await page.getByRole('button', { name: 'Employer guide' }).click();
+    await expect(page.getByText('Demo copy for employers.')).toBeVisible();
+    await page.getByRole('button', { name: 'Copy the text' }).click();
+    await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible();
+  });
+});

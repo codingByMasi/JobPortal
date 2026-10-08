@@ -32,6 +32,7 @@ const AdminHome = lazy(() => import('./features/admin/AdminHome'));
 const AdminJobForm = lazy(() => import('./features/admin/AdminJobForm'));
 const AdminJobs = lazy(() => import('./features/admin/AdminJobs'));
 const AdminLayout = lazy(() => import('./features/admin/AdminLayout'));
+const AdminGuides = lazy(() => import('./features/admin/AdminGuides'));
 const AdminSettings = lazy(() => import('./features/admin/AdminSettings'));
 const AdminReports = lazy(() => import('./features/admin/AdminReports'));
 const AdminAudit = lazy(() => import('./features/admin/AdminAudit'));
@@ -91,6 +92,7 @@ export default function App() {
             <Route path="history" element={<AdminAudit />} />
             <Route path="reports" element={<AdminReports />} />
             <Route path="settings" element={<AdminSettings />} />
+            <Route path="guides" element={<AdminGuides />} />
             <Route path="applications" element={<AdminApplications />} />
             <Route path="requests" element={<AdminRequests />} />
             <Route path="security" element={<AdminSecurity />} />
