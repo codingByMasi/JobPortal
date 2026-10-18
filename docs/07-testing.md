@@ -61,7 +61,10 @@ Follow `06-deploy.md` section C2 with `supabase/sample-ads.sql`. Expected: 3 liv
 ## Security check (real project only)
 Run the 8-point list in `03-database-security.md` with two employer accounts and a visitor.
 
-## Online payment (Razorpay) - hand test, test mode only
+## Online payment (Razorpay)
+Automatic: `scripts/razorpay.e2e.test.mjs` runs the real Edge Function logic (`supabase/functions/_shared/handlers.js`) against the real migrations: order, signed webhook, repeated event, wrong signature, wrong amount, database failure and retry, admin approval, refund. Only Razorpay's own server is faked.
+
+### Hand test, test mode only
 Not covered by automatic tests (they need the real Razorpay). Do all of this with test keys:
 1. Post an ad, choose a plan, open Pay: the **Pay online** box shows above the UPI steps. With `VITE_RAZORPAY_KEY_ID` empty it must not show.
 2. Pay with a Razorpay test card/UPI. The screen says it is confirming, then "Payment confirmed". The ad is now "Waiting for approval"; Admin > Payments shows a Razorpay payment with the right amount.
