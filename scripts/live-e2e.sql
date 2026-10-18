@@ -262,7 +262,7 @@ begin
   res := res || pg_temp.chk('14 system', 'clean-up function runs for the system', 'allowed', r);
   r := pg_temp.try('select count(*)::text from public.admin_log', u_e1);
   res := res || pg_temp.chk('14 system', 'employer cannot read the admin log', '0', r);
-  select count(*)::text into r from public.admin_log;
+  select count(*)::text into r from public.admin_log where created_at >= now(); -- only this test's own lines (the real log already holds real entries)
   res := res || pg_temp.chk('14 system', 'admin actions were logged (6 lines: mark paid, approve, reject, hide, show, refund)', '6', r);
 
   -- ===== 15. launch hardening (migration 0017) =====
