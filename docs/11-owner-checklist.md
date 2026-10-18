@@ -43,7 +43,6 @@ These pages hold **placeholder drafts**. They are not legal advice. Please have 
 - [ ] Paid ads cannot be edited; employers use "Ask us to change this".
 - [ ] Hindi when the phone is set to Hindi.
 - [ ] Prices are shown publicly on the Post-a-job page.
-- [ ] Ask Razorpay now whether overseas-job advertising is allowed (Phase 2).
 - [ ] Optional: a "send us your ad on WhatsApp, we post it" service at a higher price (not built).
 
 ## D. Optional extras that need an outside account

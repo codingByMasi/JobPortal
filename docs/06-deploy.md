@@ -53,7 +53,7 @@ Full details and the dashboard checklist: `13-cloudflare-pages.md`.
 5. **Keep share previews and search pages fresh:** Settings > Builds > **Deploy hooks**: create one and call it every 3 hours with a free cron service (for example cron-job.org). New ads then get their own page and picture preview within about 3 hours, and ended ads leave search results. (The free plan allows 500 builds a month; hourly would need 720, so do not go below every 2 hours.)
 6. **Custom domain:** Custom domains > Set up a domain. Then put the same address in `SITE_URL`, in Supabase (Authentication > URL configuration: Site URL and the `/reset-password` redirect), and in the Turnstile widget's allowed hostnames.
 7. Submit `https://YOUR-SITE/sitemap.xml` in Google Search Console.
-8. The security headers and caching rules are written at build time into `dist/_headers` (`scripts/headers.mjs`). If you add a new outside service (for example Razorpay), add its address there on purpose.
+8. The security headers and caching rules are written at build time into `dist/_headers` (`scripts/headers.mjs`). If you add a new outside service (for example an analytics counter), add its address there on purpose.
 
 ## F. Before real customers
 - Use the **paid** Supabase plan: free projects pause after about a week without visits and have no backups.

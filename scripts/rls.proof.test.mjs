@@ -148,3 +148,14 @@ describe('24b. payment proof', () => {
     await denied(as(db, e1, () => db.query("insert into public.payment_proofs (job_id, recruiter_id, reference, file_path) values ($1, $2, 'DIRECT00GGG', 'x/aaaaaaaaaaa')", [job, e1])));
   });
 });
+
+describe('25. Razorpay removed (migration 0025)', () => {
+  it('its functions, table and columns are gone, and "Mark as paid" still works', async () => {
+    expect(await countOf(db, "select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname like 'razorpay%'")).toBe(0);
+    expect(await countOf(db, "select 1 from information_schema.tables where table_schema = 'public' and table_name = 'razorpay_events'")).toBe(0);
+    expect(await countOf(db, "select 1 from information_schema.columns where table_schema = 'public' and table_name = 'payments' and column_name like 'razorpay%'")).toBe(0);
+    const job = await newAd(e1);
+    const [pay] = (await adminDo('select * from public.admin_mark_paid($1)', [job])).rows;
+    expect(pay.status).toBe('paid');
+  });
+});

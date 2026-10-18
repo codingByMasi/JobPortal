@@ -8,7 +8,7 @@ export function errorKey(err) {
     LOGIN: 'errLogin', EMAIL_TAKEN: 'errEmailTaken', WEAK_PASSWORD: 'errWeakPassword', NETWORK: 'errNetwork',
     BLOCKED: 'errBlocked', NOT_ALLOWED: 'errNotAllowed', NEED_LOGIN: 'errNeedLogin', NOT_FOUND: 'errNotFound',
     FILE_TYPE: 'errFileType', PDF_BIG: 'errPdfBig', IMAGE_FAIL: 'errImage', STORAGE_FULL: 'errStorageFull',
-    EMAIL_NOT_CONFIRMED: 'errEmailNotConfirmed', TOO_MANY_ADS: 'errTooManyAds', DUPLICATE: 'errAlreadyApplied', LIMIT: 'errTooManyApplications', ENDED: 'errEnded', NOT_WAITING: 'errNotWaiting', BAD_PRICE: 'errPrice', UPLOAD: 'errUpload', TOO_MANY_REQUESTS: 'errTooManyRequests', MFA_CODE: 'errMfaCode', NEED_MESSAGE: 'errNeedMessage', ONLINE_PAY_FAILED: 'errOnlinePay',
+    EMAIL_NOT_CONFIRMED: 'errEmailNotConfirmed', TOO_MANY_ADS: 'errTooManyAds', DUPLICATE: 'errAlreadyApplied', LIMIT: 'errTooManyApplications', ENDED: 'errEnded', NOT_WAITING: 'errNotWaiting', BAD_PRICE: 'errPrice', UPLOAD: 'errUpload', TOO_MANY_REQUESTS: 'errTooManyRequests', MFA_CODE: 'errMfaCode', NEED_MESSAGE: 'errNeedMessage',
   };
   if (map[code]) return map[code];
   if (/invalid login credentials/i.test(msg)) return 'errLogin';

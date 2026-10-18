@@ -134,7 +134,6 @@ export default function AdminPayments() {
           <select value={method} onChange={(e) => setParam('method', e.target.value)}>
             <option value="all">{t.allMethods}</option>
             <option value="manual">{t.methodManual}</option>
-            <option value="razorpay">{t.methodRazorpay}</option>
           </select>
         </Field>
         <Button icon="plus" onClick={() => setAdding(true)}>{t.addPayment}</Button>

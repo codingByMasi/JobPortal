@@ -4,9 +4,7 @@
 // Today (Phase 1): startPayment() sends the employer to the "Payment instructions" screen
 // (pay by UPI, then tell us on WhatsApp; an admin marks the ad as paid).
 //
-// Phase 2: replace the body of startPayment() with: ask the server (a Supabase Edge Function)
-// to create a Razorpay order for this job, open Razorpay Checkout, and let a webhook mark the
-// ad paid. Nothing else in the app needs to change.
+// Online payment is not used (decision of the owner): payment stays UPI + QR + proof, checked by the admin.
 // ============================================================================
 import { adReference } from '../../shared/lib/adReference';
 import { whatsappLink } from '../../shared/lib/format';

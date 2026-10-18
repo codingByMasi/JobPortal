@@ -64,18 +64,6 @@ Run the 8-point list in `03-database-security.md` with two employer accounts and
 ## QR picture and payment proof
 Automatic: `scripts/rls.proof.test.mjs` (database rules) and `e2e/proof.spec.js` (admin uploads, replaces and removes the QR picture; the employer sends a proof; the admin sees it, rejects it with a reason, the employer sends again, the admin marks the ad paid). Hand check on the real project: upload your real QR, scan it with a phone and confirm it pays your account; send a real proof from an employer test account and open the screenshot as admin (the link is a private link that works for 5 minutes).
 
-## Online payment (Razorpay)
-Automatic: `scripts/razorpay.e2e.test.mjs` runs the real Edge Function logic (`supabase/functions/_shared/handlers.js`) against the real migrations: order, signed webhook, repeated event, wrong signature, wrong amount, database failure and retry, admin approval, refund. Only Razorpay's own server is faked.
-
-### Hand test, test mode only
-Not covered by automatic tests (they need the real Razorpay). Do all of this with test keys:
-1. Post an ad, choose a plan, open Pay: the **Pay online** box shows above the UPI steps. With `VITE_RAZORPAY_KEY_ID` empty it must not show.
-2. Pay with a Razorpay test card/UPI. The screen says it is confirming, then "Payment confirmed". The ad is now "Waiting for approval"; Admin > Payments shows a Razorpay payment with the right amount.
-3. Close the window without paying: "The payment was not completed"; the ad stays "Waiting for payment".
-4. Resend the same event from the Razorpay dashboard: nothing changes (`razorpay_events` outcome `duplicate`).
-5. Refund in the Razorpay dashboard: the payment shows Refunded.
-6. Check the browser console for blocked-by-CSP messages while the window is open; if any, add that address in `scripts/headers.mjs` on purpose.
-7. Pay with a 100% offer: no Razorpay window (the ad is free and goes to review at once).
 
 ## Accessibility
 Automated axe scan (WCAG 2.1 AA) at 375 px in English and Hindi: **clean on every public, employer and admin screen** (one finding on the turned-off package row was fixed). Re-run after any visual change.

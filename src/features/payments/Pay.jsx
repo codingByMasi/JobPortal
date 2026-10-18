@@ -12,10 +12,8 @@ import { canPay } from '../../shared/lib/jobStatus';
 import { useLang } from '../../shared/i18n/LangContext';
 import { formatPrice } from '../../shared/lib/money';
 import { paymentInfo } from './payments';
-import OnlinePay from './OnlinePay';
 import ManualQr from './ManualQr';
 import ProofForm from './ProofForm';
-import { RAZORPAY_KEY_ID, hasSupabase } from '../../shared/data/env';
 import { useAsync } from '../../shared/lib/useAsync';
 import { useSettings } from '../../shared/settings/SettingsContext';
 
@@ -53,8 +51,7 @@ export default function Pay() {
           }
           if (!ready) return <Loading />;
           const manualReady = has('upiId') && has('upiName');
-          const online = hasSupabase && Boolean(RAZORPAY_KEY_ID);
-          if (!manualReady && !online) {
+          if (!manualReady) {
             return (
               <>
                 <Notice tone="info">{t.payNotReady}</Notice>
@@ -66,11 +63,8 @@ export default function Pay() {
           const info = paymentInfo(job, job.package, settings);
           const amount = formatPrice(info.amountPaise);
           const waLink = info.whatsappLink(t.payWaMessage(info.reference, info.jobTitle, amount));
-          if (!manualReady) return <OnlinePay job={job} amountPaise={info.amountPaise} companyName={settings.companyName} />;
           return (
             <>
-              {online && <OnlinePay job={job} amountPaise={info.amountPaise} companyName={settings.companyName} />}
-              {online && <h3 className="section-title">{t.payOrUpi}</h3>}
               <p className="help">{t.payHelp}</p>
               <dl className="pay-box">
                 <div><dt>{t.colAd}</dt><dd>{job.title}</dd></div>

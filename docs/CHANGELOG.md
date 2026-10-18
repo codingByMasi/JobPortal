@@ -1,5 +1,8 @@
 # Changelog
 
+## Step 19 - Razorpay removed (migration 0025)
+- Online payment is not needed, so everything built for it was removed: the two Edge Functions, the "Pay online" box, the checkout loader, the Razorpay security-header entries, the `VITE_RAZORPAY_KEY_ID` setting, their texts and tests. Migration 0025 drops the Razorpay database functions, the `razorpay_events` table and the Razorpay columns of `payments` (it refuses to run if any Razorpay payment record exists). `mark_job_paid` stays: the admin's Mark as paid uses it. Payment is UPI + QR + payment proof, checked by the admin. `docs/08` now explains the decision; the code is in git history (`d44f3ff`, `cd2a722`).
+
 ## Step 18 - Admin QR picture and payment proof (migration 0024)
 - **QR picture:** the admin can upload, replace and remove the shop's own payment QR in Admin > Settings; employers see it on the payment screen (otherwise the generated UPI QR code). New public bucket `shop-assets` (admin writes only) and setting `qr_path`.
 - **Payment proof:** after paying, the employer sends the UTR reference number and a screenshot (private bucket `payment-proofs`, table `payment_proofs`). The Ads tab shows **Proof sent**; the **Mark as paid** pop-up shows the reference, the date and the screenshot, with **Money not found** (reject with a reason the employer reads). A reference can back only one live proof and is refused if a payment already uses it. Marking the ad paid accepts the proof. The website cannot see the money itself: the admin still checks the bank.

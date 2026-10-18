@@ -45,4 +45,4 @@ Waiting for payment, then (admin marks paid) waiting for approval, then (admin a
 - Prices are always calculated by the server, never by the browser. The shop details are saved by admins and every change is logged.
 
 ## What is not built yet
-Online card/UPI payment (Phase 2, Razorpay); CAPTCHA on the apply form; email or WhatsApp notices to employers; Hindi search-engine pages; a mobile app (not needed: the site works on phones).
+CAPTCHA on the apply form; email or WhatsApp notices to employers; Hindi search-engine pages; a mobile app (not needed: the site works on phones).

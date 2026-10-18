@@ -6,8 +6,7 @@ Read this first. It is the rulebook for anyone (human or AI) changing this proje
 A job-ads website for people in India looking for work abroad (Gulf countries). Employers pay to post ads.
 Stack: Vite + React (plain JavaScript) + plain CSS + Supabase (database, login, file storage). No separate server.
 Roles: **visitor/candidate** (no login), **recruiter** (login, posts ads for a fee), **admin** (everything).
-Phase 1: the admin marks payments by hand (still works, and is the fallback).
-Phase 2 (built, test-mode checks still to do): Razorpay through Supabase Edge Functions. See `docs/08-phase2-payments.md`.
+Payments: the employer pays by UPI (QR code), sends a payment proof (UTR + screenshot), and the admin checks the money and marks the ad paid. No online payment gateway is used (`docs/08-phase2-payments.md`).
 The owner is not deeply technical: explain decisions in short, plain words.
 
 ## Folder structure
@@ -19,7 +18,6 @@ supabase/
   migrations/             numbered SQL files = the source of truth for the database
   seed.sql                sample packages
   schema.sql              GENERATED from the above (npm run schema). Paste-once file.
-  functions/              Edge Functions: create-razorpay-order, razorpay-webhook (+ _shared helpers)
 public/                   images, icons, manifest (no _redirects: Cloudflare Pages serves the app for unknown addresses by itself)
 scripts/                  build-time helpers: prerender (search pages + sitemap), schema builder, images
 src/
@@ -32,7 +30,7 @@ src/
     ads/                  the ad form + file field + package picker (used by recruiter AND admin)
     recruiter/            employer area: my ads, post/edit ad, my payments, applications
     admin/                admin area
-    payments/             startPayment() + the payment instructions screen. THE Phase 2 place.
+    payments/             startPayment() + the payment screen (QR code, proof form)
     site/                 contact, privacy/terms, post-a-job info, 404
   shared/
     ui/                   Button, Field, Icon, Modal, Notice, tabs, state views (look and feel, no business rules)
@@ -59,7 +57,7 @@ Tests sit next to the code they test (`*.test.js`) and in `scripts/*.test.mjs` (
 - **Errors:** never show technical words to users; use `friendlyMessage`. Every screen that loads data needs loading, empty and error states.
 
 ## Security rules (non-negotiable)
-- No secrets in the frontend. Only the public anon key is allowed in the browser. The service-role key and any Razorpay secret live ONLY in Supabase (Edge Function secrets) and never in the repo.
+- No secrets in the frontend. Only the public anon key is allowed in the browser. The service-role key lives ONLY in Supabase and never in the repo.
 - Row Level Security on every table. The database decides what is allowed; screen guards are only for convenience.
 - Employers must not be able to change `status`, `package_id`, `starts_at`, `expires_at` or write payments. Triggers enforce it. Keep it that way.
 - Validate every upload twice: in the browser (type, size, shrink) and in the database/bucket (type, size, own folder, link must point to our storage).
@@ -87,4 +85,4 @@ npm run schema    rebuild supabase/schema.sql from the migrations
 ```
 
 ## Docs
-`docs/16-employer-guide.md`, `docs/17-job-seeker-guide.md` (English and Hindi) and `docs/18-app-features.md` explain the app to its users and are published for admins only with `npm run guides:publish` (Admin > Guides) - `docs/15-final-release-gate.md` final release gate - `docs/14-release-readiness-report.md` pre-launch test pass - `docs/12-live-test-report.md` live test on the real project - `docs/10-admin-guide.md` the admin's daily guide - `docs/11-owner-checklist.md` what only the owner can do - `docs/00-project-analysis.md` full review and finding status - `docs/01-overview.md` product by role - `02-architecture.md` how it fits together - `03-database-security.md` tables, rules, security checks - `04-screens.md` every screen and status - `05-i18n.md` words - `06-deploy.md` set-up and go-live - `07-testing.md` tests and hand checklist - `08-phase2-payments.md` Razorpay plan - `09-decisions.md` why we chose what - `CHANGELOG.md`.
+`docs/16-employer-guide.md`, `docs/17-job-seeker-guide.md` (English and Hindi) and `docs/18-app-features.md` explain the app to its users and are published for admins only with `npm run guides:publish` (Admin > Guides) - `docs/15-final-release-gate.md` final release gate - `docs/14-release-readiness-report.md` pre-launch test pass - `docs/12-live-test-report.md` live test on the real project - `docs/10-admin-guide.md` the admin's daily guide - `docs/11-owner-checklist.md` what only the owner can do - `docs/00-project-analysis.md` full review and finding status - `docs/01-overview.md` product by role - `02-architecture.md` how it fits together - `03-database-security.md` tables, rules, security checks - `04-screens.md` every screen and status - `05-i18n.md` words - `06-deploy.md` set-up and go-live - `07-testing.md` tests and hand checklist - `08-phase2-payments.md` why there is no online payment gateway - `09-decisions.md` why we chose what - `CHANGELOG.md`.

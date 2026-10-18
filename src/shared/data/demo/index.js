@@ -4,7 +4,6 @@ import * as auth from './auth';
 import * as files from './files';
 import * as guides from './guides';
 import * as offers from './offers';
-import * as payments from './payments';
 import * as proofs from './proofs';
 import * as publicApi from './public';
 import * as recruiter from './recruiter';
@@ -22,7 +21,6 @@ export const demoApi = {
   ...trust,
   ...settings,
   ...guides,
-  ...payments,
   ...proofs,
   /** For the "Start again" button in the demo banner. */
   async resetDemo() {
