@@ -13,6 +13,7 @@ import { useLang } from '../../shared/i18n/LangContext';
 import { formatPrice } from '../../shared/lib/money';
 import { paymentInfo } from './payments';
 import OnlinePay from './OnlinePay';
+import QrCode from '../../shared/ui/QrCode';
 import { RAZORPAY_KEY_ID, hasSupabase } from '../../shared/data/env';
 import { useAsync } from '../../shared/lib/useAsync';
 import { useSettings } from '../../shared/settings/SettingsContext';
@@ -94,6 +95,10 @@ export default function Pay() {
                 <li><span className="step-num">2</span><Icon name="rupee" size={28} /><span>{t.payStep2(amount, info.upiId)}</span></li>
                 <li><span className="step-num">3</span><Icon name="whatsapp" size={28} /><span>{t.payStep3}</span></li>
               </ol>
+              <div className="pay-qr">
+                <QrCode value={info.upiLink} label={t.payQrLabel(amount, info.upiName)} />
+                <p className="help">{t.payQrHelp}</p>
+              </div>
               <div className="actions">
                 <Button tone="blue" icon="rupee" href={info.upiLink}>{t.payUpiApp}</Button>
                 <Button icon="whatsapp" href={waLink} target="_blank" rel="noopener noreferrer">{t.payPaidButton}</Button>

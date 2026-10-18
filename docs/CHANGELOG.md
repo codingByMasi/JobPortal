@@ -1,5 +1,8 @@
 # Changelog
 
+## Step 17 - QR code on the manual payment screen
+- The payment screen now shows a QR code of the UPI link (amount and ad code filled in) so an employer on a computer can pay with their phone. Made in the browser with the small `qrcode-generator` library (reason in `09-decisions.md`, no change to the security headers). English and Hindi text; unit tests and a browser test that the picture really loads. The admin already finds an ad by its code (AD-XXXXXXXX) in Admin > Ads and marks it paid with the UPI reference.
+
 ## Step 16 - Online payments with Razorpay (migration 0023) + fixes
 - **Razorpay:** new migration 0023 (`mark_job_paid`, `razorpay_order_info`, `razorpay_attach_order`, `razorpay_capture`, `razorpay_refund`, table `razorpay_events`, Razorpay ids on `payments`). The admin button now goes through `mark_job_paid` too. The server-only functions are closed to the browser, admins and visitors. Two Edge Functions in `supabase/functions`: `create-razorpay-order` (price read from the database) and `razorpay-webhook` (signature checked, each event once). New "Pay online" box on the payment screen when `VITE_RAZORPAY_KEY_ID` is set; manual UPI stays as the fallback; the admin still approves every ad. Checkout addresses are added to the security headers only when online payment is on. 9 database tests and 11 helper tests; the Razorpay window, webhook and CSP are NOT tested against the real Razorpay yet (see 07-testing).
 - **Fixes:** `.gitattributes` keeps line endings as LF (on Windows the schema test failed because Git changed them); `test:lighthouse` honours `CHROME_PATH` (Playwright's Chromium cannot be started by Lighthouse on some Windows setups).

@@ -285,6 +285,9 @@ test.describe('admin', () => {
     await page.goto('/dashboard/pay/job-7');
     await expect(page.getByText('e2eshop@okbank').first()).toBeVisible();
     await expect(page.getByRole('link', { name: /Pay with my UPI app/ })).toHaveAttribute('href', /pa=e2eshop%40okbank/);
+    const qr = page.getByRole('img', { name: /QR code to pay/ });
+    await expect(qr).toBeVisible();
+    expect(await qr.evaluate((img) => img.complete && img.naturalWidth > 0)).toBe(true); // the picture really loaded
     await logout(page);
     expect(await page.getByRole('link', { name: /WhatsApp us/ }).first().getAttribute('href')).toContain('919812345678');
 

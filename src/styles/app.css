@@ -249,3 +249,7 @@ tfoot td { background: var(--blue-card); }
 .markdown pre { overflow-x: auto; padding: 12px; background: #f1f1f1; border-radius: 8px; }
 .markdown hr { border: 0; border-top: 1px solid var(--line-strong); width: 100%; }
 @media print { .no-print, .site-header, .site-footer, .sub-nav { display: none !important; } }
+
+/* QR code on the payment screen: always black on white so every UPI app can read it, also in dark mode */
+.pay-qr { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 16px 0; text-align: center; }
+.qr { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); max-width: 100%; height: auto; }
