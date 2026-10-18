@@ -17,7 +17,9 @@ export function errorKey(err) {
   if (/email not confirmed/i.test(msg)) return 'errEmailNotConfirmed';
   if (/failed to fetch|networkerror|load failed|network request failed/i.test(msg)) return 'errNetwork';
   if (/blocked/i.test(msg)) return 'errBlocked';
-  if (/payments_reference|payments_one_paid/i.test(msg)) return 'errReferenceUsed';
+  if (/payments_reference|payments_one_paid|payment_proofs_reference|proof: reference_used/i.test(msg) || code === 'REFERENCE_USED' || code === 'PROOF_REFERENCE_USED') return 'errReferenceUsed';
+  if (/proof: reference|PROOF_REFERENCE/.test(msg + code)) return 'errProofReference';
+  if (/proof: file/i.test(msg)) return 'errProofFile';
   if (/has ended/i.test(msg)) return 'errEnded';
   if (/cannot be (approved|rejected|refunded)|not hidden|only a live ad/i.test(msg)) return 'errNotNow';
   const offer = msg.match(/offer: (\w+)/);

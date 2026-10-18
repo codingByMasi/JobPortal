@@ -20,6 +20,14 @@ describe('friendly errors', () => {
     expect(errorKey({ code: '42501', message: 'new row violates row-level security policy' })).toBe('errNotAllowed');
     expect(errorKey({ message: 'This ad is not waiting for payment.' })).toBe('errNotWaiting');
   });
+  it('understands the payment proof errors', () => {
+    expect(errorKey({ code: '22023', message: 'proof: reference' })).toBe('errProofReference');
+    expect(errorKey({ code: 'PROOF_REFERENCE', message: 'proof: reference' })).toBe('errProofReference');
+    expect(errorKey({ code: '23505', message: 'proof: reference_used' })).toBe('errReferenceUsed');
+    expect(errorKey({ code: '23505', message: 'duplicate key value violates unique constraint "payment_proofs_reference_unique"' })).toBe('errReferenceUsed');
+    expect(errorKey({ code: '22023', message: 'proof: file' })).toBe('errProofFile');
+    for (const lang of ['en', 'hi']) for (const key of ['errProofReference', 'errReferenceUsed', 'errProofFile']) expect(translations[lang][key]).toBeTruthy();
+  });
   it('never shows technical words: unknown errors become the generic sentence', () => {
     expect(errorKey(new Error('PGRST999 something internal'))).toBe('errGeneric');
     expect(errorKey(undefined)).toBe('errGeneric');

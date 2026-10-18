@@ -61,6 +61,9 @@ Follow `06-deploy.md` section C2 with `supabase/sample-ads.sql`. Expected: 3 liv
 ## Security check (real project only)
 Run the 8-point list in `03-database-security.md` with two employer accounts and a visitor.
 
+## QR picture and payment proof
+Automatic: `scripts/rls.proof.test.mjs` (database rules) and `e2e/proof.spec.js` (admin uploads, replaces and removes the QR picture; the employer sends a proof; the admin sees it, rejects it with a reason, the employer sends again, the admin marks the ad paid). Hand check on the real project: upload your real QR, scan it with a phone and confirm it pays your account; send a real proof from an employer test account and open the screenshot as admin (the link is a private link that works for 5 minutes).
+
 ## Online payment (Razorpay)
 Automatic: `scripts/razorpay.e2e.test.mjs` runs the real Edge Function logic (`supabase/functions/_shared/handlers.js`) against the real migrations: order, signed webhook, repeated event, wrong signature, wrong amount, database failure and retry, admin approval, refund. Only Razorpay's own server is faked.
 

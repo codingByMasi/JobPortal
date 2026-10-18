@@ -253,3 +253,6 @@ tfoot td { background: var(--blue-card); }
 /* QR code on the payment screen: always black on white so every UPI app can read it, also in dark mode */
 .pay-qr { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 16px 0; text-align: center; }
 .qr { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); max-width: 100%; height: auto; }
+.proof-box { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); }
+.qr-admin { display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
+.proof-admin { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--blue-card); border: 1px solid var(--line); border-radius: var(--radius); margin: 12px 0; }

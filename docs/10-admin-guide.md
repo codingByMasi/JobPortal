@@ -62,6 +62,15 @@ Job seekers can press **Report this ad**; it opens WhatsApp with the ad code. Op
 - If something is empty the site hides it (for example no WhatsApp button, or "payment details are not ready" on the payment screen). The home tab shows a red reminder until everything is filled in.
 - The site address is used for the search pages and sitemap the next time the site is built (up to 3 hours, or press the deploy hook).
 
+### Your payment QR picture (Settings tab, at the bottom)
+- **Upload QR picture** puts your own shop QR (PhonePe, Google Pay, Paytm or your bank) on the employers' payment screen. **Replace** and **Remove** are in the same place. Check with your own phone that the QR you uploaded pays YOUR account.
+- With no picture the site shows its own QR code made from your UPI ID. That code already holds the amount and the ad code; an uploaded picture cannot, so the screen tells the employer to type the amount and write the ad code in the note.
+
+### Checking a QR payment (Ads tab)
+1. After paying, the employer sends a **payment proof**: the reference number (UTR) and a screenshot. Such ads show **Proof sent** in the Ads tab (filter: Waiting for payment).
+2. Press **Mark as paid**. You see the reference, the date and the screenshot. **Check the reference and the amount in your bank or UPI app.** A screenshot alone proves nothing.
+3. Money found: press **Mark as paid** (the reference is filled in; one reference works only once). Money not found or the wrong amount: press **Money not found**, write the reason (the employer reads it) and press **Reject proof**. The employer can send a new proof.
+
 ## Reports and deletion requests (Reports tab)
 - **Reports about ads:** a visitor tapped "Report this ad". Read the reason and message. Tap *Find the ad* to open it in the Ads tab. If the ad looks fake or asks for money: hide it (*Hide*), block the employer in the Employers tab, then tap *Mark done*. If the report is wrong or silly, tap *Dismiss*. Do this daily at the start; reports about money demands first.
 - **Account deletion requests:** anyone can send one with any email, so **never delete only because of a request**. Write to that email first and ask the owner to confirm (or confirm from the phone number on the account). Then ask your developer to delete the account (or in Supabase delete the employer's user), and tap *Mark done*. Payment records stay (the law may need them).

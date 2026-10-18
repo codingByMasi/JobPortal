@@ -11,6 +11,7 @@ export const SETTING_KEYS = {
   grievance_email: 'grievanceEmail',
   company_name: 'companyName',
   site_url: 'siteUrl',
+  qr_path: 'qrPath',
 };
 
 /** The example values of src/config.js. A setting that still holds one of these (or nothing) counts as NOT filled in. */
@@ -27,6 +28,7 @@ const EXAMPLES = {
 export const DEFAULT_SETTINGS = {
   ...EXAMPLES,
   companyName: '',
+  qrPath: '',
   siteUrl: config.isPlaceholder(config.SITE_URL) ? '' : config.SITE_URL,
 };
 
@@ -53,6 +55,7 @@ const PATTERNS = {
   upiName: (v) => v.length >= 2 && v.length <= 80,
   grievanceName: (v) => v.length >= 2 && v.length <= 80,
   companyName: (v) => v.length >= 2 && v.length <= 80,
+  qrPath: (v) => /^qr\/[0-9a-f-]{36}\.(png|jpg|webp)$/.test(v),
   siteUrl: (v) => /^https:\/\/[A-Za-z0-9.-]+\.[A-Za-z]{2,}(:[0-9]{2,5})?$/.test(v),
 };
 

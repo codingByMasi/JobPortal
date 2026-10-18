@@ -67,6 +67,11 @@ Source of truth: the numbered files in `supabase/migrations` (0001 to 0022). Put
 - `mark_job_paid` is the one place an ad becomes paid. It and `razorpay_order_info`, `razorpay_attach_order`, `razorpay_capture`, `razorpay_refund` are closed to anon and logged-in users (only the service role used by the Edge Functions can run them). `razorpay_capture` refuses an unknown order, a different amount and an ad that is no longer waiting, and ignores a repeated event.
 - Tests: `scripts/rls.razorpay.test.mjs`.
 
+## QR picture and payment proof (migration 0024)
+- Two new storage buckets. `shop-assets` is public to read and only admins can write or delete (1 MB, pictures only); the QR picture is the setting `qr_path`, readable by logged-in people only, saved only by `admin_save_settings`, and only if the file really exists in `shop-assets`. `payment-proofs` is private: an employer writes in their own folder and reads their own files, admins read all (3 MB, pictures and PDF).
+- Table `payment_proofs` (one per ad, RLS: owner or admin can read, nobody writes directly). `submit_payment_proof` checks: own ad, ad waiting for payment, not blocked, a reference of 6 to 30 letters and numbers, a reference not used by any payment or any other live proof, and a file that exists in the employer's own folder. `admin_reject_proof` needs a reason. `admin_mark_paid` marks the open proof accepted. Nothing marks an ad paid except the admin (or the verified Razorpay webhook).
+- Tests: `scripts/rls.proof.test.mjs`; browser tests: `e2e/proof.spec.js`.
+
 ## Functions
 - `public_counts()` (visitors may call it): three numbers for the home page: live ads, verified employers, applications. Nothing else (0020).
 - `is_admin()` (also checks the two-step login), `is_blocked()` - helpers for the rules.

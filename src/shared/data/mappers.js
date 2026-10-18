@@ -122,6 +122,20 @@ export function toJobRow(input) {
   return row;
 }
 
+/** A payment proof the employer sent (UTR number + screenshot) for the admin to check. */
+export function toProof(row) {
+  return {
+    id: row.id,
+    jobId: row.job_id,
+    recruiterId: row.recruiter_id,
+    reference: row.reference,
+    filePath: row.file_path,
+    status: row.status,
+    rejectReason: row.reject_reason || '',
+    createdAt: Date.parse(row.created_at) || null,
+  };
+}
+
 export function toPayment(row) {
   return {
     id: row.id,

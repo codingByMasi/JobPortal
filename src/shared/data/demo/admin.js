@@ -94,6 +94,7 @@ export async function adminMarkPaid(id, { amountPaise, note = '', reference = ''
     }));
   }
   logAdmin('mark_paid', row.id, `${amount} paise`);
+  (state.db.payment_proofs || []).forEach((x) => { if (x.job_id === row.id && x.status === 'submitted') x.status = 'accepted'; });
   row.status = 'paid_pending_review';
   save();
   return toPayment(pay);

@@ -31,7 +31,8 @@ You can keep up to 20 unpaid ads at a time.
 After you save, the **payment screen** shows the amount, the **UPI ID**, the **name on the UPI ID** and your **ad code** (looks like `AD-1A2B3C4D`).
 1. Open any UPI app (PhonePe, Google Pay, Paytm). Check that the **name shown** matches the name on our screen.
 2. Pay the exact amount. Write the ad code in the note.
-3. Tap **I have paid, send details on WhatsApp** and send us your payment screenshot.
+3. Tap **I have paid, send details on WhatsApp** and send us your payment screenshot. You can also use the QR code on the screen (scan it with your phone if you are on a computer).
+   Then fill in **After you pay: send proof**: the payment reference number (UTR, from your UPI app) and a screenshot. Each reference number can be used once. If we cannot find the money, the screen tells you why and you can send the proof again.
 4. We check the payment in our bank, mark it paid, and your ad goes to approval. This can take a few hours. Payment details missing on the screen? We have not finished setting up: tap the WhatsApp button and we will help.
 **Never pay anyone else or any other account.** We will never ask you for money outside this screen. If the total is zero (a free offer), no payment is needed: the ad goes straight to approval.
 

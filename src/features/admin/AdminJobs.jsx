@@ -35,6 +35,8 @@ export default function AdminJobs() {
   const location = useLocation();
   const [params, setParams] = useSearchParams();
   const ads = useAsync(() => api.adminListJobs(), []);
+  const proofs = useAsync(() => api.adminListPaymentProofs(), []);
+  const proofOf = (job) => (proofs.data || []).find((p) => p.jobId === job.id) || null;
   const { notice, success, fail } = useNotice(location.state?.notice || '');
   const [dialog, setDialog] = useState(null); // { kind: 'reject' | 'paid' | 'delete', job }
   const [busy, setBusy] = useState(false);
@@ -49,6 +51,7 @@ export default function AdminJobs() {
       await work();
       success(doneText);
       ads.reload();
+      proofs.reload();
     } catch (err) {
       fail(err);
     } finally {
@@ -123,6 +126,7 @@ export default function AdminJobs() {
                         <StatusBadge job={job} />
                         <br /><span className="muted">{describeStatus(job, t, lang)}</span>
                         <br /><span className="muted">{adReference(job.id)}</span>
+                        {job.status === 'pending_payment' && proofOf(job) && proofOf(job).status !== 'accepted' && <p className="hint">{proofOf(job).status === 'rejected' ? t.proofRejectedBadge : t.proofBadge}</p>}
                       </td>
                       <td data-label={t.colActions}>
                         <div className="row-actions">
@@ -158,7 +162,7 @@ export default function AdminJobs() {
         <RejectDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={(reason) => run(() => api.adminReject(dialog.job.id, reason), t.adRejected)} />
       )}
       {dialog?.kind === 'paid' && (
-        <PaidDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={(reference) => run(() => api.adminMarkPaid(dialog.job.id, { reference }), t.adPaid)} />
+        <PaidDialog job={dialog.job} proof={proofOf(dialog.job)} busy={busy} onClose={() => setDialog(null)} onConfirm={(reference) => run(() => api.adminMarkPaid(dialog.job.id, { reference }), t.adPaid)} onRejectProof={(reason) => run(() => api.adminRejectProof(proofOf(dialog.job).id, reason), t.proofRejectedDone)} />
       )}
       {dialog?.kind === 'extend' && (
         <ExtendDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={(days, reason) => run(() => api.adminExtendJob(dialog.job.id, days, reason), t.adExtended)} />

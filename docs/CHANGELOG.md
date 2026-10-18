@@ -1,5 +1,10 @@
 # Changelog
 
+## Step 18 - Admin QR picture and payment proof (migration 0024)
+- **QR picture:** the admin can upload, replace and remove the shop's own payment QR in Admin > Settings; employers see it on the payment screen (otherwise the generated UPI QR code). New public bucket `shop-assets` (admin writes only) and setting `qr_path`.
+- **Payment proof:** after paying, the employer sends the UTR reference number and a screenshot (private bucket `payment-proofs`, table `payment_proofs`). The Ads tab shows **Proof sent**; the **Mark as paid** pop-up shows the reference, the date and the screenshot, with **Money not found** (reject with a reason the employer reads). A reference can back only one live proof and is refused if a payment already uses it. Marking the ad paid accepts the proof. The website cannot see the money itself: the admin still checks the bank.
+- 11 database tests, 3 browser tests; the guard lists of callable functions and RLS tables were updated on purpose.
+
 ## Step 17 - QR code on the manual payment screen
 - The payment screen now shows a QR code of the UPI link (amount and ad code filled in) so an employer on a computer can pay with their phone. Made in the browser with the small `qrcode-generator` library (reason in `09-decisions.md`, no change to the security headers). English and Hindi text; unit tests and a browser test that the picture really loads. The admin already finds an ad by its code (AD-XXXXXXXX) in Admin > Ads and marks it paid with the UPI reference.
 
