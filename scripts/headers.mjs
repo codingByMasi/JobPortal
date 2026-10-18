@@ -1,21 +1,22 @@
 // Writes dist/_headers (read by Cloudflare Pages): the security headers for every page, and the caching rules. The Content-Security-Policy names YOUR Supabase project only
-// (not every project on supabase.co), and allows the optional Turnstile check and Plausible counter only when they are turned on.
+// (not every project on supabase.co), and allows the optional Turnstile check, Plausible counter and Razorpay checkout only when they are turned on.
 import { existsSync, readFileSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { ANALYTICS_DOMAIN, isPlaceholder } from '../src/config.js';
 
 /** The text of the _headers file. */
-export function buildHeaders({ supabaseUrl = '', turnstile = false, plausible = false } = {}) {
+export function buildHeaders({ supabaseUrl = '', turnstile = false, plausible = false, razorpay = false } = {}) {
   let supabase;
   try {
     supabase = supabaseUrl ? new URL(supabaseUrl).origin : '';
   } catch {
     supabase = '';
   }
-  const script = ["'self'", plausible && 'https://plausible.io', turnstile && 'https://challenges.cloudflare.com'].filter(Boolean).join(' ');
-  const connect = ["'self'", supabase, plausible && 'https://plausible.io'].filter(Boolean).join(' ');
-  const frame = [supabase, turnstile && 'https://challenges.cloudflare.com'].filter(Boolean).join(' ') || "'none'";
+  const script = ["'self'", plausible && 'https://plausible.io', turnstile && 'https://challenges.cloudflare.com', razorpay && 'https://checkout.razorpay.com'].filter(Boolean).join(' ');
+  const connect = ["'self'", supabase, plausible && 'https://plausible.io', razorpay && 'https://api.razorpay.com', razorpay && 'https://lumberjack.razorpay.com'].filter(Boolean).join(' ');
+  const frame = [supabase, turnstile && 'https://challenges.cloudflare.com', razorpay && 'https://api.razorpay.com', razorpay && 'https://checkout.razorpay.com'].filter(Boolean).join(' ') || "'none'";
+  const payment = razorpay ? '(self "https://checkout.razorpay.com" "https://api.razorpay.com")' : '()';
   const csp = [
     "default-src 'self'",
     `script-src ${script}`,
@@ -34,7 +35,7 @@ export function buildHeaders({ supabaseUrl = '', turnstile = false, plausible = 
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=${payment}
   Strict-Transport-Security: max-age=31536000; includeSubDomains
 
 # Built files have a fingerprint in their name, so they can be kept for a year and never need to be asked about again.
@@ -68,6 +69,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     supabaseUrl: setting('VITE_SUPABASE_URL'),
     turnstile: Boolean(setting('VITE_TURNSTILE_SITE_KEY')),
     plausible: !isPlaceholder(ANALYTICS_DOMAIN),
+    razorpay: Boolean(setting('VITE_RAZORPAY_KEY_ID')),
   });
   await writeFile('dist/_headers', text);
   console.log('headers: wrote dist/_headers');

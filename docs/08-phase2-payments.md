@@ -1,4 +1,22 @@
-# 08 - Phase 2: online payments (Razorpay) - plan only, nothing built yet
+# 08 - Phase 2: online payments (Razorpay) - built (Step 16), not yet tried against the real Razorpay
+
+## What was built (Step 16)
+- Migration `0023_razorpay.sql`: Razorpay ids on `payments`, table `razorpay_events` (each webhook event once, admins can read it to reconcile), `mark_job_paid()` (the one place that makes an ad paid; `admin_mark_paid` calls it), and four server-only functions (`razorpay_order_info`, `razorpay_attach_order`, `razorpay_capture`, `razorpay_refund`). Employers, admins and visitors cannot call them; only the service role can.
+- Edge Functions: `supabase/functions/create-razorpay-order` and `supabase/functions/razorpay-webhook`, with shared helpers in `_shared/razorpay.js` (tested).
+- Screen: `features/payments/OnlinePay.jsx` + `checkout.js`. Shown only when `VITE_RAZORPAY_KEY_ID` is set. After the Razorpay window says "paid" the screen only WAITS (checks My ads every 3 seconds for about a minute); the ad becomes paid only when the signed webhook arrives.
+- Decisions made (by the owner): the admin still approves each ad after payment; manual UPI stays as a fallback. A new order is created at every click (an older order that gets paid later is recorded as `unknown_order` in `razorpay_events`: refund it by hand). Refunds started in the Razorpay dashboard mark the payment refunded (the ad is not hidden).
+- Outcomes in `razorpay_events`: `paid`, `duplicate`, `unknown_order`, `amount_mismatch`, `not_waiting` (money arrived but the ad was no longer waiting, e.g. paid by hand meanwhile), `refunded`, `unknown_payment`, `not_paid`. Anything other than `paid`/`refunded`/`duplicate` needs a person to look at it.
+
+## Set-up by hand (once)
+1. Razorpay dashboard (test mode): copy the Key Id and Key Secret. Settings > Payment capture: **automatic**.
+2. `supabase secrets set RAZORPAY_KEY_ID=rzp_test_... RAZORPAY_KEY_SECRET=... RAZORPAY_WEBHOOK_SECRET=...  SITE_URL=https://your-site` (never in the repo).
+3. `supabase functions deploy create-razorpay-order` and `supabase functions deploy razorpay-webhook --no-verify-jwt`.
+4. Run migration 0023 (`npm run schema`, paste `supabase/schema.sql` or run the new file).
+5. Razorpay dashboard > Webhooks: URL `https://<project>.supabase.co/functions/v1/razorpay-webhook`, the same secret as step 2, events **payment.captured** and **refund.processed**.
+6. Hosting variable `VITE_RAZORPAY_KEY_ID=rzp_test_...` (public id only), rebuild.
+7. Hand test (07-testing.md), then repeat with live keys.
+
+# The original plan (kept for reference)
 
 ## Why it is easy to add
 - All payment code is in `src/features/payments` (the screen) and `supabase/functions` (server code, not created yet). Nothing else in the app knows how payment works.

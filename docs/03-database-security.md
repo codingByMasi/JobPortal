@@ -62,6 +62,11 @@ Source of truth: the numbered files in `supabase/migrations` (0001 to 0022). Put
 - **Old ads keep their price:** the snapshot is saved at order time; later changes to a plan or an offer never touch it. Approve uses the saved days (bonus days included); Mark as paid fills the waiting payment (no second row) and uses the saved final price.
 - **Admin only:** `admin_extend_job(job, days, reason)` (live or hidden ads, reason needed), `admin_set_featured(job, on/off)`, `admin_give_free_ad(job, note)` (payment of 0, method `complimentary`). All write to `admin_log`.
 
+## Online payments (migration 0023)
+- `payments.razorpay_order_id` and `razorpay_payment_id` are unique. `razorpay_events` (one row per webhook event) has Row Level Security: only admins can read; nobody writes except the server.
+- `mark_job_paid` is the one place an ad becomes paid. It and `razorpay_order_info`, `razorpay_attach_order`, `razorpay_capture`, `razorpay_refund` are closed to anon and logged-in users (only the service role used by the Edge Functions can run them). `razorpay_capture` refuses an unknown order, a different amount and an ad that is no longer waiting, and ignores a repeated event.
+- Tests: `scripts/rls.razorpay.test.mjs`.
+
 ## Functions
 - `public_counts()` (visitors may call it): three numbers for the home page: live ads, verified employers, applications. Nothing else (0020).
 - `is_admin()` (also checks the two-step login), `is_blocked()` - helpers for the rules.

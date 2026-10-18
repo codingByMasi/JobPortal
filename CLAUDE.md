@@ -6,8 +6,8 @@ Read this first. It is the rulebook for anyone (human or AI) changing this proje
 A job-ads website for people in India looking for work abroad (Gulf countries). Employers pay to post ads.
 Stack: Vite + React (plain JavaScript) + plain CSS + Supabase (database, login, file storage). No separate server.
 Roles: **visitor/candidate** (no login), **recruiter** (login, posts ads for a fee), **admin** (everything).
-Phase 1 (now): everything except online payments; the admin marks payments by hand.
-Phase 2 (later): Razorpay through Supabase Edge Functions. See `docs/08-phase2-payments.md`.
+Phase 1: the admin marks payments by hand (still works, and is the fallback).
+Phase 2 (built, test-mode checks still to do): Razorpay through Supabase Edge Functions. See `docs/08-phase2-payments.md`.
 The owner is not deeply technical: explain decisions in short, plain words.
 
 ## Folder structure
@@ -19,7 +19,7 @@ supabase/
   migrations/             numbered SQL files = the source of truth for the database
   seed.sql                sample packages
   schema.sql              GENERATED from the above (npm run schema). Paste-once file.
-  functions/              Phase 2 only (Edge Functions). Does not exist yet.
+  functions/              Edge Functions: create-razorpay-order, razorpay-webhook (+ _shared helpers)
 public/                   images, icons, manifest (no _redirects: Cloudflare Pages serves the app for unknown addresses by itself)
 scripts/                  build-time helpers: prerender (search pages + sitemap), schema builder, images
 src/

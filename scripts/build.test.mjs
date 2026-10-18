@@ -27,6 +27,16 @@ describe('buildHeaders (security headers)', () => {
     expect(on).toContain('https://challenges.cloudflare.com');
     expect(on).toContain('https://plausible.io');
   });
+  it('allows Razorpay checkout only when online payments are turned on', () => {
+    const off = buildHeaders({ supabaseUrl: 'https://abc.supabase.co' });
+    expect(off).not.toContain('razorpay');
+    expect(off).toContain('payment=()');
+    const on = buildHeaders({ supabaseUrl: 'https://abc.supabase.co', razorpay: true });
+    expect(on).toContain("script-src 'self' https://checkout.razorpay.com;");
+    expect(on).toContain('frame-src https://abc.supabase.co https://api.razorpay.com https://checkout.razorpay.com;');
+    expect(on).toContain('https://lumberjack.razorpay.com');
+    expect(on).not.toContain('unsafe-inline');
+  });
   it('keeps the other protections', () => {
     const text = buildHeaders({ supabaseUrl: 'https://abc.supabase.co' });
     for (const part of ["frame-ancestors 'none'", "object-src 'none'", 'X-Content-Type-Options: nosniff', 'X-Frame-Options: DENY', 'Strict-Transport-Security']) {

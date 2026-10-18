@@ -789,6 +789,17 @@ export const hi = {
   settingsMissingText: (names) => `अभी भरा नहीं गया: ${names}।`,
   settingsMissingLink: 'सेटिंग खोलें',
   payNotReady: 'भुगतान की जानकारी अभी तैयार नहीं है। कृपया हमसे संपर्क करें, हम मदद करेंगे।',
+  /* online payment (Razorpay, migration 0023) */
+  payOnlineTitle: 'ऑनलाइन भुगतान करें',
+  payOnlineHelp: 'UPI, कार्ड या नेट बैंकिंग से पैसे दें। भुगतान पक्का होते ही आपका विज्ञापन मंज़ूरी के लिए चला जाएगा।',
+  payOnlineButton: (amount) => `${amount} ऑनलाइन दें`,
+  payOnlineStarting: 'भुगतान की विंडो खुल रही है...',
+  payOnlineConfirming: 'भुगतान मिल गया। अभी पक्का कर रहे हैं। कृपया दोबारा पैसे न दें।',
+  payOnlineDone: 'भुगतान पक्का हो गया। आपका विज्ञापन अब मंज़ूरी के इंतज़ार में है।',
+  payOnlineSlow: 'हम अभी आपका भुगतान पक्का कर रहे हैं। कुछ मिनट बाद मेरे विज्ञापन देखें। कृपया दोबारा पैसे न दें।',
+  payOnlineCancelled: 'भुगतान पूरा नहीं हुआ। आप फिर से कोशिश कर सकते हैं।',
+  payOrUpi: 'या खुद UPI से पैसे दें',
+  errOnlinePay: 'ऑनलाइन भुगतान शुरू नहीं हो सका। कृपया फिर कोशिश करें, या नीचे UPI से पैसे दें।',
   aboutWho: (name) => `Jobs Abroad का संचालन ${name} द्वारा किया जाता है।`,
   /* guides for admins (migration 0022) */
   tabGuides: 'गाइड',

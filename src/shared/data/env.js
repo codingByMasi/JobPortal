@@ -4,6 +4,9 @@ export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 /** Public key of the optional "I am not a robot" check (Cloudflare Turnstile). Empty = no check shown. */
 export const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
 
+/** Public key id of Razorpay (online payments). Empty = no "Pay online" button. The SECRET key lives only in Supabase. */
+export const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID || '';
+
 /**
  * 'supabase' = real data (both keys present).
  * 'demo'     = fake data kept in the browser. Only while developing, or when VITE_ALLOW_DEMO=true is set on purpose.

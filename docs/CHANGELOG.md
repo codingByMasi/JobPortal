@@ -1,5 +1,9 @@
 # Changelog
 
+## Step 16 - Online payments with Razorpay (migration 0023) + fixes
+- **Razorpay:** new migration 0023 (`mark_job_paid`, `razorpay_order_info`, `razorpay_attach_order`, `razorpay_capture`, `razorpay_refund`, table `razorpay_events`, Razorpay ids on `payments`). The admin button now goes through `mark_job_paid` too. The server-only functions are closed to the browser, admins and visitors. Two Edge Functions in `supabase/functions`: `create-razorpay-order` (price read from the database) and `razorpay-webhook` (signature checked, each event once). New "Pay online" box on the payment screen when `VITE_RAZORPAY_KEY_ID` is set; manual UPI stays as the fallback; the admin still approves every ad. Checkout addresses are added to the security headers only when online payment is on. 9 database tests and 11 helper tests; the Razorpay window, webhook and CSP are NOT tested against the real Razorpay yet (see 07-testing).
+- **Fixes:** `.gitattributes` keeps line endings as LF (on Windows the schema test failed because Git changed them); `test:lighthouse` honours `CHROME_PATH` (Playwright's Chromium cannot be started by Lighthouse on some Windows setups).
+
 ## Step 15 - Guides (admin only) and the admin helper (migration 0022)
 - New guides in `docs/`: `16-employer-guide.md`, `17-job-seeker-guide.md` (English and Hindi), `18-app-features.md`; `10-admin-guide.md` got "First day as admin", "Making someone an admin" and "Updating the guides".
 - **Guides are for admins only:** they are saved in a new table `guides` that only admins can read (migration 0022), shown in **Admin > Guides** with a Copy button, and published from `docs/` with `npm run guides:publish`. They are not in the website files (a file there could be downloaded by anyone who knows its address). 4 database tests and a browser test check that visitors and employers cannot read them.
