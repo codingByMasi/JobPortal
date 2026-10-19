@@ -13,9 +13,8 @@ import { useAuth } from '../auth/AuthContext';
 import { countryById } from '../../shared/lib/catalog';
 import { friendlyMessage } from '../../shared/lib/friendlyError';
 import { describeStatus, formatDate } from '../../shared/lib/format';
-import { canDelete, canEditAsRecruiter, canPay, canRenew, canRequestChange, effectiveStatus } from '../../shared/lib/jobStatus';
+import { canDelete, canEditAsRecruiter, canRenew, canRequestChange, effectiveStatus } from '../../shared/lib/jobStatus';
 import { useLang } from '../../shared/i18n/LangContext';
-import { formatPrice } from '../../shared/lib/money';
 import { useAsync } from '../../shared/lib/useAsync';
 
 /** /dashboard - the employer's own ads. */
@@ -79,10 +78,8 @@ export default function MyAds() {
                     </p>
                     <p className={`status-line status-${status}`}>{describeStatus(job, t, lang)}</p>
                     {latestRequest(job.id) && <p className="help">{t.requestLine[latestRequest(job.id).status]}</p>}
-                    {job.package && <p className="help">{t.package}: {job.package.name} · {formatPrice(job.package.pricePaise)}</p>}
                   </div>
                   <div className="row-actions">
-                    {canPay(job) && <Button to={`/dashboard/pay/${job.id}`} icon="rupee">{t.payNow}</Button>}
                     {canEditAsRecruiter(job) && <Button to={`/dashboard/edit/${job.id}`} tone="outline" icon="edit">{job.status === 'rejected' ? t.editResend : t.edit}</Button>}
                     {status === 'live' && <Button to={`/job/${job.id}`} tone="outline" icon="eye">{t.seeAd}</Button>}
                     {canRequestChange(job) && !canRenew(job) && <Button tone="outline" icon="edit" onClick={() => setToChange(job)}>{t.requestAsk}</Button>}

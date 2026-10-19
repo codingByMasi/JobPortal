@@ -14,18 +14,21 @@ export async function createJob(input) {
   await wait();
   const p = needUser();
   if (p.blocked) throw fail('BLOCKED');
-  const pkg = state.db.packages.find((x) => x.id === input.packageId && x.active);
+  if (!p.verified && p.role !== 'admin') throw fail('NOT_VERIFIED', 'Your account is not verified yet.'); // migration 0027
+  // employers never choose a plan: the default plan is stored (migration 0028)
+  if (input.packageId && !state.db.packages.some((x) => x.id === input.packageId && x.active)) throw fail('NOT_ALLOWED'); // an unknown or inactive plan is refused
+  const pkg = state.db.packages.find((x) => x.id === input.packageId) || [...state.db.packages].filter((x) => x.active).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))[0];
   if (!pkg) throw fail('NOT_ALLOWED');
-  // same limit as the database (migration 0009): at most 20 ads waiting for payment
-  if (state.db.jobs.filter((j) => j.recruiter_id === p.id && j.status === 'pending_payment').length >= 20) throw fail('TOO_MANY_ADS');
+  // like the database: at most 20 ads waiting for approval
+  if (state.db.jobs.filter((j) => j.recruiter_id === p.id && j.status === 'paid_pending_review').length >= 20) throw fail('TOO_MANY_ADS');
   const fields = toJobRow(input);
   if ((fields.title || '').length < 2) throw fail('NOT_ALLOWED');
   if (!isValidWhatsapp(fields.whatsapp || '')) throw fail('NOT_ALLOWED');
   const row = {
     file_url: null, file_path: null, thumb_url: null, thumb_path: null, details: '', file_type: 'image', company: '', city: '', whatsapp: '', ...fields,
-    price_paise_at_order: pkg.price_paise, days_at_order: pkg.duration_days,
-    list_price_paise: pkg.price_paise, discount_paise: 0, final_price_paise: pkg.price_paise, duration_days_final: pkg.duration_days, offer_id: null, featured_override: null,
-    id: uid(), recruiter_id: p.id, package_id: pkg.id, status: 'pending_payment', starts_at: null, expires_at: null,
+    price_paise_at_order: 0, days_at_order: 30,
+    list_price_paise: 0, discount_paise: 0, final_price_paise: 0, duration_days_final: 30, offer_id: null, featured_override: null,
+    id: uid(), recruiter_id: p.id, package_id: pkg.id, status: 'paid_pending_review', starts_at: null, expires_at: null,
     reject_reason: null, posted_date: new Date().toISOString().slice(0, 10), created_at: new Date().toISOString(),
   };
   state.db.jobs.push(row);

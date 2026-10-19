@@ -194,8 +194,9 @@ export async function adminExtendJob(id, days, reason) {
   const row = findJob(id);
   if (!(days >= 1 && days <= 365)) throw fail('NOT_ALLOWED');
   if (reason.trim().length < 3) throw fail('NEED_MESSAGE');
-  if (!['live', 'hidden'].includes(row.status) || !row.expires_at) throw fail('NOT_NOW', 'Only a live ad can get more days.');
+  if (!['live', 'hidden', 'expired'].includes(row.status) || !row.expires_at) throw fail('NOT_NOW', 'Only a live, hidden or ended ad can get more days.');
   row.expires_at = new Date(Math.max(Date.parse(row.expires_at), Date.now()) + days * 86400000).toISOString();
+  if (row.status === 'expired') row.status = 'live'; // an ended ad goes live again
   logAdmin('extend_job', id, `+${days} days: ${reason.trim().slice(0, 200)}`);
   save();
 }

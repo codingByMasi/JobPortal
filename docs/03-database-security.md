@@ -65,10 +65,16 @@ Source of truth: the numbered files in `supabase/migrations` (0001 to 0022). Put
 ## Mark as paid (migrations 0023 to 0026)
 - `mark_job_paid` is the one place an ad becomes paid. It is closed to anon and logged-in users; only `admin_mark_paid` calls it. Migration 0025 removed the online-payment functions, table and columns that 0023 had added; migration 0026 limits `payments.method` to `manual`, `free_offer` and `complimentary`.
 
-## QR picture and payment proof (migration 0024)
+## QR picture and payment proof (migration 0024, not used by the site any more)
 - Two new storage buckets. `shop-assets` is public to read and only admins can write or delete (1 MB, pictures only); the QR picture is the setting `qr_path`, readable by logged-in people only, saved only by `admin_save_settings`, and only if the file really exists in `shop-assets`. `payment-proofs` is private: an employer writes in their own folder and reads their own files, admins read all (3 MB, pictures and PDF).
 - Table `payment_proofs` (one per ad, RLS: owner or admin can read, nobody writes directly). `submit_payment_proof` checks: own ad, ad waiting for payment, not blocked, a reference of 6 to 30 letters and numbers, a reference not used by any payment or any other live proof, and a file that exists in the employer's own folder. `admin_reject_proof` needs a reason. `admin_mark_paid` marks the open proof accepted. Nothing marks an ad paid except the admin.
-- Tests: `scripts/rls.proof.test.mjs`; browser tests: `e2e/proof.spec.js`.
+- These two features (QR picture and payment proof) are no longer used by any screen: employers do not pay (migration 0028). The database rules and their tests (`scripts/rls.proof.test.mjs`) stay; nothing reads or writes these tables from the site.
+
+## License verification and free posting (migrations 0027 and 0028)
+- Only a **verified** employer (or an admin) can start a new ad (trigger `jobs_require_verified`). A new ad from an employer is stored as "waiting for approval" at price 0 with the first active plan (triggers `jobs_default_package` and `jobs_submit_for_review`, which run after the older guard that decides the owner and file links); the employer cannot choose the status, plan or price. At most 20 ads can wait for approval per employer. An employer may delete (withdraw) an ad that waits for approval.
+- Table `verification_requests` (one per employer; RLS: the owner or an admin reads; nobody writes directly). `submit_verification` checks: logged in, not blocked, not already verified, a license number of 3 to 40 characters, and a file that exists in the employer's own folder of the private bucket `licenses` (3 MB, pictures and PDF). `admin_reject_verification` needs a reason. The trigger `profiles_verified_needs_license` stops an admin from verifying an employer with no submitted or approved license, and marks the request approved when the admin verifies.
+- `admin_approve_job(job, days)`: the admin chooses 1 to 365 days (default: the ad's saved days, else 30). `admin_extend_job` now also works on **ended** ads and puts them back to live; a rejected or never-approved ad cannot be extended.
+- Tests: `scripts/rls.license.test.mjs` (and `rls.verified.test.mjs`), demo copies in `demo.license.test.js`, browser tests in `e2e/verification.spec.js` and `e2e/admin.spec.js`.
 
 ## Functions
 - `public_counts()` (visitors may call it): three numbers for the home page: live ads, verified employers, applications. Nothing else (0020).

@@ -1,6 +1,7 @@
 // The demo backend must follow the same rules as the real database. These tests are that promise in code.
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEMO_LOGINS } from './seed';
+import { setStatus } from '../legacy.testkit';
 
 const DAY = 86400000;
 let api;
@@ -70,10 +71,11 @@ describe('employers', () => {
     expect(apps.every((a) => ['job-1', 'job-3', 'job-5', 'job-6', 'job-7', 'job-8'].includes(a.jobId))).toBe(true);
     expect(apps.map((a) => a.jobId)).not.toContain('job-2'); // belongs to the other employer
   });
-  it('always start an ad as "waiting for payment", whatever they ask for', async () => {
+  it('always start an ad as "waiting for approval" at no price, whatever they ask for', async () => {
     await asEmployer();
     const job = await api.createJob({ ...newAd(), status: 'live', expiresAt: Date.now() + DAY });
-    expect(job.status).toBe('pending_payment');
+    expect(job.status).toBe('paid_pending_review');
+    expect(job.finalPricePaise).toBe(0);
     expect(job.startsAt).toBeNull();
     expect(job.expiresAt).toBeNull();
   });
@@ -82,21 +84,29 @@ describe('employers', () => {
     for (let i = 0; i < 19; i += 1) await api.createJob(newAd({ title: `Waiting ad ${i}` }));
     await expect(api.createJob(newAd({ title: 'One too many' }))).rejects.toMatchObject({ code: 'TOO_MANY_ADS' });
   }, 30000);
-  it('need an active package', async () => {
+  it('an unknown or inactive package is refused; no package at all gets the default plan', async () => {
     await asEmployer();
     await expect(api.createJob(newAd({ packageId: 'nope' }))).rejects.toMatchObject({ code: 'NOT_ALLOWED' });
     await asAdmin();
     await api.adminSavePackage({ id: 'pkg-7', name: '7 Days', pricePaise: 29900, durationDays: 7, featured: false, active: false });
     await asEmployer();
     await expect(api.createJob(newAd({ packageId: 'pkg-7' }))).rejects.toMatchObject({ code: 'NOT_ALLOWED' });
+    const none = await api.createJob(newAd({ packageId: undefined, title: 'No plan chosen' }));
+    expect(none.packageId).toBeTruthy();
   });
-  it('can edit while waiting for payment, but not after, and cannot change the package', async () => {
+  it('only a verified employer can post an ad', async () => {
+    await api.signIn({ email: 'other@example.com', password: 'other12345' }); // not verified in the sample data
+    await expect(api.createJob(newAd())).rejects.toMatchObject({ code: 'NOT_VERIFIED' });
+  });
+  it('can edit only a rejected ad, cannot change the package or status, and not a live, waiting or someone else\'s ad', async () => {
     await asEmployer();
-    const job = await api.createJob(newAd());
+    const job = await setStatus(await api.createJob(newAd()), 'rejected');
     const edited = await api.updateJob(job.id, { title: 'Better title', packageId: 'pkg-30f', status: 'live' });
     expect(edited.title).toBe('Better title');
-    expect(edited.packageId).toBe('pkg-30');
-    expect(edited.status).toBe('pending_payment');
+    expect(edited.packageId).not.toBe('pkg-30f');
+    expect(edited.status).toBe('rejected');
+    const waiting = await api.createJob(newAd({ title: 'Waiting' }));
+    await expect(api.updateJob(waiting.id, { title: 'Too late' })).rejects.toMatchObject({ code: 'NOT_ALLOWED' });
     await expect(api.updateJob('job-1', { title: 'Hacked' })).rejects.toMatchObject({ code: 'NOT_ALLOWED' }); // live ad
     await expect(api.updateJob('job-2', { title: 'Hacked' })).rejects.toMatchObject({ code: 'NOT_ALLOWED' }); // someone else's
   });
@@ -124,28 +134,25 @@ describe('employers', () => {
 });
 
 describe('the whole journey: post, pay, approve, apply, hide, delete', () => {
-  it('works end to end and money is recorded', async () => {
+  it('works end to end: post (free), approve with days, apply, hide, extend after it ends, delete', async () => {
     await asEmployer();
     const job = await api.createJob(newAd({ title: 'Journey ad' }));
+    expect(job.status).toBe('paid_pending_review');
 
     await asAdmin();
-    const payment = await api.adminMarkPaid(job.id);
-    expect(payment).toMatchObject({ amountPaise: 79900, method: 'manual', status: 'paid' });
-    await expect(api.adminMarkPaid(job.id)).rejects.toMatchObject({ code: 'NOT_WAITING' }); // cannot pay twice
     expect((await api.adminListJobs()).find((j) => j.id === job.id).status).toBe('paid_pending_review');
     expect((await api.listLiveJobs()).map((j) => j.id)).not.toContain(job.id); // not public yet
 
     const before = Date.now();
-    await api.adminApprove(job.id);
+    await api.adminApprove(job.id, 45); // the admin chooses the days
     const live = (await api.listLiveJobs()).find((j) => j.id === job.id);
     expect(live).toBeTruthy();
-    expect(live.expiresAt - live.startsAt).toBe(30 * DAY);
+    expect(live.expiresAt - live.startsAt).toBe(45 * DAY);
     expect(live.startsAt).toBeGreaterThanOrEqual(before);
 
     await api.submitApplication({ jobId: job.id, name: 'Sita', phone: '9876543210', city: 'Pune', message: 'Hello' });
     await asEmployer();
     expect((await api.listMyApplications()).map((a) => a.name)).toContain('Sita');
-    expect((await api.listMyPayments()).map((p) => p.jobId)).toContain(job.id);
 
     await asAdmin();
     await api.adminSetHidden(job.id, true);
@@ -157,7 +164,6 @@ describe('the whole journey: post, pay, approve, apply, hide, delete', () => {
     await api.deleteJob({ id: job.id });
     expect((await api.adminListJobs()).map((j) => j.id)).not.toContain(job.id);
     expect((await api.adminListApplications()).map((a) => a.name)).not.toContain('Sita');
-    expect((await api.adminListPayments()).find((p) => p.id === payment.id)).toBeTruthy(); // the money record stays
   });
   it('an ad disappears when its end time passes, and cannot be shown again', async () => {
     await asAdmin();

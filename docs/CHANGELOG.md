@@ -1,5 +1,13 @@
 # Changelog
 
+## Step 20 - License verification, free posting, approval with days (migrations 0027 and 0028)
+- **Employers do not pay.** A verified employer posts ads for free; there is no plan, price, coupon or payment screen for employers (the pay screen, payments tab, receipts, QR picture and payment proof screens were removed from the site; the admin's old payment tools stay for older ads).
+- **License verification:** an unverified employer sees a license form (number + picture/PDF in the private bucket `licenses`) instead of the ad form. The admin checks it in Admin > Employers (**Check license**: open the file, **Verify this employer** or reject with a reason the employer reads). The database refuses to verify an employer who sent no license.
+- **Approval with days:** **Approve** asks the admin how many days the ad stays live (1 to 365). An ad is never live until approved. When the days end it stops showing; **More days** works on ended ads and puts them back to live.
+- New ads from verified employers are stored as "waiting for approval" at price 0 with the default plan; they can be withdrawn (deleted) while waiting; at most 20 wait at a time.
+- Texts (English and Hindi), employer and admin guides, terms and refund drafts, the Post-a-job page (no prices) updated; the lawyer still has to read the terms and refund pages (`11-owner-checklist.md`).
+- Tests: new database tests (`rls.license`), demo tests, browser tests (`verification.spec.js`); the old payment-journey browser tests were replaced.
+
 ## Step 19 - Online payment gateway removed (migrations 0025, 0026)
 - Online payment is not needed, so everything built for it was removed: the Edge Functions, the "Pay online" box, the checkout loader, the extra security-header entries, the hosting setting, their texts and tests. Migration 0025 drops the gateway database functions, the events table and the extra payment columns (it refuses to run if any such record exists). Migration 0026 limits `payments.method` to `manual`, `free_offer` and `complimentary`. `mark_job_paid` stays: the admin's Mark as paid uses it. Payment is UPI + QR + payment proof, checked by the admin. Every mention was removed from the code, tests and docs; only the already-applied migration files 0004, 0018, 0023 and 0025 keep old names, because applied migrations are never edited.
 

@@ -1,47 +1,39 @@
-// Browser tests for the admin: approve, reject (and the employer fixing it), hide, show, delete, mark paid, refund, block, packages, requests, CSV.
+// Browser tests for the admin: approve with days, reject (and the employer fixing it), hide, show, extend, delete, refund, block, plans, requests, CSV.
 import { expect, test } from '@playwright/test';
 import { fillAd, login, logout, picture } from './helpers.js';
 
-/** An employer posts an ad (as the demo employer); returns its payment code. */
+/** A verified employer (the demo employer) posts an ad for free; it waits for approval. Returns the title to search for. */
 async function postAd(page, title) {
   await login(page, 'employer');
   await page.goto('/dashboard/new');
   await fillAd(page, title);
   await page.locator('input[type=file]').setInputFiles(picture());
   await expect(page.getByText(/ad\.png \(\d+ KB\)/)).toBeVisible({ timeout: 15000 });
-  await page.locator('input[name=package]').nth(1).check({ force: true });
-  await page.getByRole('button', { name: 'Save and go to payment' }).click();
-  await expect(page.getByText('Name on the UPI ID')).toBeVisible();
-  const code = (await page.locator('body').innerText()).match(/AD-[0-9A-F]{8}/)[0];
+  await page.getByRole('button', { name: 'Send for approval' }).click();
+  await expect(page.getByText('Your ad was sent to us. It goes live after we approve it.')).toBeVisible();
   await page.getByRole('button', { name: 'Log out' }).click();
-  return code;
+  return title;
 }
 
-async function adminFind(page, code) {
+async function adminFind(page, title) {
   await login(page, 'admin');
   await page.goto('/admin/jobs');
-  await page.getByRole('searchbox').fill(code);
+  await page.getByRole('searchbox').fill(title);
 }
 
 const row = (page) => page.locator('tbody tr').first();
 
 test.describe('admin', () => {
-  test('full life of an ad: mark paid (reference needed), reject with reason, employer fixes, approve, hide, show, visitors see it, delete', async ({ page }) => {
+  test('full life of an ad: it waits for approval, reject with reason, employer fixes, approve with days, hide, show, an ended ad is extended and is live again, delete', async ({ page }) => {
     const code = await postAd(page, 'E2E Life Ad');
     await adminFind(page, code);
-    await expect(page.getByText('First ad of this employer').or(page.getByText('E2E Life Ad'))).toBeVisible();
+    await expect(row(page).getByText('Waiting for approval').first()).toBeVisible();
+    await expect(row(page).getByRole('button', { name: 'Mark as paid' })).toHaveCount(0); // nothing to pay
 
     await row(page).getByRole('button', { name: 'View ad' }).click();
     await expect(page.getByRole('dialog').locator('img.ad-image')).toBeVisible();
     await expect(page.getByRole('dialog').getByText(/Salary 1800 AED/)).toBeVisible();
     await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click();
-
-    await row(page).getByRole('button', { name: 'Mark as paid' }).click();
-    const paid = page.getByRole('dialog');
-    await expect(paid.getByRole('button', { name: 'Mark as paid' })).toBeDisabled();
-    await paid.getByLabel(/Payment reference/).fill(`E2E-UTR-${code}`);
-    await paid.getByRole('button', { name: 'Mark as paid' }).click();
-    await expect(row(page).getByText('Waiting for approval').first()).toBeVisible();
 
     await row(page).getByRole('button', { name: 'Reject' }).click();
     const reject = page.getByRole('dialog');
@@ -62,6 +54,11 @@ test.describe('admin', () => {
 
     await adminFind(page, code);
     await row(page).getByRole('button', { name: 'Approve' }).click();
+    const approve = page.getByRole('dialog');
+    await approve.getByLabel('Days live').fill('0');
+    await expect(approve.getByRole('button', { name: 'Approve and go live' })).toBeDisabled();
+    await approve.getByLabel('Days live').fill('20');
+    await approve.getByRole('button', { name: 'Approve and go live' }).click();
     await expect(row(page).getByText(/Live until/).first()).toBeVisible();
     await expect(row(page).getByRole('button', { name: 'Approve' })).toHaveCount(0);
 
@@ -83,25 +80,30 @@ test.describe('admin', () => {
     await adminFind(page, code);
     await row(page).getByRole('button', { name: 'Show' }).click();
     await expect(row(page).getByText(/Live until/).first()).toBeVisible();
+
+    // the days end: the ad is no longer shown; the admin extends it and it is live again
+    await row(page).getByRole('link', { name: 'Edit' }).click();
+    await page.getByLabel(/Ends on|Expires/i).fill('2020-01-01');
+    await page.getByRole('button', { name: 'Save changes' }).click();
+    await page.waitForURL(/\/admin\/jobs$/); // wait until the change is saved
+    await page.getByRole('searchbox').fill(code);
+    await expect(row(page).getByText('Expired').first()).toBeVisible();
+    await page.getByRole('button', { name: 'Log out' }).click();
+    await page.goto('/jobs');
+    await expect(page.getByRole('link', { name: /View: E2E Life Ad/ })).toHaveCount(0);
+    await adminFind(page, code);
+    await row(page).getByRole('button', { name: 'More days' }).click();
+    await page.getByRole('dialog').getByLabel('Reason').fill('Employer asked to run it again');
+    await page.getByRole('dialog').getByRole('button', { name: 'Add days' }).click();
+    await expect(page.getByText('Days were added to the ad.')).toBeVisible();
+    await expect(row(page).getByText(/Live until/).first()).toBeVisible();
+    await page.getByRole('button', { name: 'Log out' }).click();
+    await page.goto('/jobs');
+    await expect(page.getByRole('link', { name: /View: E2E Life Ad/ })).toBeVisible();
+    await adminFind(page, code);
     await row(page).getByRole('button', { name: 'Delete' }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Yes, delete' }).click();
     await expect(page.getByText('E2E Life Ad')).toHaveCount(0);
-  });
-
-  test('the same payment reference cannot be used for a second ad', async ({ page }) => {
-    const first = await postAd(page, 'E2E Ref Ad One');
-    const second = await postAd(page, 'E2E Ref Ad Two');
-    await adminFind(page, first);
-    await row(page).getByRole('button', { name: 'Mark as paid' }).click();
-    await page.getByRole('dialog').getByLabel(/Payment reference/).fill('E2E-SAME-REF');
-    await page.getByRole('dialog').getByRole('button', { name: 'Mark as paid' }).click();
-    await expect(row(page).getByText('Waiting for approval').first()).toBeVisible();
-    await page.getByRole('searchbox').fill(second);
-    await row(page).getByRole('button', { name: 'Mark as paid' }).click();
-    await page.getByRole('dialog').getByLabel(/Payment reference/).fill('e2e-same-ref');
-    await page.getByRole('dialog').getByRole('button', { name: 'Mark as paid' }).click();
-    await expect(page.getByText(/already used|already has a payment/)).toBeVisible();
-    await expect(row(page).getByText('Waiting for payment').first()).toBeVisible();
   });
 
   test('refund can hide the ad; blocking an employer hides their live ads', async ({ page }) => {
@@ -120,23 +122,6 @@ test.describe('admin', () => {
     await expect(page.getByRole('link', { name: /View: Plumbers Needed/ })).toHaveCount(0);
     await expect(page.getByRole('link', { name: /View: Heavy Driver/ })).toHaveCount(0);
     await expect(page.getByRole('link', { name: /View: Building Electrician/ })).toBeVisible();
-  });
-
-  test('edit a package price: the public Post-a-job page follows; an ad made earlier keeps its old price when paid', async ({ page }) => {
-    const code = await postAd(page, 'E2E Price Ad');
-    await login(page, 'admin');
-    await page.goto('/admin/packages');
-    await page.locator('tbody tr', { hasText: '30 Days' }).filter({ hasNotText: 'Featured' }).getByRole('button', { name: 'Edit' }).click();
-    await page.getByRole('dialog').getByLabel(/Price/).fill('999');
-    await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
-    await expect(page.getByText('Package saved.')).toBeVisible();
-    await page.getByRole('button', { name: 'Log out' }).click();
-    await page.goto('/post-job');
-    await expect(page.getByText('₹999')).toBeVisible();
-    await adminFind(page, code);
-    await row(page).getByRole('button', { name: 'Mark as paid' }).click();
-    await expect(page.getByRole('dialog').getByText(/₹799/)).toBeVisible();
-    await expect(page.getByRole('dialog').getByText(/₹999/)).toHaveCount(0);
   });
 
   test('change requests can be closed; payments and applications download as spreadsheets', async ({ page }) => {
@@ -169,7 +154,7 @@ test.describe('admin', () => {
     }
   });
 
-  test('offers: admin makes a coupon, an employer uses it, a wrong code is refused in plain words, the payment screen shows the discounted price', async ({ page }) => {
+  test('offers: the admin makes a coupon; it shows in the list and in the history', async ({ page }) => {
     await login(page, 'admin');
     await page.goto('/admin/offers');
     await page.getByRole('button', { name: 'New offer' }).click();
@@ -183,51 +168,6 @@ test.describe('admin', () => {
     await expect(page.getByRole('row', { name: /E2E twenty/ })).toContainText('Active');
     await page.goto('/admin/history');
     await expect(page.getByText(/E2E twenty/).first()).toBeVisible();
-    await logout(page);
-
-    await login(page, 'employer');
-    await page.goto('/dashboard/new');
-    await fillAd(page, 'E2E Coupon Ad');
-    await page.locator('input[type=file]').setInputFiles(picture());
-    await expect(page.getByText(/ad\.png \(\d+ KB\)/)).toBeVisible({ timeout: 15000 });
-    await page.locator('input[name=package]').nth(1).check({ force: true });
-    await page.getByLabel('Have a coupon code?').fill('WRONGCODE');
-    await page.getByRole('button', { name: 'Apply' }).click();
-    await expect(page.getByText(/not correct/)).toBeVisible();
-    await page.getByLabel('Have a coupon code?').fill('e2e20');
-    await page.getByRole('button', { name: 'Apply' }).click();
-    await expect(page.getByText('Coupon E2E20 is applied.')).toBeVisible();
-    await expect(page.locator('.order-summary')).toContainText('₹639.20');
-    await page.getByRole('button', { name: 'Save and go to payment' }).click();
-    await expect(page.getByText('Name on the UPI ID')).toBeVisible();
-    await expect(page.locator('.pay-amount')).toHaveText('₹639.20');
-  });
-
-  test('free offer: the employer pays nothing and the ad goes to review; wrong plan code gives plain words', async ({ page }) => {
-    await login(page, 'admin');
-    await page.goto('/admin/offers');
-    await page.getByRole('button', { name: 'New offer' }).click();
-    const form = page.getByRole('dialog');
-    await form.getByLabel('Offer name').fill('E2E free');
-    await form.getByLabel('What does it give?').selectOption('free');
-    await form.getByLabel('Coupon code').fill('E2EFREE');
-    await form.getByRole('button', { name: 'Save' }).click();
-    await expect(page.getByText('Offer saved.')).toBeVisible();
-    await logout(page);
-
-    await login(page, 'employer');
-    await page.goto('/dashboard/new');
-    await fillAd(page, 'E2E Free Ad');
-    await page.locator('input[type=file]').setInputFiles(picture());
-    await expect(page.getByText(/ad\.png \(\d+ KB\)/)).toBeVisible({ timeout: 15000 });
-    await page.locator('input[name=package]').nth(1).check({ force: true });
-    await page.getByLabel('Have a coupon code?').fill('E2EFREE');
-    await page.getByRole('button', { name: 'Apply' }).click();
-    await expect(page.locator('.order-summary')).toContainText('Free');
-    await page.getByRole('button', { name: 'Save and go to payment' }).click();
-    await expect(page.getByText(/This ad is free/)).toBeVisible();
-    await page.goto('/dashboard');
-    await expect(page.getByText('E2E Free Ad')).toBeVisible();
   });
 
   test('one ad: more days (reason needed), featured on and off, free ad (note needed)', async ({ page }) => {
@@ -268,7 +208,7 @@ test.describe('admin', () => {
     await expect(page.getByText(/badge_text/).first()).toBeVisible();
   });
 
-  test('settings: the admin changes the UPI ID and the WhatsApp number, the payment screen follows; an empty UPI ID hides payment details', async ({ page }) => {
+  test('settings: wrong values are refused in plain words; the WhatsApp number follows on the site', async ({ page }) => {
     await login(page, 'admin');
     await page.goto('/admin/settings');
     await page.getByLabel('UPI ID for payments').fill('no-at-sign');
@@ -281,26 +221,7 @@ test.describe('admin', () => {
     await expect(page.getByText('Settings saved.')).toBeVisible();
     await logout(page);
 
-    await login(page, 'employer');
-    await page.goto('/dashboard/pay/job-7');
-    await expect(page.getByText('e2eshop@okbank').first()).toBeVisible();
-    await expect(page.getByRole('link', { name: /Pay with my UPI app/ })).toHaveAttribute('href', /pa=e2eshop%40okbank/);
-    const qr = page.getByRole('img', { name: /QR code to pay/ });
-    await expect(qr).toBeVisible();
-    expect(await qr.evaluate((img) => img.complete && img.naturalWidth > 0)).toBe(true); // the picture really loaded
-    await logout(page);
-    expect(await page.getByRole('link', { name: /WhatsApp us/ }).first().getAttribute('href')).toContain('919812345678');
-
-    await login(page, 'admin');
-    await page.goto('/admin/settings');
-    await page.getByLabel('UPI ID for payments').fill('');
-    await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.getByText('Settings saved.')).toBeVisible();
-    await page.goto('/admin');
-    await expect(page.getByText('Fill in the Settings before you take payments')).toBeVisible();
-    await logout(page);
-    await login(page, 'employer');
-    await page.goto('/dashboard/pay/job-7');
-    await expect(page.getByText(/Payment details are not ready/)).toBeVisible();
+    await page.goto('/');
+    await expect(page.getByRole('link', { name: /WhatsApp us/ }).first()).toHaveAttribute('href', /919812345678/);
   });
 });

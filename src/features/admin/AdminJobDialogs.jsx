@@ -7,7 +7,6 @@ import Modal from '../../shared/ui/Modal';
 import { adReference } from '../../shared/lib/adReference';
 import { useLang } from '../../shared/i18n/LangContext';
 import { formatPrice } from '../../shared/lib/money';
-import AdminProofBox from './AdminProofBox';
 
 /** The ad exactly as visitors will see it: the picture, or a big link to the PDF, plus the details text. */
 export function AdFileDialog({ job, onClose }) {
@@ -21,6 +20,23 @@ export function AdFileDialog({ job, onClose }) {
         <a className="pdf-open" href={job.fileUrl} target="_blank" rel="noopener noreferrer"><Icon name="file" size={32} />{t.pdfOpen}</a>
       )}
       {job.details && <p className="modal-text">{job.details}</p>}
+    </Modal>
+  );
+}
+
+/** Approving asks how many days the ad stays live; it goes live now and ends after that many days. */
+export function ApproveDialog({ job, busy, onClose, onConfirm }) {
+  const { t } = useLang();
+  const [days, setDays] = useState('30');
+  const valid = Number.isInteger(+days) && +days >= 1 && +days <= 365;
+  return (
+    <Modal title={t.approveTitle} onClose={onClose}>
+      <p className="modal-text"><strong>{job.title}</strong> <span className="muted">{adReference(job.id)}</span></p>
+      <p className="modal-text">{t.approveText}</p>
+      <Field label={t.approveDays} error={valid ? '' : t.errRequired}>
+        <input type="number" inputMode="numeric" min="1" max="365" value={days} onChange={(e) => setDays(e.target.value)} />
+      </Field>
+      <Button icon="check" disabled={busy || !valid} onClick={() => onConfirm(+days)}>{t.approveConfirm}</Button>
     </Modal>
   );
 }
@@ -41,15 +57,14 @@ export function RejectDialog({ job, busy, onClose, onConfirm }) {
 }
 
 /** Mark as paid asks for the bank or UPI reference number, so one payment cannot be used for two ads. Shows the employer's payment proof when there is one. */
-export function PaidDialog({ job, proof, busy, onClose, onConfirm, onRejectProof }) {
+export function PaidDialog({ job, busy, onClose, onConfirm }) {
   const { t } = useLang();
-  const [reference, setReference] = useState(proof?.status === 'submitted' ? proof.reference : '');
+  const [reference, setReference] = useState('');
   const price = job.finalPricePaise ?? job.priceAtOrder ?? job.package?.pricePaise ?? 0;
   return (
     <Modal title={t.markPaidTitle} onClose={onClose}>
       <p className="modal-text"><strong>{job.title}</strong> <span className="muted">{adReference(job.id)}</span></p>
       <p className="modal-text">{t.markPaidText(formatPrice(price))}</p>
-      <AdminProofBox proof={proof} busy={busy} onReject={onRejectProof} />
       <Field label={t.payReferenceLabel} help={t.payReferenceHelp}>
         <input type="text" value={reference} onChange={(e) => setReference(e.target.value)} maxLength={60} />
       </Field>

@@ -122,6 +122,19 @@ export function toJobRow(input) {
   return row;
 }
 
+/** The license an employer sent so the admin can verify them. */
+export function toVerification(row) {
+  return {
+    id: row.id,
+    recruiterId: row.recruiter_id,
+    licenseNumber: row.license_number,
+    filePath: row.file_path,
+    status: row.status,
+    rejectReason: row.reject_reason || '',
+    createdAt: Date.parse(row.created_at) || null,
+  };
+}
+
 /** A payment proof the employer sent (UTR number + screenshot) for the admin to check. */
 export function toProof(row) {
   return {

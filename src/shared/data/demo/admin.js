@@ -37,13 +37,15 @@ export async function adminCreateJob(input, days) {
   return asJob(row);
 }
 
-export async function adminApprove(id) {
+export async function adminApprove(id, days = null) {
   await wait();
   needAdmin();
   const row = findJob(id);
   if (!['paid_pending_review', 'rejected'].includes(row.status)) throw fail('NOT_NOW', 'This ad cannot be approved now.');
-  const { startsAt, expiresAt } = approvalDates(Date.now(), row.duration_days_final || row.days_at_order || pkgOf(row.package_id)?.duration_days || 30);
-  logAdmin('approve_job', row.id);
+  if (days !== null && !(Number.isInteger(days) && days >= 1 && days <= 365)) throw fail('NOT_ALLOWED', 'Days must be between 1 and 365.');
+  const chosen = days ?? (row.duration_days_final || row.days_at_order || pkgOf(row.package_id)?.duration_days || 30);
+  const { startsAt, expiresAt } = approvalDates(Date.now(), chosen);
+  logAdmin('approve_job', row.id, `${chosen} days`);
   Object.assign(row, { status: 'live', starts_at: new Date(startsAt).toISOString(), expires_at: new Date(expiresAt).toISOString(), reject_reason: null });
   save();
   return asJob(row);
@@ -111,6 +113,12 @@ export async function adminSetRecruiter(id, patch) {
   needAdmin();
   const row = profileOf(id);
   if (!row) throw fail('NOT_FOUND');
+  if (patch.verified && !row.verified) {
+    // like the database (migration 0028): an employer needs a license on file; verifying closes the request as approved
+    const req = (state.db.verification_requests || []).find((x) => x.recruiter_id === id && ['submitted', 'approved'].includes(x.status));
+    if (!req) throw fail('LICENSE_NEEDED', 'license: needed');
+    req.status = 'approved';
+  }
   if (patch.verified !== undefined) row.verified = patch.verified;
   if (patch.blocked !== undefined) {
     if (patch.blocked && !row.blocked) state.db.jobs.forEach((j) => { if (j.recruiter_id === id && j.status === 'live') j.status = 'hidden'; });

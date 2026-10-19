@@ -1,4 +1,4 @@
-// Browser tests for employers: signup, login errors, posting ads (picture and PDF), file rules, payment instructions, edit, delete.
+// Browser tests for employers: signup, login errors, posting ads (picture and PDF; free, they wait for approval), file rules, edit, delete.
 import { expect, test } from '@playwright/test';
 import { ACCOUNTS, bigPdf, fillAd, login, picture, smallPdf, wrongTypes } from './helpers.js';
 
@@ -61,7 +61,7 @@ test.describe('employer', () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
-  test('post an ad with a big picture: it is shrunk, saved as waiting for payment, payment screen shows code, amount and UPI link', async ({ page }) => {
+  test('post an ad with a big picture: it is shrunk and sent for approval, with no package or price on the form', async ({ page }) => {
     await login(page, 'employer');
     await page.goto('/dashboard/new');
     await fillAd(page);
@@ -69,17 +69,14 @@ test.describe('employer', () => {
     await expect(page.getByText(/ad\.png \(\d+ KB\)/)).toBeVisible({ timeout: 15000 });
     const kb = Number((await page.getByText(/ad\.png \(\d+ KB\)/).textContent()).match(/\((\d+) KB\)/)[1]);
     expect(kb).toBeLessThanOrEqual(400);
-    await page.locator('input[name=package]').nth(1).check({ force: true });
-    await page.getByRole('button', { name: 'Save and go to payment' }).click();
-    await expect(page.getByText('Name on the UPI ID')).toBeVisible();
-    const code = (await page.locator('body').innerText()).match(/AD-[0-9A-F]{8}/)[0];
-    await expect(page.getByText('₹799').first()).toBeVisible();
-    const upi = await page.getByRole('link', { name: 'Pay with my UPI app' }).getAttribute('href');
-    expect(upi).toContain('am=799.00');
-    expect(upi).toContain(`tn=${code}`);
-    await page.goto('/dashboard');
-    await expect(page.getByText('E2E Welders needed').first()).toBeVisible();
-    await expect(page.getByText('Waiting for payment').first()).toBeVisible();
+    await expect(page.locator('input[name=package]')).toHaveCount(0); // employers never choose a plan
+    await expect(page.getByLabel('Have a coupon code?')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Send for approval' }).click();
+    await expect(page.getByText('Your ad was sent to us. It goes live after we approve it.')).toBeVisible();
+    await expect(page).toHaveURL(/\/dashboard$/);
+    const ad = page.locator('.ad-row', { hasText: 'E2E Welders needed' }).first();
+    await expect(ad.getByText('Waiting for approval').first()).toBeVisible();
+    expect(await page.locator('body').innerText()).not.toMatch(/Pay now|UPI|₹|price|coupon/i); // no payment buttons or prices on the employer's page
   });
 
   test('post an ad with a PDF', async ({ page }) => {
@@ -88,9 +85,8 @@ test.describe('employer', () => {
     await fillAd(page, 'E2E PDF ad');
     await page.locator('input[type=file]').setInputFiles(smallPdf());
     await expect(page.getByText(/offer\.pdf/)).toBeVisible();
-    await page.locator('input[name=package]').first().check({ force: true });
-    await page.getByRole('button', { name: 'Save and go to payment' }).click();
-    await expect(page.getByText('Name on the UPI ID')).toBeVisible();
+    await page.getByRole('button', { name: 'Send for approval' }).click();
+    await expect(page.getByText('Your ad was sent to us. It goes live after we approve it.')).toBeVisible();
   });
 
   test('wrong file types and a PDF over 2 MB are refused in plain words', async ({ page }) => {
@@ -104,17 +100,17 @@ test.describe('employer', () => {
     await expect(page.getByText(/too big/i)).toBeVisible();
   });
 
-  test('saving without a file, a package or a valid WhatsApp number is refused', async ({ page }) => {
+  test('saving without a file or a valid WhatsApp number is refused', async ({ page }) => {
     await login(page, 'employer');
     await page.goto('/dashboard/new');
     await page.getByLabel('Job title').fill('No file ad');
     await page.getByLabel(/WhatsApp number/).fill('123');
-    await page.getByRole('button', { name: 'Save and go to payment' }).click();
+    await page.getByRole('button', { name: 'Send for approval' }).click();
     await expect(page.locator('.field-error, .has-error').first()).toBeVisible();
     await expect(page).toHaveURL(/\/dashboard\/new/);
   });
 
-  test('a waiting ad can be edited and deleted (after a question); live and paid ads cannot be deleted', async ({ page }) => {
+  test('an older ad that still waits for payment can be edited; a waiting or rejected ad can be withdrawn (after a question); a live ad cannot be deleted', async ({ page }) => {
     await login(page, 'employer');
     await page.goto('/dashboard');
     const kitchen = page.locator('.ad-row', { hasText: 'Kitchen Helper' });
@@ -128,8 +124,9 @@ test.describe('employer', () => {
     const live = page.locator('.ad-row', { hasText: 'Plumbers Needed' });
     await expect(live.getByRole('button', { name: 'Delete' })).toHaveCount(0);
     await expect(live.getByRole('link', { name: 'Edit' })).toHaveCount(0);
-    const waiting = page.locator('.ad-row', { hasText: 'Office Assistant' });
-    await expect(waiting.getByRole('button', { name: 'Delete' })).toHaveCount(0);
+    const waiting = page.locator('.ad-row', { hasText: 'Office Assistant' }); // waiting for approval
+    await expect(waiting.getByRole('button', { name: 'Delete' })).toHaveCount(1);
+    await expect(waiting.getByRole('link', { name: 'Edit' })).toHaveCount(0);
     const edited = page.locator('.ad-row', { hasText: 'Kitchen Helper (edited)' });
     await edited.getByRole('button', { name: 'Delete' }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
@@ -137,7 +134,7 @@ test.describe('employer', () => {
     await expect(page.getByText('Kitchen Helper (edited)')).toHaveCount(0);
   });
 
-  test('a paid ad cannot be edited, but the employer can ask for a change (3 open at most)', async ({ page }) => {
+  test('an approved ad cannot be edited, but the employer can ask for a change (3 open at most)', async ({ page }) => {
     await login(page, 'employer');
     await page.goto('/dashboard');
     const live = page.locator('.ad-row', { hasText: 'AC Technician' });
@@ -170,12 +167,11 @@ test.describe('employer', () => {
     await expect(page.getByText('Ramesh Kumar')).toBeVisible();
   });
 
-  test('printable receipt for a paid ad and the employer details page', async ({ page }) => {
+  test('the employer details page, and no payment tabs or pages for employers', async ({ page }) => {
     await login(page, 'employer');
+    await expect(page.getByRole('link', { name: /Payments/ })).toHaveCount(0);
     await page.goto('/dashboard/payments');
-    await page.getByRole('link', { name: 'Receipt' }).first().click();
-    await expect(page.getByRole('heading', { name: 'Payment receipt' })).toBeVisible();
-    await expect(page.getByText(/not a tax invoice/i)).toBeVisible();
+    await expect(page.getByText(/not found/i).first()).toBeVisible();
     await page.goto('/dashboard/profile');
     await expect(page.getByLabel('Company name')).toHaveValue('Gulf Works');
   });

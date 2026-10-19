@@ -1,6 +1,7 @@
 // Demo backend: plans and offers behave like the database (migration 0018).
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEMO_LOGINS } from './seed';
+import { unpaid } from '../legacy.testkit';
 
 let api;
 const memoryStorage = () => {
@@ -26,20 +27,20 @@ describe('quote and order', () => {
     await asEmployer();
     const q = await api.quotePrice('pkg-30', 'save20');
     expect(q).toMatchObject({ ok: true, listPricePaise: 79900, discountPaise: 15980, finalPricePaise: 63920 });
-    const job = await api.createJob(ad());
+    const job = await unpaid(api.createJob(ad()));
     const done = await api.createAdOrder(job.id, 'pkg-30', 'SAVE20');
     expect(done.jobStatus).toBe('pending_payment');
     const mine = (await api.listMyJobs()).find((j) => j.id === job.id);
     expect(mine).toMatchObject({ listPricePaise: 79900, discountPaise: 15980, finalPricePaise: 63920 });
     expect((await api.listMyPayments()).filter((p) => p.jobId === job.id)).toHaveLength(1);
-    await expect(api.createAdOrder((await api.createJob(ad())).id, 'pkg-30', 'SAVE20')).rejects.toThrow('already_used');
+    await expect(api.createAdOrder((await unpaid(api.createJob(ad()))).id, 'pkg-30', 'SAVE20')).rejects.toThrow('already_used');
   });
   it('a free offer pays at once and sends the ad to review', async () => {
     await asAdmin();
     await api.adminSaveOffer(offer({ type: 'free', value: 0, couponCode: 'FREE1' }));
     await api.signOut();
     await asEmployer();
-    const job = await api.createJob(ad());
+    const job = await unpaid(api.createJob(ad()));
     expect((await api.createAdOrder(job.id, 'pkg-30', 'FREE1')).jobStatus).toBe('paid_pending_review');
     const pay = (await api.listMyPayments()).find((p) => p.jobId === job.id);
     expect(pay).toMatchObject({ status: 'paid', method: 'free_offer', amountPaise: 0 });
@@ -57,7 +58,7 @@ describe('quote and order', () => {
     await api.adminSaveOffer(offer({ couponCode: 'BACK1' }));
     await api.signOut();
     await asEmployer();
-    const job = await api.createJob(ad());
+    const job = await unpaid(api.createJob(ad()));
     await api.createAdOrder(job.id, 'pkg-30', 'BACK1');
     await api.deleteJob(job);
     expect((await api.quotePrice('pkg-30', 'BACK1')).ok).toBe(true);
@@ -81,7 +82,7 @@ describe('admin rules', () => {
   });
   it('the old ad keeps its price when the plan price changes', async () => {
     await asEmployer();
-    const job = await api.createJob(ad());
+    const job = await unpaid(api.createJob(ad()));
     await api.createAdOrder(job.id, 'pkg-30', '');
     await api.signOut();
     await asAdmin();
@@ -106,7 +107,7 @@ describe('admin rules', () => {
     await api.adminSaveOffer(offer({ couponCode: 'STAT1' }));
     await api.signOut();
     await asEmployer();
-    const job = await api.createJob(ad());
+    const job = await unpaid(api.createJob(ad()));
     await api.createAdOrder(job.id, 'pkg-30', 'STAT1');
     await api.signOut();
     await asAdmin();

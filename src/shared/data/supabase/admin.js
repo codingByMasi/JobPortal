@@ -26,8 +26,9 @@ export async function adminCreateJob(input, days) {
   return toJob(ok(await supabase.from('jobs').insert(row).select(JOB_FULL).single()));
 }
 
-export async function adminApprove(id) {
-  ok(await supabase.rpc('admin_approve_job', { p_job: id }));
+/** Approves an ad; `days` (1 to 365) is how long it stays live. Without it the database uses the ad's saved days. */
+export async function adminApprove(id, days = null) {
+  ok(await supabase.rpc('admin_approve_job', { p_job: id, p_days: days }));
 }
 
 export async function adminReject(id, reason) {

@@ -256,3 +256,4 @@ tfoot td { background: var(--blue-card); }
 .proof-box { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); }
 .qr-admin { display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
 .proof-admin { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--blue-card); border: 1px solid var(--line); border-radius: var(--radius); margin: 12px 0; }
+.steps-list { list-style: none; padding: 0; margin: 12px 0; display: flex; flex-direction: column; gap: 6px; }

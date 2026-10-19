@@ -61,9 +61,8 @@ Follow `06-deploy.md` section C2 with `supabase/sample-ads.sql`. Expected: 3 liv
 ## Security check (real project only)
 Run the 8-point list in `03-database-security.md` with two employer accounts and a visitor.
 
-## QR picture and payment proof
-Automatic: `scripts/rls.proof.test.mjs` (database rules) and `e2e/proof.spec.js` (admin uploads, replaces and removes the QR picture; the employer sends a proof; the admin sees it, rejects it with a reason, the employer sends again, the admin marks the ad paid). Hand check on the real project: upload your real QR, scan it with a phone and confirm it pays your account; send a real proof from an employer test account and open the screenshot as admin (the link is a private link that works for 5 minutes).
-
+## License verification and free posting
+Automatic: `scripts/rls.license.test.mjs` (database rules), `src/shared/data/demo/demo.license.test.js` (demo copy) and `e2e/verification.spec.js` (an unverified employer sees the license form, sends a license, the admin rejects it with a reason, the employer sends again, the admin verifies, the employer posts for free, the admin approves with days) plus `e2e/admin.spec.js` (approve with days, an ended ad extended and live again). Hand check on the real project: send a real license from a test employer account, open the file as admin (the link is private and works for 5 minutes), reject once, then verify; post an ad and approve it with 2 days; wait for it to end (or set the end date in the past in Admin > Ads > Edit) and use **More days**.
 
 ## Accessibility
 Automated axe scan (WCAG 2.1 AA) at 375 px in English and Hindi: **clean on every public, employer and admin screen** (one finding on the turned-off package row was fixed). Re-run after any visual change.

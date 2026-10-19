@@ -17,17 +17,17 @@ export default function EditAd() {
   const navigate = useNavigate();
 
   const data = useAsync(async () => {
-    const [packages, mine] = await Promise.all([api.listPackages(), api.listMyJobs(user.id)]);
-    return { packages, job: mine.find((j) => j.id === id) || null };
+    const mine = await api.listMyJobs(user.id);
+    return { job: mine.find((j) => j.id === id) || null };
   }, [id, user.id]);
 
   return (
     <section className="section narrow-form">
       <h2 className="section-title">{t.formEdit}</h2>
       <AsyncView state={data} isEmpty={() => false}>
-        {({ packages, job }) =>
+        {({ job }) =>
           job && canEditAsRecruiter(job) ? (
-            <JobForm mode="edit" job={job} packages={packages} onSaved={(saved) => navigate('/dashboard', { state: { notice: saved.status === 'paid_pending_review' ? t.adResent : t.adSaved } })} />
+            <JobForm mode="edit" job={job} onSaved={(saved) => navigate('/dashboard', { state: { notice: saved.status === 'paid_pending_review' ? t.adResent : t.adSaved } })} />
           ) : (
             <Notice tone="error">{job ? t.errNotAllowed : t.errNotFound}</Notice>
           )

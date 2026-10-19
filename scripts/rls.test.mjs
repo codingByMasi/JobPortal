@@ -157,25 +157,26 @@ describe('3. an employer', () => {
     expect(rows.map((r) => r.id)).not.toContain(e2pending);
   });
 
-  it('can post an ad, which always starts as "waiting for payment" with no dates', async () => {
+  it('can post an ad, which always starts as "waiting for approval" with no dates and no price (migration 0028)', async () => {
     const { rows } = await insertJob(e1, newJob(e1, { starts_at: new Date().toISOString(), expires_at: new Date(Date.now() + 9e9).toISOString(), reject_reason: 'x' }));
     const job = (await rowsOf(db, 'select * from public.jobs where id = $1', [rows[0].id]))[0];
-    expect(job).toMatchObject({ status: 'pending_payment', starts_at: null, expires_at: null, reject_reason: null });
+    expect(job).toMatchObject({ status: 'paid_pending_review', starts_at: null, expires_at: null, reject_reason: null, final_price_paise: 0, price_paise_at_order: 0 });
     expect(job.posted_date).toBeTruthy();
   });
-  it('cannot post an ad as live, paid, or for someone else: whatever they ask, it is stored as THEIR ad "waiting for payment"', async () => {
+  it('cannot post an ad as live, paid, or for someone else: whatever they ask, it is stored as THEIR ad "waiting for approval"', async () => {
     // The insert is corrected by a trigger before the permission check, so nothing dangerous can ever be stored.
     const asks = [{ status: 'live' }, { status: 'paid_pending_review' }, { status: 'hidden' }, { status: 'expired' }, { status: 'rejected' }, { recruiter_id: e2 }];
     for (const ask of asks) {
       const { rows } = await insertJob(e1, newJob(e1, { title: `Sneaky ${JSON.stringify(ask)}`, ...ask }));
       const [job] = await rowsOf(db, 'select recruiter_id, status, starts_at, expires_at from public.jobs where id = $1', [rows[0].id]);
-      expect(job, JSON.stringify(ask)).toMatchObject({ recruiter_id: e1, status: 'pending_payment', starts_at: null, expires_at: null });
+      expect(job, JSON.stringify(ask)).toMatchObject({ recruiter_id: e1, status: 'paid_pending_review', starts_at: null, expires_at: null });
     }
     expect(await countOf(db, "select 1 from public.jobs where recruiter_id = $1 and title like 'Sneaky%'", [e2])).toBe(0);
   });
-  it('needs an active package', async () => {
+  it('an inactive or unknown package is refused; no package at all gets the default plan (employers never choose)', async () => {
     await denied(insertJob(e1, newJob(e1, { package_id: pkgOff })));
-    await denied(insertJob(e1, newJob(e1, { package_id: null })));
+    const none = (await insertJob(e1, newJob(e1, { package_id: null, title: 'No package chosen' }))).rows[0].id;
+    expect((await rowsOf(db, 'select package_id from public.jobs where id = $1', [none]))[0].package_id).toBeTruthy();
     await denied(insertJob(e1, newJob(e1, { package_id: '00000000-0000-0000-0000-00000000dead' })));
   });
   it('is held to valid country, category, WhatsApp and title', async () => {
@@ -209,6 +210,7 @@ describe('3. an employer', () => {
     const own = `${e1}/edit-me.jpg`;
     await putFile(e1, own);
     const { rows } = await insertJob(e1, newJob(e1, { title: 'Edit my file', file_path: own }));
+    await db.query("update public.jobs set status = 'rejected' where id = $1", [rows[0].id]); // a rejected ad is the one an employer edits
     const edit = (set, ...params) => as(db, e1, () => db.query(`update public.jobs set ${set} where id = $1`, [rows[0].id, ...params]));
     const link = async () => (await rowsOf(db, 'select file_url from public.jobs where id = $1', [rows[0].id]))[0].file_url;
     await edit("file_url = 'https://evil.example.com/x.png'");
@@ -237,6 +239,7 @@ describe('3. an employer', () => {
   });
   it('cannot keep more than 20 unpaid ads', async () => {
     const heavy = await addUser(db, 'heavy@x.co', { company_name: 'Heavy' });
+    await db.query('update public.profiles set verified = true where id = $1', [heavy]);
     for (let i = 0; i < 20; i += 1) await insertJob(heavy, newJob(heavy, { title: `Ad number ${i}` }));
     const err = await denied(insertJob(heavy, newJob(heavy, { title: 'One too many' })));
     expect(err.code).toBe('53400');
@@ -269,7 +272,7 @@ describe('3. an employer', () => {
   it('can delete their own unpaid, rejected or ended ads, but not a paid, live or hidden one', async () => {
     const del = (id) => as(db, e1, () => db.query('delete from public.jobs where id = $1', [id]));
     for (const [status, ok, a, b] of [['pending_payment', true, null, null], ['rejected', true, null, null], ['expired', true, -9, -1], ['live', true, -9, -1],
-      ['live', false, -1, 5], ['hidden', false, -1, 5], ['paid_pending_review', false, null, null]]) {
+      ['live', false, -1, 5], ['hidden', false, -1, 5], ['paid_pending_review', true, null, null]]) { // an ad waiting for approval can be withdrawn (nothing was paid)
       const id = await seedJob(e1, `To delete ${status}`, status, pkg30, a, b);
       expect((await del(id)).affectedRows).toBe(ok ? 1 : 0);
     }
@@ -385,12 +388,19 @@ describe('6. the admin', () => {
     expect(row.status).toBe('live');
     expect(Number(row.days)).toBe(7);
   });
-  it('approving an ad with no package gives 30 days; an unknown ad is an error', async () => {
+  it('approving an ad with no package gives 30 days; the admin can choose the days; an unknown ad is an error', async () => {
     const job = await seedJob(e1, 'No package', 'paid_pending_review', null, null, null);
     await as(db, admin, () => db.query('select public.admin_approve_job($1)', [job]));
     const [row] = await rowsOf(db, 'select extract(epoch from (expires_at - starts_at)) / 86400 as days from public.jobs where id = $1', [job]);
     expect(Number(row.days)).toBe(30);
     await denied(as(db, admin, () => db.query('select public.admin_approve_job($1)', ['00000000-0000-0000-0000-00000000dead'])));
+    const chosen = await seedJob(e1, 'Admin picks days', 'paid_pending_review', pkg30, null, null);
+    await as(db, admin, () => db.query('select public.admin_approve_job($1, 45)', [chosen]));
+    const [c] = await rowsOf(db, 'select extract(epoch from (expires_at - starts_at)) / 86400 as days from public.jobs where id = $1', [chosen]);
+    expect(Number(c.days)).toBe(45);
+    const bad = await seedJob(e1, 'Bad days', 'paid_pending_review', pkg30, null, null);
+    await denied(as(db, admin, () => db.query('select public.admin_approve_job($1, 0)', [bad])));
+    await denied(as(db, admin, () => db.query('select public.admin_approve_job($1, 400)', [bad])));
   });
   it('can mark an ad as paid: one payment record, ad moves to "waiting for approval", cannot be paid twice', async () => {
     const job = await seedJob(e2, 'To pay', 'pending_payment', pkg30, null, null);
@@ -431,6 +441,8 @@ describe('6. the admin', () => {
     expect((await as(db, null, () => countOf(db, 'select * from public.public_jobs where id = $1', [rows[0].id])))).toBe(1);
   });
   it('can verify and block employers, and manage packages', async () => {
+    await denied(as(db, admin, () => db.query('update public.profiles set verified = true where id = $1', [e2]))); // no license on file (migration 0028)
+    await db.query("insert into public.verification_requests (recruiter_id, license_number, file_path) values ($1, 'LIC-001', $2)", [e2, `${e2}/license.jpg`]);
     expect((await as(db, admin, () => db.query('update public.profiles set verified = true where id = $1', [e2]))).affectedRows).toBe(1);
     expect((await as(db, admin, () => db.query('update public.profiles set blocked = true where id = $1', [e2]))).affectedRows).toBe(1);
     await db.query('update public.profiles set blocked = false where id = $1', [e2]);

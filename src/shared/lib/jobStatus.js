@@ -12,15 +12,12 @@ export function effectiveStatus(job, now = Date.now()) {
 /** True when visitors may see the ad. */
 export const isPubliclyVisible = (job, now = Date.now()) => job.status === 'live' && job.expiresAt != null && job.expiresAt > now;
 
-/** Employers can edit an ad while it waits for payment, or after it was rejected (then they send it for review again). */
+/** Employers can fix an ad the admin rejected (then they send it for review again). Ads from before migration 0028 may still wait for payment. */
 export const canEditAsRecruiter = (job) => job.status === 'pending_payment' || job.status === 'rejected';
 
-/** Employers pay only while the ad waits for payment. */
-export const canPay = (job) => job.status === 'pending_payment';
-
-/** Employers can delete an ad only when nothing is running: unpaid, rejected or ended. Paid ads are hidden by us, not deleted. */
+/** Employers can withdraw (delete) an ad only when it is not running: waiting for approval, rejected or ended. Live ads are hidden by us, not deleted. */
 export const canDelete = (job, now = Date.now()) =>
-  ['draft', 'pending_payment', 'rejected'].includes(job.status) || effectiveStatus(job, now) === 'expired';
+  ['draft', 'pending_payment', 'paid_pending_review', 'rejected'].includes(job.status) || effectiveStatus(job, now) === 'expired';
 
 /** Once an ad is past "waiting for payment" employers cannot edit it, but they can ask us to change it. */
 export const canRequestChange = (job) => job.status !== 'pending_payment' && job.status !== 'draft';
@@ -56,6 +53,7 @@ export function adminExtraActions(job, now = Date.now()) {
   if (s === 'pending_payment') return ['freeAd'];
   if (s === 'live') return ['extend', job.featured ? 'unfeature' : 'feature'];
   if (s === 'hidden') return ['extend'];
+  if (s === 'expired') return ['extend']; // an ended ad can be extended and goes live again
   return [];
 }
 

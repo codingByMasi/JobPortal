@@ -20,13 +20,13 @@ describe('friendly errors', () => {
     expect(errorKey({ code: '42501', message: 'new row violates row-level security policy' })).toBe('errNotAllowed');
     expect(errorKey({ message: 'This ad is not waiting for payment.' })).toBe('errNotWaiting');
   });
-  it('understands the payment proof errors', () => {
-    expect(errorKey({ code: '22023', message: 'proof: reference' })).toBe('errProofReference');
-    expect(errorKey({ code: 'PROOF_REFERENCE', message: 'proof: reference' })).toBe('errProofReference');
-    expect(errorKey({ code: '23505', message: 'proof: reference_used' })).toBe('errReferenceUsed');
-    expect(errorKey({ code: '23505', message: 'duplicate key value violates unique constraint "payment_proofs_reference_unique"' })).toBe('errReferenceUsed');
-    expect(errorKey({ code: '22023', message: 'proof: file' })).toBe('errProofFile');
-    for (const lang of ['en', 'hi']) for (const key of ['errProofReference', 'errReferenceUsed', 'errProofFile']) expect(translations[lang][key]).toBeTruthy();
+  it('understands the license and verification errors', () => {
+    expect(errorKey({ code: 'P0001', message: 'Your account is not verified yet.' })).toBe('errNeedVerified');
+    expect(errorKey({ code: 'NOT_VERIFIED' })).toBe('errNeedVerified');
+    expect(errorKey({ code: 'P0001', message: 'license: needed' })).toBe('errLicenseNeeded');
+    expect(errorKey({ code: '22023', message: 'license: number' })).toBe('errLicenseNumber');
+    expect(errorKey({ code: '22023', message: 'license: file' })).toBe('errLicenseFile');
+    for (const lang of ['en', 'hi']) for (const key of ['errNeedVerified', 'errLicenseNeeded', 'errLicenseNumber', 'errLicenseFile']) expect(translations[lang][key]).toBeTruthy();
   });
   it('never shows technical words: unknown errors become the generic sentence', () => {
     expect(errorKey(new Error('PGRST999 something internal'))).toBe('errGeneric');

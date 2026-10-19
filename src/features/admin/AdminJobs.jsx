@@ -4,7 +4,7 @@ import { useLocation, useSearchParams } from 'react-router-dom';
 import Button from '../../shared/ui/Button';
 import Field from '../../shared/ui/Field';
 import Icon from '../../shared/ui/Icon';
-import { AdFileDialog, DeleteDialog, PaidDialog, RejectDialog } from './AdminJobDialogs';
+import { AdFileDialog, ApproveDialog, DeleteDialog, PaidDialog, RejectDialog } from './AdminJobDialogs';
 import { ExtendDialog, FreeAdDialog } from './AdminJobExtras';
 import Notice from '../../shared/ui/Notice';
 import { StatusBadge } from '../../shared/ui/StatusBadge';
@@ -35,8 +35,6 @@ export default function AdminJobs() {
   const location = useLocation();
   const [params, setParams] = useSearchParams();
   const ads = useAsync(() => api.adminListJobs(), []);
-  const proofs = useAsync(() => api.adminListPaymentProofs(), []);
-  const proofOf = (job) => (proofs.data || []).find((p) => p.jobId === job.id) || null;
   const { notice, success, fail } = useNotice(location.state?.notice || '');
   const [dialog, setDialog] = useState(null); // { kind: 'reject' | 'paid' | 'delete', job }
   const [busy, setBusy] = useState(false);
@@ -51,7 +49,6 @@ export default function AdminJobs() {
       await work();
       success(doneText);
       ads.reload();
-      proofs.reload();
     } catch (err) {
       fail(err);
     } finally {
@@ -61,11 +58,10 @@ export default function AdminJobs() {
   };
 
   const act = (kind, job) => {
-    if (kind === 'approve') run(() => api.adminApprove(job.id), t.adApproved);
-    else if (kind === 'hide') run(() => api.adminSetHidden(job.id, true), t.adHidden);
+    if (kind === 'hide') run(() => api.adminSetHidden(job.id, true), t.adHidden);
     else if (kind === 'show') run(() => api.adminSetHidden(job.id, false), t.adShown);
     else if (kind === 'feature' || kind === 'unfeature') run(() => api.adminSetFeatured(job.id, kind === 'feature'), t.adFeaturedSaved);
-    else setDialog({ kind: kind === 'markPaid' ? 'paid' : kind, job });
+    else setDialog({ kind: kind === 'markPaid' ? 'paid' : kind, job }); // approve, reject, paid, extend ... open a pop-up first
   };
 
   const all = ads.data || [];
@@ -126,7 +122,6 @@ export default function AdminJobs() {
                         <StatusBadge job={job} />
                         <br /><span className="muted">{describeStatus(job, t, lang)}</span>
                         <br /><span className="muted">{adReference(job.id)}</span>
-                        {job.status === 'pending_payment' && proofOf(job) && proofOf(job).status !== 'accepted' && <p className="hint">{proofOf(job).status === 'rejected' ? t.proofRejectedBadge : t.proofBadge}</p>}
                       </td>
                       <td data-label={t.colActions}>
                         <div className="row-actions">
@@ -158,11 +153,14 @@ export default function AdminJobs() {
       </AsyncView>
 
       {dialog?.kind === 'view' && <AdFileDialog job={dialog.job} onClose={() => setDialog(null)} />}
+      {dialog?.kind === 'approve' && (
+        <ApproveDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={(days) => run(() => api.adminApprove(dialog.job.id, days), t.adApproved)} />
+      )}
       {dialog?.kind === 'reject' && (
         <RejectDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={(reason) => run(() => api.adminReject(dialog.job.id, reason), t.adRejected)} />
       )}
       {dialog?.kind === 'paid' && (
-        <PaidDialog job={dialog.job} proof={proofOf(dialog.job)} busy={busy} onClose={() => setDialog(null)} onConfirm={(reference) => run(() => api.adminMarkPaid(dialog.job.id, { reference }), t.adPaid)} onRejectProof={(reason) => run(() => api.adminRejectProof(proofOf(dialog.job).id, reason), t.proofRejectedDone)} />
+        <PaidDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={(reference) => run(() => api.adminMarkPaid(dialog.job.id, { reference }), t.adPaid)} />
       )}
       {dialog?.kind === 'extend' && (
         <ExtendDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={(days, reason) => run(() => api.adminExtendJob(dialog.job.id, days, reason), t.adExtended)} />

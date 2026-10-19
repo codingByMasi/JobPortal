@@ -37,7 +37,7 @@ declare
   res jsonb := '[]'::jsonb;
   u_admin uuid := gen_random_uuid(); u_e1 uuid := gen_random_uuid(); u_e2 uuid := gen_random_uuid(); u_bl uuid := gen_random_uuid();
   pkg uuid; base text; r text; j1 uuid; j2 uuid; j3 uuid; j4 uuid; j5 uuid; pay1 uuid; n int;
-  f1 text; t1 text; j6 uuid;
+  f1 text; t1 text; j6 uuid; u_e3 uuid := gen_random_uuid(); j7 uuid; lic text;
 begin
   select value into base from public.app_settings where key = 'storage_base';
   select id into pkg from public.packages where name = '30 Days';
@@ -49,6 +49,7 @@ begin
     (u_e2, 'e2@livetest.invalid', '{"company_name":"Employer Two"}'),
     (u_bl, 'blocked@livetest.invalid', '{"company_name":"Blocked Co"}');
   update public.profiles set role = 'admin' where id = u_admin;
+  update public.profiles set verified = true where id = any (array[u_e1, u_bl]); -- only verified employers can post (migrations 0027, 0028); step 7 turns e1 off again
   f1 := u_e1 || '/live-ad.jpg'; t1 := u_e1 || '/live-ad-t.jpg';
   insert into storage.objects (bucket_id, name, owner) values ('job-files', f1, u_e1), ('job-files', t1, u_e1), ('job-files', u_e2 || '/theirs.jpg', u_e2);
 
@@ -62,7 +63,13 @@ begin
   res := res || pg_temp.chk('2 post ad', 'employer can post an ad with a file, thumbnail and details', 'allowed', r);
   select id into j1 from public.jobs where title = 'Live test plumber';
   select status || '/' || whatsapp || '/' || price_paise_at_order || '/' || days_at_order into r from public.jobs where id = j1;
-  res := res || pg_temp.chk('2 post ad', 'stored as waiting for payment, WhatsApp got 91, price and days saved', 'pending_payment/919876543210/79900/30', r);
+  res := res || pg_temp.chk('2 post ad', 'stored as waiting for APPROVAL (free: price 0), WhatsApp got 91, 30 days saved', 'paid_pending_review/919876543210/0/30', r);
+  select count(*)::text into r from public.payments where job_id = j1;
+  res := res || pg_temp.chk('2 post ad', 'no payment record is made for a free ad', '0', r);
+  r := pg_temp.try(format($q$insert into public.jobs (package_id, title, whatsapp) values (%L, 'Unverified post', '9876543210')$q$, pkg), u_e2);
+  res := res || pg_temp.chk('2 post ad', 'an unverified employer cannot post an ad', 'denied', r);
+  -- the payment checks below use an ad from BEFORE posting became free: waiting for payment, with the plan's price saved
+  update public.jobs set status = 'pending_payment', price_paise_at_order = 79900, list_price_paise = 79900, final_price_paise = 79900 where id = j1;
   select file_url into r from public.jobs where id = j1;
   res := res || pg_temp.chk('2 post ad', 'typed-in outside link replaced by our own storage link', base || '/storage/v1/object/public/job-files/' || f1, r);
   select thumb_url into r from public.jobs where id = j1;
@@ -89,7 +96,7 @@ begin
   res := res || pg_temp.chk('3 employer limits', 'another employer cannot even see it', '0', r);
   r := pg_temp.try($q$update public.profiles set role = 'admin' where email = 'e1@livetest.invalid'$q$, u_e1);
   res := res || pg_temp.chk('3 employer limits', 'employer cannot make themselves admin', 'denied', r);
-  r := pg_temp.try($q$update public.profiles set verified = true where email = 'e1@livetest.invalid'$q$, u_e1);
+  r := pg_temp.try($q$update public.profiles set verified = true where email = 'e2@livetest.invalid'$q$, u_e2);
   res := res || pg_temp.chk('3 employer limits', 'employer cannot verify themselves', 'denied', r);
 
   -- ===== 4. visitors =====
@@ -139,6 +146,7 @@ begin
   res := res || pg_temp.chk('6 public', 'employer cannot delete a paid, live ad', 'ok rows=0', r);
 
   -- ===== 7. applying =====
+  update public.profiles set verified = false where id = u_e1; -- back to unverified for the applicant-privacy checks
   r := pg_temp.try(format($q$insert into public.applications (job_id, name, phone, city, message) values (%L, 'Ram Kumar', '98111 00001', 'Lucknow', 'Plumber, 5 years')$q$, j1));
   res := res || pg_temp.chk('7 apply', 'visitor can apply to a live ad', 'ok rows=1', r);
   r := pg_temp.try(format($q$insert into public.applications (job_id, name, phone) values (%L, 'Ram again', '+91 9811100001')$q$, j1));
@@ -152,7 +160,10 @@ begin
   r := pg_temp.try('select public.count_my_applications()::text', u_e1);
   res := res || pg_temp.chk('7 apply', 'unverified employer sees only the count', '1', r);
   r := pg_temp.try(format($q$update public.profiles set verified = true where id = %L$q$, u_e1), u_admin);
-  res := res || pg_temp.chk('7 apply', 'admin verifies the employer', 'ok rows=1', r);
+  res := res || pg_temp.chk('7 apply', 'the admin cannot verify an employer who sent no license', 'denied', r);
+  insert into public.verification_requests (recruiter_id, license_number, file_path) values (u_e1, 'LIVE-LIC-1', u_e1 || '/license.jpg');
+  r := pg_temp.try(format($q$update public.profiles set verified = true where id = %L$q$, u_e1), u_admin);
+  res := res || pg_temp.chk('7 apply', 'admin verifies the employer once a license is on file', 'ok rows=1', r);
   r := pg_temp.try('select count(*)::text from public.applications', u_e1);
   res := res || pg_temp.chk('7 apply', 'verified employer now sees the applicant', '1', r);
   r := pg_temp.try('select count(*)::text from public.applications', u_e2);
@@ -300,6 +311,7 @@ begin
   res := res || pg_temp.chk('15 launch', 'visitors cannot read the crash list', 'denied', r);
   r := pg_temp.try('select count(*)::text from public.error_log where message = ''Live test crash''', u_admin, 'aal2');
   res := res || pg_temp.chk('15 launch', 'the admin can read it', '1', r);
+  update public.profiles set verified = true where id = u_e1; -- so the refusal below is because of the banned number
   update public.profiles set phone = '9811100777' where id = u_e2;
   update public.profiles set blocked = true where id = u_e2;
   r := pg_temp.try(format($q$insert into public.jobs (package_id, title, whatsapp) values (%L, 'Banned number ad', '919811100777')$q$, pkg), u_e1);
@@ -307,6 +319,52 @@ begin
   insert into auth.users (id, email, raw_user_meta_data) values (gen_random_uuid(), 'comeback@livetest.invalid', '{"company_name":"Comeback","phone":"+91 98111 00777"}');
   select blocked::text into r from public.profiles where email = 'comeback@livetest.invalid';
   res := res || pg_temp.chk('15 launch', 'a new signup with a banned phone starts blocked', 'true', r);
+
+  -- ===== 16. license verification, free posting, approving with days, extending an ended ad (migration 0028) =====
+  insert into auth.users (id, email, raw_user_meta_data) values (u_e3, 'e3@livetest.invalid', '{"company_name":"Employer Three","phone":"9876500003"}');
+  lic := u_e3 || '/license.jpg';
+  insert into storage.objects (bucket_id, name, owner) values ('licenses', lic, u_e3), ('licenses', u_e2 || '/theirs.jpg', u_e2);
+  r := pg_temp.try(format($q$select public.submit_verification('LIVE-LIC-9', %L)::text$q$, u_e2 || '/theirs.jpg'), u_e3);
+  res := res || pg_temp.chk('16 license', 'an employer cannot send another employer''s license file', 'denied', r);
+  r := pg_temp.try(format($q$select public.submit_verification('LIVE-LIC-9', %L)::text$q$, lic), u_e3);
+  res := res || pg_temp.chk('16 license', 'an employer can send a license from their own folder', 'allowed', r);
+  r := pg_temp.try('select count(*)::text from public.verification_requests', u_e2);
+  res := res || pg_temp.chk('16 license', 'another employer cannot read the license request', '0', r);
+  r := pg_temp.try('select count(*)::text from public.verification_requests', u_e3);
+  res := res || pg_temp.chk('16 license', 'the employer reads their own request', '1', r);
+  r := pg_temp.try('select count(*)::text from storage.objects where bucket_id = ''licenses''', u_e2);
+  res := res || pg_temp.chk('16 license', 'another employer cannot list license files except their own', '1', r);
+  r := pg_temp.try(format($q$insert into public.jobs (title, whatsapp) values ('Free live ad', '9876543210')$q$), u_e3);
+  res := res || pg_temp.chk('16 license', 'an employer whose license is not yet checked cannot post', 'denied', r);
+  r := pg_temp.try(format($q$update public.profiles set verified = true where id = %L$q$, u_e3), u_admin);
+  res := res || pg_temp.chk('16 license', 'the admin verifies the employer after the license', 'ok rows=1', r);
+  select status into r from public.verification_requests where recruiter_id = u_e3;
+  res := res || pg_temp.chk('16 license', 'verifying closes the request as approved', 'approved', r);
+  r := pg_temp.try($q$insert into public.jobs (title, whatsapp, status, final_price_paise) values ('Free live ad', '9876543210', 'live', 5000)$q$, u_e3);
+  res := res || pg_temp.chk('16 free posting', 'a verified employer posts without choosing a package', 'ok rows=1', r);
+  select id into j7 from public.jobs where title = 'Free live ad';
+  select status || '/' || final_price_paise || '/' || (package_id is not null)::text into r from public.jobs where id = j7;
+  res := res || pg_temp.chk('16 free posting', 'whatever they ask, the ad waits for approval at price 0 with the default plan', 'paid_pending_review/0/true', r);
+  r := pg_temp.try(format($q$select public.admin_approve_job(%L, 400)::text$q$, j7), u_admin);
+  res := res || pg_temp.chk('16 free posting', 'the admin cannot approve for 400 days', 'denied', r);
+  r := pg_temp.try(format($q$select (public.admin_approve_job(%L, 12)).id::text$q$, j7), u_admin);
+  res := res || pg_temp.chk('16 free posting', 'the admin approves and chooses 12 days', 'allowed', r);
+  select status || '/' || round(extract(epoch from (expires_at - starts_at)) / 86400)::int into r from public.jobs where id = j7;
+  res := res || pg_temp.chk('16 free posting', 'it is live for exactly the chosen days', 'live/12', r);
+  update public.jobs set expires_at = now() - interval '1 day' where id = j7;
+  perform public.expire_jobs();
+  select status into r from public.jobs where id = j7;
+  res := res || pg_temp.chk('16 free posting', 'when the days end the ad is expired', 'expired', r);
+  select count(*)::text into r from public.public_jobs where id = j7;
+  res := res || pg_temp.chk('16 free posting', 'an expired ad is not on the public list', '0', r);
+  r := pg_temp.try(format($q$select public.admin_extend_job(%L, 5, 'live test')::text$q$, j7), u_e3);
+  res := res || pg_temp.chk('16 free posting', 'an employer cannot add days', 'denied', r);
+  r := pg_temp.try(format($q$select (public.admin_extend_job(%L, 5, 'live test')).id::text$q$, j7), u_admin);
+  res := res || pg_temp.chk('16 free posting', 'the admin adds days to the ended ad', 'allowed', r);
+  select status into r from public.jobs where id = j7;
+  res := res || pg_temp.chk('16 free posting', 'the ended ad is live again', 'live', r);
+  select count(*)::text into r from public.public_jobs where id = j7;
+  res := res || pg_temp.chk('16 free posting', 'and is on the public list again', '1', r);
 
   raise exception 'LIVE_E2E_RESULTS %', res::text;
 end

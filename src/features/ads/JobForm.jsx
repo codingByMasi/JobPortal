@@ -1,6 +1,6 @@
 // The ad form, used four ways:
-//   new         employer posts an ad (picks a package, then goes to payment)
-//   edit        employer edits an ad that is still waiting for payment
+//   new         a verified employer posts an ad: no package, no price, no payment; it waits for the admin's approval
+//   edit        employer fixes an ad the admin rejected, then sends it again
 //   admin-new   admin adds an ad that goes live at once (no payment)
 //   admin-edit  admin edits any field of any ad
 import { useState } from 'react';
@@ -9,10 +9,6 @@ import Field from '../../shared/ui/Field';
 import FileField from './FileField';
 import JobFactsFields, { factsStart } from './JobFactsFields';
 import Notice from '../../shared/ui/Notice';
-import CouponBox from './CouponBox';
-import OrderSummary from './OrderSummary';
-import PackagePicker from './PackagePicker';
-import { usePackageQuotes } from './usePackageQuotes';
 import { api } from '../../shared/data';
 import { useAuth } from '../auth/AuthContext';
 import { CATEGORIES, COUNTRIES } from '../../shared/lib/catalog';
@@ -29,7 +25,7 @@ const endOfDay = (dateString) => {
 };
 
 /** `job` for edit modes; `renewFrom` pre-fills a new ad from an ended one. `onSaved(job)` runs after saving. */
-export default function JobForm({ mode, job, renewFrom, packages, onSaved }) {
+export default function JobForm({ mode, job, renewFrom, packages = [], onSaved }) {
   const { t } = useLang();
   const { user, profile } = useAuth();
   const isAdmin = mode.startsWith('admin');
@@ -64,16 +60,12 @@ export default function JobForm({ mode, job, renewFrom, packages, onSaved }) {
     clearError(key);
   };
   const choices = isAdmin ? packages : packages.filter((p) => p.active);
-  const [code, setCode] = useState('');
-  const { quotes, codeProblems } = usePackageQuotes(mode === 'new' ? choices : [], code);
-  const codeProblem = code && v.packageId ? codeProblems[v.packageId] : '';
 
   const submit = async (e) => {
     e.preventDefault();
     const next = {};
     if (v.title.trim().length < 2) next.title = t.errRequired;
     if (!isValidWhatsapp(v.whatsapp)) next.whatsapp = t.errPhoneBad;
-    if (mode === 'new' && !v.packageId) next.package = t.errNeedPackage;
     if (!isAdmin && !file) next.file = t.errNeedFile;
     for (const [field, key] of Object.entries(checkFacts(v))) next[field] = t[key];
     if (mode === 'admin-new' && !(Number.isInteger(+v.days) && +v.days >= 1 && +v.days <= 365)) next.days = t.errRequired;
@@ -105,15 +97,8 @@ export default function JobForm({ mode, job, renewFrom, packages, onSaved }) {
       };
       let saved;
       if (mode === 'new') {
-        saved = await api.createJob({ ...base, packageId: v.packageId });
-        try {
-          await api.createAdOrder(saved.id, v.packageId, codeProblem ? '' : code); // the database saves the price, the offer and a waiting payment
-        } catch (orderErr) {
-          await api.deleteJob(saved).catch(() => {}); // nothing is left half-made; the form stays filled in for another try
-          throw orderErr;
-        }
-      }
-      else if (mode === 'edit') {
+        saved = await api.createJob(base); // the database stores it as "waiting for approval" (a verified employer only)
+      } else if (mode === 'edit') {
         saved = await api.updateJob(job.id, base);
         if (job.status === 'rejected') saved = await api.resubmitJob(job.id); // a fixed, rejected ad goes back to review
       } else if (mode === 'admin-new') saved = await api.adminCreateJob({ ...base, packageId: v.packageId || null }, Number(v.days));
@@ -131,7 +116,7 @@ export default function JobForm({ mode, job, renewFrom, packages, onSaved }) {
     }
   };
 
-  const submitLabel = { new: t.continuePay, edit: job?.status === 'rejected' ? t.saveAndResend : t.saveChanges, 'admin-new': t.save, 'admin-edit': t.saveChanges }[mode];
+  const submitLabel = { new: t.sendForApproval, edit: job?.status === 'rejected' ? t.saveAndResend : t.saveChanges, 'admin-new': t.save, 'admin-edit': t.saveChanges }[mode];
 
   return (
     <form className="form" onSubmit={submit} noValidate>
@@ -170,17 +155,6 @@ export default function JobForm({ mode, job, renewFrom, packages, onSaved }) {
 
       <FileField value={file} onChange={(f) => { setFile(f); clearError('file'); }} error={errors.file} />
 
-      {mode === 'new' && (
-        <>
-          <PackagePicker packages={choices} quotes={quotes} value={v.packageId} onChange={(id) => { setV((x) => ({ ...x, packageId: id })); clearError('package'); }} error={errors.package} />
-          <CouponBox packageId={v.packageId} applied={code} onApply={setCode} />
-          {codeProblem && <Notice tone="error">{t[`offer_${codeProblem}`]}</Notice>}
-          <OrderSummary pkg={choices.find((p) => p.id === v.packageId)} quote={quotes[v.packageId]} />
-        </>
-      )}
-      {isEdit && !isAdmin && job.package && (
-        <p className="help">{t.package}: <strong>{job.package.name}</strong> ({formatPrice(job.package.pricePaise)}, {t.pkgDays(job.package.durationDays)})</p>
-      )}
       {isAdmin && (
         <>
           <Field label={t.package}>

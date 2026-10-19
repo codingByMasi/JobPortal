@@ -1,10 +1,10 @@
 // Extra browser tests added for the final release gate: every protected route, every deep link, Hindi on every public screen,
-// image zoom, PDF view, and the coupon cases that were only tested in the database (expired, used up, wrong plan).
+// image zoom and PDF view.
 import { expect, test } from '@playwright/test';
 import { fillAd, login, logout, picture, smallPdf } from './helpers.js';
 
 const ADMIN_ROUTES = ['/admin', '/admin/jobs', '/admin/jobs/new', '/admin/jobs/job-1', '/admin/employers', '/admin/payments', '/admin/packages', '/admin/offers', '/admin/history', '/admin/reports', '/admin/settings', '/admin/guides', '/admin/applications', '/admin/requests', '/admin/security', '/admin/problems'];
-const EMPLOYER_ROUTES = ['/dashboard', '/dashboard/new', '/dashboard/edit/job-7', '/dashboard/pay/job-7', '/dashboard/payments', '/dashboard/applications', '/dashboard/profile', '/dashboard/receipt/pay-1'];
+const EMPLOYER_ROUTES = ['/dashboard', '/dashboard/new', '/dashboard/edit/job-7', '/dashboard/applications', '/dashboard/profile'];
 const PUBLIC_ROUTES = ['/', '/jobs', '/jobs/uae', '/jobs/saudi-arabia', '/jobs/qatar', '/jobs/kuwait', '/jobs/oman', '/jobs/other-countries', '/job/job-1', '/post-job', '/contact', '/about', '/faq', '/privacy', '/terms', '/refund-policy', '/delete-account', '/login', '/signup', '/forgot-password', '/reset-password'];
 
 test.describe('release gate', () => {
@@ -61,29 +61,24 @@ test.describe('release gate', () => {
     expect(await page.locator('body').innerText()).not.toMatch(/404|exception|stack|supabase/i);
   });
 
-  test('a picture ad and a PDF ad: employer posts, admin pays and approves, a visitor can zoom the picture, download it and open the PDF', async ({ page }) => {
-    const codes = {};
+  test('a picture ad and a PDF ad: employer posts, admin approves, a visitor can zoom the picture, download it and open the PDF', async ({ page }) => {
     for (const [title, file] of [['GATE Picture Ad', picture()], ['GATE Pdf Ad', smallPdf()]]) {
       await login(page, 'employer');
       await page.goto('/dashboard/new');
       await fillAd(page, title);
       await page.locator('input[type=file]').setInputFiles(file);
       await expect(page.getByText(/\(\d+ KB\)/)).toBeVisible({ timeout: 15000 });
-      await page.locator('input[name=package]').nth(1).check({ force: true });
-      await page.getByRole('button', { name: 'Save and go to payment' }).click();
-      await expect(page.getByText('Name on the UPI ID')).toBeVisible();
-      codes[title] = (await page.locator('body').innerText()).match(/AD-[0-9A-F]{8}/)[0];
+      await page.getByRole('button', { name: 'Send for approval' }).click();
+      await expect(page.getByText('Your ad was sent to us. It goes live after we approve it.')).toBeVisible();
       await logout(page);
     }
     await login(page, 'admin');
-    for (const [title, code] of Object.entries(codes)) {
+    for (const title of ['GATE Picture Ad', 'GATE Pdf Ad']) {
       await page.goto('/admin/jobs');
-      await page.getByRole('searchbox').fill(code);
+      await page.getByRole('searchbox').fill(title);
       const row = page.locator('tbody tr').first();
-      await row.getByRole('button', { name: 'Mark as paid' }).click();
-      await page.getByRole('dialog').getByLabel(/Payment reference/).fill(`GATE-${code}`);
-      await page.getByRole('dialog').getByRole('button', { name: 'Mark as paid' }).click();
       await row.getByRole('button', { name: 'Approve' }).click();
+      await page.getByRole('dialog').getByRole('button', { name: 'Approve and go live' }).click();
       await expect(row.getByText(/Live until/).first(), title).toBeVisible();
     }
     await logout(page);
@@ -100,46 +95,6 @@ test.describe('release gate', () => {
     await page.getByRole('link', { name: /View: GATE Pdf Ad/ }).click();
     await expect(page.getByRole('link', { name: /Open the PDF/ })).toHaveAttribute('href', /.+/);
     await expect(page.getByRole('link', { name: 'Download' })).toHaveAttribute('download', 'job-ad.pdf');
-  });
-
-  test('coupons: expired, used up, wrong plan and already used each give their own plain words', async ({ page }) => {
-    await login(page, 'admin');
-    await page.goto('/admin/offers');
-    const make = async (name, code, extra = async () => {}) => {
-      await page.getByRole('button', { name: 'New offer' }).click();
-      const form = page.getByRole('dialog');
-      await form.getByLabel('Offer name').fill(name);
-      await form.getByLabel('Percent (1 to 100)').fill('10');
-      await form.getByLabel('Coupon code').fill(code);
-      await extra(form);
-      await form.getByRole('button', { name: 'Save' }).click();
-      await expect(page.getByText('Offer saved.')).toBeVisible();
-    };
-    await make('Gate expired', 'GATEOLD', async (form) => {
-      await form.getByLabel('Starts on (optional)').fill('2020-01-01');
-      await form.getByLabel('Ends on (optional)').fill('2020-02-01');
-    });
-    await make('Gate one use', 'GATEONE', async (form) => { await form.getByLabel('Total uses (optional)').fill('1'); });
-    await make('Gate wrong plan', 'GATEPLAN', async (form) => {
-      await form.getByLabel('Who gets it?').selectOption('package');
-      await form.getByLabel('Plan', { exact: true }).selectOption({ index: 0 });
-    });
-    await logout(page);
-
-    await login(page, 'employer');
-    await page.goto('/dashboard/new');
-    await fillAd(page, 'GATE Coupon Ad');
-    await page.locator('input[name=package]').nth(1).check({ force: true });
-    const apply = async (code) => {
-      await page.getByLabel('Have a coupon code?').fill(code);
-      await page.getByRole('button', { name: 'Apply' }).click();
-    };
-    await apply('GATEOLD');
-    await expect(page.getByText('Code expired')).toBeVisible();
-    await apply('GATEPLAN');
-    await expect(page.getByText('This code is not for this plan')).toBeVisible();
-    await apply('GATEONE');
-    await expect(page.getByText('Coupon GATEONE is applied.')).toBeVisible();
   });
 
   test('responsive: no sideways scrolling and nothing cut off on any screen at phone and desktop width', async ({ page }) => {

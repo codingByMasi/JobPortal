@@ -8,7 +8,6 @@ import { friendlyMessage } from '../../shared/lib/friendlyError';
 import { useLang } from '../../shared/i18n/LangContext';
 import { badSettings, cleanWhatsapp, isFilledIn, REQUIRED_SETTINGS } from '../../shared/lib/siteSettings';
 import { useSettings } from '../../shared/settings/SettingsContext';
-import AdminQr from './AdminQr';
 
 const FIELDS = {
   whatsappNumber: { inputMode: 'numeric', maxLength: 20 },
@@ -79,7 +78,6 @@ export default function AdminSettings() {
         <Notice tone={notice.tone}>{notice.text}</Notice>
         <Button type="submit" icon="check" disabled={busy}>{busy ? t.saving : t.save}</Button>
       </form>
-      <AdminQr />
     </section>
   );
 }

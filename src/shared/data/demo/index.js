@@ -4,11 +4,11 @@ import * as auth from './auth';
 import * as files from './files';
 import * as guides from './guides';
 import * as offers from './offers';
-import * as proofs from './proofs';
 import * as publicApi from './public';
 import * as recruiter from './recruiter';
 import * as settings from './settings';
 import * as trust from './trust';
+import * as verification from './verification';
 import { resetState } from './store';
 
 export const demoApi = {
@@ -21,7 +21,7 @@ export const demoApi = {
   ...trust,
   ...settings,
   ...guides,
-  ...proofs,
+  ...verification,
   /** For the "Start again" button in the demo banner. */
   async resetDemo() {
     resetState();

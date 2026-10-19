@@ -1,16 +1,19 @@
-# 08 - Online payments: not used (decision of the owner)
+# 08 - Payments: employers do not pay (decision of the owner)
 
-No online payment gateway is used. Payment works like this and stays like this:
+Employers do not pay to post ads, and the site has no payment gateway and no payment screens for employers.
 
-1. The employer sees the amount, your UPI ID and a QR code (your own uploaded picture, or one made from the UPI ID) on the payment screen.
-2. The employer pays and sends a **payment proof**: the UTR reference number and a screenshot.
-3. The admin checks the money in the bank or UPI app, then marks the ad paid (or rejects the proof with a reason).
+How it works now:
+1. An employer signs up and sends their **license** (number + picture or PDF).
+2. The admin checks the license and **verifies** the employer (or rejects it with a reason). An employer cannot be verified without a license.
+3. A verified employer **posts ads for free**. Each ad waits for the admin, who **approves it and chooses the days** it stays live.
+4. When the days end the ad is no longer shown. The admin can **add days** and the ad goes live again.
 
-See `docs/10-admin-guide.md` (QR picture, checking a payment) and `docs/03-database-security.md` (QR picture and payment proof).
+See `docs/10-admin-guide.md` and `docs/16-employer-guide.md`.
 
-## What is in the code
-- `mark_job_paid()` (migration 0023): the one database function that makes an ad "paid". The admin's **Mark as paid** uses it.
-- `startPayment()` in `src/features/payments/payments.js` sends the employer to the payment screen.
+## What is still in the code from the paid days
+- The admin-only tools for money: **Payments**, **Packages**, **Offers**, **Mark as paid**, **Free ad**, **Refund**, and the database functions behind them (`admin_mark_paid`, `mark_job_paid`, `create_ad_order`, offers and plans). They work on ads made before posting became free and keep the records. Nothing in the employer's screens uses them. They can be removed later in a clean-up if the owner confirms they are never needed.
+- The database also keeps two unused tables from earlier work (payment proofs, QR picture setting). Nothing reads them.
+- The status name `paid_pending_review` is the stored name of "waiting for approval" (renaming it would touch live data and many rules).
 
 ## If a payment gateway is ever wanted
-Start from a clean plan: a gateway needs KYC and a website review, and overseas-job advertising may be a restricted category (ask first). The server must be the only thing that marks an ad paid, after checking the gateway's signed message; never trust the browser. Earlier work on this is in the git history (commits `d44f3ff` and `cd2a722`).
+Start from a clean plan: a gateway needs KYC and a website review, and overseas-job advertising may be a restricted category (ask first). The server must be the only thing that marks an ad paid, after checking the gateway's signed message; never trust the browser.

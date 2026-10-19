@@ -6,7 +6,7 @@ Read this first. It is the rulebook for anyone (human or AI) changing this proje
 A job-ads website for people in India looking for work abroad (Gulf countries). Employers pay to post ads.
 Stack: Vite + React (plain JavaScript) + plain CSS + Supabase (database, login, file storage). No separate server.
 Roles: **visitor/candidate** (no login), **recruiter** (login, posts ads for a fee), **admin** (everything).
-Payments: the employer pays by UPI (QR code), sends a payment proof (UTR + screenshot), and the admin checks the money and marks the ad paid. No online payment gateway is used (`docs/08-phase2-payments.md`).
+Employers do not pay. A recruiter signs up, sends a license, and the admin verifies them. A verified recruiter posts ads for free; the admin approves each ad and chooses how many days it stays live, and can add days when it ends (`docs/08-phase2-payments.md`).
 The owner is not deeply technical: explain decisions in short, plain words.
 
 ## Folder structure
@@ -28,9 +28,8 @@ src/
     jobs/                 public: home, list, filters, job page, apply form, public jobs state
     auth/                 login, signup, login state (AuthContext), route guard (RequireRole)
     ads/                  the ad form + file field + package picker (used by recruiter AND admin)
-    recruiter/            employer area: my ads, post/edit ad, my payments, applications
+    recruiter/            employer area: my ads, license form (NeedVerification), post/edit ad, applications
     admin/                admin area
-    payments/             startPayment() + the payment screen (QR code, proof form)
     site/                 contact, privacy/terms, post-a-job info, 404
   shared/
     ui/                   Button, Field, Icon, Modal, Notice, tabs, state views (look and feel, no business rules)
@@ -44,7 +43,7 @@ Tests sit next to the code they test (`*.test.js`) and in `scripts/*.test.mjs` (
 ## Conventions
 - **Names:** components `PascalCase.jsx`; everything else `camelCase.js`; CSS classes `kebab-case`; database `snake_case`; JavaScript objects `camelCase` (mappers convert).
 - **One job per file.** Aim for under 200 lines per file (text files like `en.js` excepted). Every file starts with a one-line comment saying what it is for; every component has a one-line doc comment.
-- **Imports go one way:** `app` and `features` may use `shared`. A feature may import another feature only for these shared pieces: `features/auth` (useAuth, RequireRole), `features/ads` (the ad form) and `features/payments` (startPayment). `app` may also use `features/auth`. `shared` never imports from `features` or `app`.
+- **Imports go one way:** `app` and `features` may use `shared`. A feature may import another feature only for these shared pieces: `features/auth` (useAuth, RequireRole) and `features/ads` (the ad form and file field). `app` may also use `features/auth`. `shared` never imports from `features` or `app`.
 - **Data rule:** only `src/shared/data` may import the Supabase library or touch the database. Screens call `api.something()`. Every new data function is added to BOTH `supabase/` and `demo/` with the same name, plus a test.
 - **Text rule:** no words in components. All text lives in `shared/i18n/en.js` and `hi.js` with the same keys (a test checks it). Hindi must be simple.
 - **Money rule:** money is whole paise in the database and code; `formatPrice` shows rupees. Never use floating-point rupees.

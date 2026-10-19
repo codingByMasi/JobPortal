@@ -8,7 +8,7 @@ export function errorKey(err) {
     LOGIN: 'errLogin', EMAIL_TAKEN: 'errEmailTaken', WEAK_PASSWORD: 'errWeakPassword', NETWORK: 'errNetwork',
     BLOCKED: 'errBlocked', NOT_ALLOWED: 'errNotAllowed', NEED_LOGIN: 'errNeedLogin', NOT_FOUND: 'errNotFound',
     FILE_TYPE: 'errFileType', PDF_BIG: 'errPdfBig', IMAGE_FAIL: 'errImage', STORAGE_FULL: 'errStorageFull',
-    EMAIL_NOT_CONFIRMED: 'errEmailNotConfirmed', TOO_MANY_ADS: 'errTooManyAds', DUPLICATE: 'errAlreadyApplied', LIMIT: 'errTooManyApplications', ENDED: 'errEnded', NOT_WAITING: 'errNotWaiting', BAD_PRICE: 'errPrice', UPLOAD: 'errUpload', TOO_MANY_REQUESTS: 'errTooManyRequests', MFA_CODE: 'errMfaCode', NEED_MESSAGE: 'errNeedMessage',
+    EMAIL_NOT_CONFIRMED: 'errEmailNotConfirmed', TOO_MANY_ADS: 'errTooManyAds', DUPLICATE: 'errAlreadyApplied', LIMIT: 'errTooManyApplications', ENDED: 'errEnded', NOT_WAITING: 'errNotWaiting', BAD_PRICE: 'errPrice', UPLOAD: 'errUpload', TOO_MANY_REQUESTS: 'errTooManyRequests', MFA_CODE: 'errMfaCode', NEED_MESSAGE: 'errNeedMessage', NOT_VERIFIED: 'errNeedVerified', LICENSE_NEEDED: 'errLicenseNeeded', LICENSE_NUMBER: 'errLicenseNumber', LICENSE_FILE: 'errLicenseFile',
   };
   if (map[code]) return map[code];
   if (/invalid login credentials/i.test(msg)) return 'errLogin';
@@ -16,10 +16,12 @@ export function errorKey(err) {
   if (/password should be|at least \d+ char|weak password/i.test(msg)) return 'errWeakPassword';
   if (/email not confirmed/i.test(msg)) return 'errEmailNotConfirmed';
   if (/failed to fetch|networkerror|load failed|network request failed/i.test(msg)) return 'errNetwork';
+  if (/not verified/i.test(msg)) return 'errNeedVerified';
+  if (/license: needed/i.test(msg)) return 'errLicenseNeeded';
+  if (/license: number/i.test(msg)) return 'errLicenseNumber';
+  if (/license: file/i.test(msg)) return 'errLicenseFile';
   if (/blocked/i.test(msg)) return 'errBlocked';
   if (/payments_reference|payments_one_paid|payment_proofs_reference|proof: reference_used/i.test(msg) || code === 'REFERENCE_USED' || code === 'PROOF_REFERENCE_USED') return 'errReferenceUsed';
-  if (/proof: reference|PROOF_REFERENCE/.test(msg + code)) return 'errProofReference';
-  if (/proof: file/i.test(msg)) return 'errProofFile';
   if (/has ended/i.test(msg)) return 'errEnded';
   if (/cannot be (approved|rejected|refunded)|not hidden|only a live ad/i.test(msg)) return 'errNotNow';
   const offer = msg.match(/offer: (\w+)/);

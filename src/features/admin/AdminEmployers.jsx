@@ -1,10 +1,11 @@
-// /admin/employers - verify or block employers, and look at their ads and payments.
+// /admin/employers - check an employer's license and verify them, block employers, and look at their ads and payments.
 import { useState } from 'react';
 import Button from '../../shared/ui/Button';
 import Icon from '../../shared/ui/Icon';
 import Modal from '../../shared/ui/Modal';
 import Notice from '../../shared/ui/Notice';
 import { StatusBadge } from '../../shared/ui/StatusBadge';
+import AdminLicenseDialog from './AdminLicenseDialog';
 import { AsyncView } from '../../shared/ui/StateViews';
 import { api } from '../../shared/data';
 import { formatDate } from '../../shared/lib/format';
@@ -53,6 +54,9 @@ function EmployerDetails({ employer, onClose }) {
 export default function AdminEmployers() {
   const { t, lang } = useLang();
   const list = useAsync(() => api.adminListRecruiters(), []);
+  const licenses = useAsync(() => api.adminListVerifications(), []);
+  const licenseOf = (employer) => (licenses.data || []).find((r) => r.recruiterId === employer.id) || null;
+  const [checking, setChecking] = useState(null); // the employer whose license is open
   const { notice, success, fail } = useNotice();
   const [details, setDetails] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -63,10 +67,25 @@ export default function AdminEmployers() {
       await api.adminSetRecruiter(employer.id, patch);
       success(t.employerSaved);
       list.reload();
+      licenses.reload();
     } catch (err) {
       fail(err);
     } finally {
       setBusy(false);
+    }
+  };
+
+  const rejectLicense = async (employer, reason) => {
+    setBusy(true);
+    try {
+      await api.adminRejectVerification(licenseOf(employer).id, reason);
+      success(t.licenseRejectedDone);
+      licenses.reload();
+    } catch (err) {
+      fail(err);
+    } finally {
+      setBusy(false);
+      setChecking(null);
     }
   };
 
@@ -91,12 +110,12 @@ export default function AdminEmployers() {
                     <td data-label={t.colStatus}>
                       {e.verified && <span className="tag tag-verified"><Icon name="badge" size={16} />{t.verifiedTag}</span>}
                       {e.blocked && <span className="tag tag-blocked"><Icon name="ban" size={16} />{t.blockedTag}</span>}
+                      {!e.verified && e.role !== 'admin' && <span className="muted">{licenseOf(e) ? t.licenseState[licenseOf(e).status] : t.licenseState.none}</span>}
                     </td>
                     <td data-label={t.colActions}>
                       <div className="row-actions">
-                        <Button size="sm" tone="outline" icon="badge" disabled={busy} onClick={() => change(e, { verified: !e.verified })}>
-                          {e.verified ? t.unverify : t.verify}
-                        </Button>
+                        {e.verified && <Button size="sm" tone="outline" icon="badge" disabled={busy} onClick={() => change(e, { verified: false })}>{t.unverify}</Button>}
+                        {!e.verified && licenseOf(e) && <Button size="sm" tone="green" icon="badge" disabled={busy} onClick={() => setChecking(e)}>{t.licenseCheck}</Button>}
                         <Button size="sm" tone={e.blocked ? 'green' : 'danger'} icon="ban" disabled={busy || e.role === 'admin'} onClick={() => change(e, { blocked: !e.blocked })}>
                           {e.blocked ? t.unblock : t.block}
                         </Button>
@@ -112,6 +131,16 @@ export default function AdminEmployers() {
         )}
       </AsyncView>
       {details && <EmployerDetails employer={details} onClose={() => setDetails(null)} />}
+      {checking && licenseOf(checking) && (
+        <AdminLicenseDialog
+          employer={checking}
+          request={licenseOf(checking)}
+          busy={busy}
+          onClose={() => setChecking(null)}
+          onVerify={async () => { await change(checking, { verified: true }); setChecking(null); }}
+          onReject={(reason) => rejectLicense(checking, reason)}
+        />
+      )}
     </section>
   );
 }
