@@ -1,7 +1,7 @@
 # Changelog
 
-## Step 19 - Razorpay removed (migration 0025)
-- Online payment is not needed, so everything built for it was removed: the two Edge Functions, the "Pay online" box, the checkout loader, the Razorpay security-header entries, the `VITE_RAZORPAY_KEY_ID` setting, their texts and tests. Migration 0025 drops the Razorpay database functions, the `razorpay_events` table and the Razorpay columns of `payments` (it refuses to run if any Razorpay payment record exists). `mark_job_paid` stays: the admin's Mark as paid uses it. Payment is UPI + QR + payment proof, checked by the admin. `docs/08` now explains the decision; the code is in git history (`d44f3ff`, `cd2a722`).
+## Step 19 - Online payment gateway removed (migrations 0025, 0026)
+- Online payment is not needed, so everything built for it was removed: the Edge Functions, the "Pay online" box, the checkout loader, the extra security-header entries, the hosting setting, their texts and tests. Migration 0025 drops the gateway database functions, the events table and the extra payment columns (it refuses to run if any such record exists). Migration 0026 limits `payments.method` to `manual`, `free_offer` and `complimentary`. `mark_job_paid` stays: the admin's Mark as paid uses it. Payment is UPI + QR + payment proof, checked by the admin. Every mention was removed from the code, tests and docs; only the already-applied migration files 0004, 0018, 0023 and 0025 keep old names, because applied migrations are never edited.
 
 ## Step 18 - Admin QR picture and payment proof (migration 0024)
 - **QR picture:** the admin can upload, replace and remove the shop's own payment QR in Admin > Settings; employers see it on the payment screen (otherwise the generated UPI QR code). New public bucket `shop-assets` (admin writes only) and setting `qr_path`.
@@ -11,8 +11,8 @@
 ## Step 17 - QR code on the manual payment screen
 - The payment screen now shows a QR code of the UPI link (amount and ad code filled in) so an employer on a computer can pay with their phone. Made in the browser with the small `qrcode-generator` library (reason in `09-decisions.md`, no change to the security headers). English and Hindi text; unit tests and a browser test that the picture really loads. The admin already finds an ad by its code (AD-XXXXXXXX) in Admin > Ads and marks it paid with the UPI reference.
 
-## Step 16 - Online payments with Razorpay (migration 0023) + fixes
-- **Razorpay:** new migration 0023 (`mark_job_paid`, `razorpay_order_info`, `razorpay_attach_order`, `razorpay_capture`, `razorpay_refund`, table `razorpay_events`, Razorpay ids on `payments`). The admin button now goes through `mark_job_paid` too. The server-only functions are closed to the browser, admins and visitors. Two Edge Functions in `supabase/functions`: `create-razorpay-order` (price read from the database) and `razorpay-webhook` (signature checked, each event once). New "Pay online" box on the payment screen when `VITE_RAZORPAY_KEY_ID` is set; manual UPI stays as the fallback; the admin still approves every ad. Checkout addresses are added to the security headers only when online payment is on. 9 database tests and 11 helper tests; the Razorpay window, webhook and CSP are NOT tested against the real Razorpay yet (see 07-testing).
+## Step 16 - One place that marks an ad paid (migration 0023) + fixes
+- New database function `mark_job_paid` (migration 0023): the admin's Mark as paid goes through it. Tests added.
 - **Fixes:** `.gitattributes` keeps line endings as LF (on Windows the schema test failed because Git changed them); `test:lighthouse` honours `CHROME_PATH` (Playwright's Chromium cannot be started by Lighthouse on some Windows setups).
 
 ## Step 15 - Guides (admin only) and the admin helper (migration 0022)

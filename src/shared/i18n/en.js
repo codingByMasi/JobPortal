@@ -257,7 +257,6 @@ export const en = {
   colPackage: 'Package',
   colActions: 'Actions',
   methodManual: 'Paid directly',
-  methodRazorpay: 'Online',
   payStatus: { created: 'Started', paid: 'Paid', refunded: 'Refunded' },
   noApps: 'No one has applied yet.',
   noAppsFound: 'No applications found.',

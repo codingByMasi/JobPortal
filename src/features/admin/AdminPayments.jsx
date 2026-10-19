@@ -158,7 +158,7 @@ export default function AdminPayments() {
                       <td data-label={t.colEmployer}>{p.recruiterName || '-'}</td>
                       <td data-label={t.colAd}>{p.jobTitle || '-'}</td>
                       <td data-label={t.colAmount}>{formatPrice(p.amountPaise)}</td>
-                      <td data-label={t.colHow}>{p.method === 'razorpay' ? t.methodRazorpay : t.methodManual}</td>
+                      <td data-label={t.colHow}>{t.methodManual}</td>
                       <td data-label={t.colStatus}><span className={`badge badge-pay-${p.status}`}>{t.payStatus[p.status]}</span></td>
                       <td data-label={t.colNote}>{[p.reference, p.note].filter(Boolean).join(' · ') || '-'}</td>
                       <td data-label={t.colActions}>

@@ -11,7 +11,7 @@ Source of truth: the numbered files in `supabase/migrations` (0001 to 0022). Put
 | `offer_redemptions` | offer, employer, ad, discount (paise), bonus days | written only by `create_ad_order`; admin reads all, an employer reads their own; deleting an unpaid ad gives the use back (0018) |
 | `audit_log` | admin, action (insert/update/delete), table, record, old value, new value | filled by triggers on `packages` and `offers`; admin reads; nobody writes through the website (0018) |
 | `jobs` | the ads (**also the job facts (`salary_min`, `salary_max`, `currency`, `experience_level`, `vacancies`, `last_date`, `visa_type`: all optional, with value checks) and the price saved at order: list price, discount, final price, offer, final days, and an admin "featured" override**): owner, package, title, company, country, city, category, details text, file link/path/type, thumbnail link/path, WhatsApp, dates, `status`, `reject_reason`, **price and days saved at order time** | country and category limited by CHECKs; WhatsApp is 10-15 digits |
-| `payments` | amount (paise), method (`manual`/`free_offer`/`complimentary`; `razorpay` is allowed by the list but never used), status (`created`/`paid`/`refunded`), note, **reference (UTR)**, **the same price snapshot as the ad** | only admin functions write; reference is unique; one paid payment per ad; kept even if the employer is removed |
+| `payments` | amount (paise), method (`manual`/`free_offer`/`complimentary`), status (`created`/`paid`/`refunded`), note, **reference (UTR)**, **the same price snapshot as the ad** | only admin functions write; reference is unique; one paid payment per ad; kept even if the employer is removed |
 | `applications` | candidate name, phone, city, message | no login to insert; one per ad per phone, at most 1000 per ad; deleted after 180 days |
 | `change_requests` | an employer asks us to change a paid ad (message, `open`/`done`/`declined`) | migration 0011 |
 | `admin_log` | who did what (approve, reject, hide, show, mark paid, refund) | written only by the admin functions; read only by admins |
@@ -62,12 +62,12 @@ Source of truth: the numbered files in `supabase/migrations` (0001 to 0022). Put
 - **Old ads keep their price:** the snapshot is saved at order time; later changes to a plan or an offer never touch it. Approve uses the saved days (bonus days included); Mark as paid fills the waiting payment (no second row) and uses the saved final price.
 - **Admin only:** `admin_extend_job(job, days, reason)` (live or hidden ads, reason needed), `admin_set_featured(job, on/off)`, `admin_give_free_ad(job, note)` (payment of 0, method `complimentary`). All write to `admin_log`.
 
-## Mark as paid (migration 0023, Razorpay removed by 0025)
-- `mark_job_paid` is the one place an ad becomes paid. It is closed to anon and logged-in users; only `admin_mark_paid` calls it. Migration 0025 removed the Razorpay functions, the `razorpay_events` table and the Razorpay columns of `payments`; the `payments.method` list still allows `razorpay` (never written).
+## Mark as paid (migrations 0023 to 0026)
+- `mark_job_paid` is the one place an ad becomes paid. It is closed to anon and logged-in users; only `admin_mark_paid` calls it. Migration 0025 removed the online-payment functions, table and columns that 0023 had added; migration 0026 limits `payments.method` to `manual`, `free_offer` and `complimentary`.
 
 ## QR picture and payment proof (migration 0024)
 - Two new storage buckets. `shop-assets` is public to read and only admins can write or delete (1 MB, pictures only); the QR picture is the setting `qr_path`, readable by logged-in people only, saved only by `admin_save_settings`, and only if the file really exists in `shop-assets`. `payment-proofs` is private: an employer writes in their own folder and reads their own files, admins read all (3 MB, pictures and PDF).
-- Table `payment_proofs` (one per ad, RLS: owner or admin can read, nobody writes directly). `submit_payment_proof` checks: own ad, ad waiting for payment, not blocked, a reference of 6 to 30 letters and numbers, a reference not used by any payment or any other live proof, and a file that exists in the employer's own folder. `admin_reject_proof` needs a reason. `admin_mark_paid` marks the open proof accepted. Nothing marks an ad paid except the admin (or the verified Razorpay webhook).
+- Table `payment_proofs` (one per ad, RLS: owner or admin can read, nobody writes directly). `submit_payment_proof` checks: own ad, ad waiting for payment, not blocked, a reference of 6 to 30 letters and numbers, a reference not used by any payment or any other live proof, and a file that exists in the employer's own folder. `admin_reject_proof` needs a reason. `admin_mark_paid` marks the open proof accepted. Nothing marks an ad paid except the admin.
 - Tests: `scripts/rls.proof.test.mjs`; browser tests: `e2e/proof.spec.js`.
 
 ## Functions

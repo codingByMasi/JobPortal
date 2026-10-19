@@ -125,7 +125,7 @@ Underneath the rows: 275 unit and database tests (275 pass), 128 of them databas
 ## 5. Before taking payments, and later
 
 **Before taking payments (manual UPI counts as taking payments):** B1 to B5; accountant answers on GST and receipts; employer terms and refund rule reviewed by a lawyer; a second admin with two-step login on; weekly backup secrets set and one test restore; decide who checks the bank statement daily (the admin guide says never mark paid from a screenshot).
-**Before online payments (Phase 2):** the plan in `docs/08` plus: a `failed` payment status, a table of webhook event ids, a reconciliation view, refund handling from the webhook; ask Razorpay if overseas-job advertising is allowed; real Terms, Refund and Privacy pages.
+**Online payments:** not used; payment is UPI + QR + proof (`docs/08`).
 **Nice to have later:** offers and coupons (if wanted), UPI QR picture, server-side paging (before about 500 live ads), email or WhatsApp notices to employers, staging project, B7, B8, B13, B14.
 
 ## 6. What is not built or not documented (compared with docs 01-11 and your brief)
@@ -134,7 +134,7 @@ Underneath the rows: 275 unit and database tests (275 pass), 128 of them databas
 |---|---|
 | Offers, coupon codes, discounts, bonus days, free offers | Built after this report (0018). |
 | Admin "edit offers" | Built after this report (Admin > Offers). |
-| Phase 2 online payments (Razorpay) | Plan only (`docs/08`); price snapshot, unique reference and one-paid-payment-per-ad are in place as groundwork. |
+| Online payment gateway | Not used (decision of the owner, `docs/08`). |
 | Deleting an ad removes its file in the database | Not built (browser only). |
 | Automatic removal of old unpaid ads and their files | Not built. |
 | CAPTCHA on the apply form | Not built (per-address limits are). |

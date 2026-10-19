@@ -256,7 +256,6 @@ export const hi = {
   colPackage: 'पैकेज',
   colActions: 'काम',
   methodManual: 'सीधे दिया',
-  methodRazorpay: 'ऑनलाइन',
   payStatus: { created: 'शुरू हुआ', paid: 'दिया गया', refunded: 'वापस हुआ' },
   noApps: 'अभी किसी ने आवेदन नहीं किया।',
   noAppsFound: 'कोई आवेदन नहीं मिला।',

@@ -28,7 +28,7 @@ export default function MyPayments() {
                     <td data-label={t.colDate}>{formatDate(p.createdAt, lang)}</td>
                     <td data-label={t.colAd}>{p.jobTitle || '-'}</td>
                     <td data-label={t.colAmount}>{formatPrice(p.amountPaise)}</td>
-                    <td data-label={t.colHow}>{p.method === 'razorpay' ? t.methodRazorpay : t.methodManual}</td>
+                    <td data-label={t.colHow}>{t.methodManual}</td>
                     <td data-label={t.colStatus}><span className={`badge badge-pay-${p.status}`}>{t.payStatus[p.status]}</span></td>
                     <td data-label={t.colActions}>{p.status === 'paid' && <Button size="sm" tone="outline" icon="file" to={`/dashboard/receipt/${p.id}`}>{t.receiptOpen}</Button>}</td>
                   </tr>

@@ -32,7 +32,7 @@ I ran (nothing inside the repo was changed; `git status` stays clean):
 - A production build, written to a temporary folder outside the repo, to measure bundle size.
 - A throw-away script (outside the repo) that uses your own test harness (real Postgres engine with your real migrations) to try 17 attacks and edge cases. Results are in section 8.
 
-I could **not** check: the real Supabase project settings, the deployed site, a real phone, Razorpay, or the content of the `.env` values (I did not open the keys).
+I could **not** check: the real Supabase project settings, the deployed site, a real phone, or the content of the `.env` values (I did not open the keys).
 
 ---
 
@@ -90,7 +90,7 @@ IDs: PRD product, ARC architecture, DAT data model, SEC security, FRD fraud, PAY
 | PAY-02 | Payments | Payment screen shows a UPI ID to copy. No QR, no `upi://` link with amount, no payee name, no ad reference. Hard for this audience; easy to mistype. | `Pay.jsx:57-66`, `payments.js:15-25` | Medium | S | Big "Pay with UPI app" button (`upi://pay?pa=..&am=..&tn=AD-ID`) and a QR image. |
 | PAY-03 | Done | Payments CSV for the admin and a printable receipt for the employer (not a tax invoice; GST invoices depend on your accountant). |
 | PAY-04 | Payments | Phase 2 plan is sound (one "mark paid" function, webhook, signature check). Missing from the plan: price saved at order time, `failed` status, one-time-only payment id table, reconciliation view, refund webhook. Plan numbering is stale: "migration 0008" already exists. | `docs/08:11` | Medium | M | Update `docs/08` first; list these items. |
-| PAY-05 | Payments | Razorpay needs real policy pages (terms, refund, privacy, contact) to activate, and may treat overseas-job advertising as a restricted category (ASSUMPTION). Current legal pages are drafts. | `en.js:380` | Medium | S | Ask Razorpay support now, before building. Have an alternative (QR-only) ready. |
+| PAY-05 | Payments | A payment gateway would need real policy pages (terms, refund, privacy, contact) to activate, and may treat overseas-job advertising as a restricted category (ASSUMPTION). Current legal pages are drafts. | `en.js:380` | Medium | S | Not needed: no payment gateway is used. Have an alternative (QR-only) ready. |
 | FE-01 | Frontend | No timeout or retry for slow networks. A stalled request shows a spinner for a long time. | `JobsContext.jsx`, `useAsync.js`, `client.js:6-8` | Medium | S | 15-second timeout, then the existing error screen with Retry. |
 | FE-02 | Frontend | PDF ads are shown in an `<iframe>`. Many phone browsers (notably Android Chrome) do not show PDFs inline: likely an empty box with only a small text link. ASSUMPTION: not tested on a device. | `JobDetail.jsx:108-111` | Medium | S | For PDFs, make "Open the PDF" the main big button; show the first page as an image if you can. |
 | FE-03 | Frontend | Same phone-number rule is copied in 3 places (apply form, signup, database). | `ApplyForm.jsx:11`, `Signup.jsx:33`, `0004:23` | Low | S | One shared helper. |
@@ -220,7 +220,7 @@ Real strengths, checked in the code or by running it:
 
 **When to pay.** Before the first real user (backups, no pausing, as `docs/06:45` says). The Pro plan costs about the same as **3 ads of Rs 799 a month**. Move on to higher tiers only when storage passes 70 GB or traffic passes 200 GB.
 
-**Other costs (estimates, confirm):** domain Rs 700-1,200 a year; email sender free tier; Razorpay about 2% plus 18% tax on the fee (on Rs 799: about Rs 16 + Rs 3 = Rs 19; UPI rates may differ); Plausible analytics is paid (about 9 dollars a month); WhatsApp links are free; a lawyer, an accountant and a native Hindi reader are one-time costs.
+**Other costs (estimates, confirm):** domain Rs 700-1,200 a year; email sender free tier; a payment gateway would charge about 2% plus tax per payment (not used); Plausible analytics is paid (about 9 dollars a month); WhatsApp links are free; a lawyer, an accountant and a native Hindi reader are one-time costs.
 
 ---
 
@@ -266,7 +266,7 @@ Baseline = 100 live ads, 1,000 visits a day. 10x = 1,000 ads, 10,000 visits. 100
 - Supabase free/Pro limits and Netlify limits: from memory, may be out of date (section 6).
 - Supabase default email limit: from memory.
 - `wa.me` behaviour with 10-digit numbers, and PDF-in-frame behaviour on phones: from known browser behaviour, **not tested on a device**.
-- Razorpay's acceptance of this category: unknown.
+- A payment gateway's acceptance of this category: unknown (no gateway is used).
 - Indian rules (Emigration Act, data protection law, intermediary rules, GST): named only so you can ask a professional. **This is not legal advice.**
 - Hindi quality: not judged by me.
 - No performance test on a real slow phone; bundle sizes are measured, load times are estimates.
@@ -290,7 +290,7 @@ Baseline = 100 live ads, 1,000 visits a day. 10x = 1,000 ads, 10,000 visits. 100
 ### Phase 2 - before promoting widely or taking online payments
 - PRF-01 thumbnails, PRF-02 / SCL-01 paging, ARC-01 / PRF-03 smaller first load, FE-02 PDF handling, UX-03 text size, SEC-03 apply CAPTCHA, SEC-04 CSP pinned.
 - DAT-03 saved price, DAT-04 status rules, ARC-03 admin functions with a log, PRD-01 / PRD-08 reject and refund flow, PAY-02 UPI link and QR, PAY-03 receipts and export.
-- PAY-04 / PAY-05 update `docs/08`, ask Razorpay first; TST-03 end-to-end test; ARC-04 / ARC-05 / OPS-04 staging and migration tracking; SEO-02, SEO-03.
+- PAY-04 / PAY-05 update `docs/08`; TST-03 end-to-end test; ARC-04 / ARC-05 / OPS-04 staging and migration tracking; SEO-02, SEO-03.
 
 ### Phase 3 - later
 ACC-01 structured text on ads, UX-04 post-for-you service, UX-06 Hindi search, PRD-02/03/09 to 12, FRD-05, DAT-06 to DAT-09, SEC-05, FE-03 to FE-05, ARC-02, ARC-06, PRF-04, PRF-05, OPS-05, OPS-06, SCL-03, TST-04, DOC-01.
@@ -312,7 +312,7 @@ ACC-01 structured text on ads, UX-04 post-for-you service, UX-06 Hindi search, P
 | 9 | Paid Supabase plan from day one | Yes (about Rs 2,100 a month, about 3 ads). | A fixed cost before income. |
 | 10 | Show prices publicly on Post-a-job | Yes. | Competitors see them; employers trust you more. |
 | 11 | How long to keep applications | 90-180 days, then delete (lawyer confirms). | Less data risk vs employers losing old lists. |
-| 12 | Payment gateway risk | Ask Razorpay now whether this category is allowed; keep UPI QR as a fallback. | A small delay vs a blocked Phase 2. |
+| 12 | Payment gateway risk | No gateway is used; payment is UPI + QR + proof. | A small delay vs a blocked Phase 2. |
 | 13 | Who is the named grievance contact? | You, with a phone/email shown on Contact. | Public responsibility, but required trust signal. |
 
 ---
@@ -378,7 +378,7 @@ Everything that could be done in code was done. "Owner" = needs your accounts, m
 | PAY-02 | Partly | "Pay with my UPI app" link with payee, amount and ad code; no QR picture. |
 | PAY-03 | Partly | Payments CSV; no printable receipt (invoice depends on your accountant). |
 | PAY-04 | Done | `08-phase2-payments.md` updated. |
-| PAY-05 | Owner | Ask Razorpay about the category. |
+| PAY-05 | Owner | Not needed: no payment gateway is used. |
 | FE-01 | Done | 20-second request limit (90 for files). |
 | FE-02 | Done | PDF: big "Open the PDF" button; the in-page PDF only on wide screens. |
 | FE-03 | Done | One phone helper. |

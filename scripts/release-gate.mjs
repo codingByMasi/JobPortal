@@ -29,7 +29,7 @@ const rel = (f) => relative('.', f).replace(/\\/g, '/');
 // ---------- 1. secrets ----------
 const SECRET_PATTERNS = [
   ['service_role key word', /service_role/i], ['Supabase secret key', /sb_secret_[A-Za-z0-9_-]{10,}/], ['Supabase access token', /\bsbp_[a-f0-9]{30,}/],
-  ['Razorpay key', /rzp_(live|test)_[A-Za-z0-9]{8,}/], ['private key block', /-----BEGIN [A-Z ]*PRIVATE KEY-----/], ['Resend key', /\bre_[A-Za-z0-9]{20,}/],
+  ['private key block', /-----BEGIN [A-Z ]*PRIVATE KEY-----/], ['Resend key', /\bre_[A-Za-z0-9]{20,}/],
 ];
 const decodeRole = (jwt) => { try { return JSON.parse(Buffer.from(jwt.split('.')[1], 'base64url').toString()).role; } catch { return null; } };
 const JWT = /eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/g;
