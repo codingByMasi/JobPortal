@@ -1,4 +1,4 @@
-// /admin/settings - the WhatsApp number, UPI ID, emails, company name and site address, changed in the app (no code change, no new build).
+// /admin/settings - the WhatsApp number, emails, company name and site address, changed in the app (no code change, no new build).
 import { useEffect, useState } from 'react';
 import Button from '../../shared/ui/Button';
 import Field from '../../shared/ui/Field';

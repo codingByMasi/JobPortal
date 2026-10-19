@@ -56,7 +56,7 @@ export function RejectDialog({ job, busy, onClose, onConfirm }) {
   );
 }
 
-/** Mark as paid asks for the bank or UPI reference number, so one payment cannot be used for two ads. Shows the employer's payment proof when there is one. */
+/** Mark as paid asks for the bank reference number, so one payment cannot be used for two ads. Shows the employer's payment proof when there is one. */
 export function PaidDialog({ job, busy, onClose, onConfirm }) {
   const { t } = useLang();
   const [reference, setReference] = useState('');

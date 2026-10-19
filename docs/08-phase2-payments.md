@@ -12,7 +12,7 @@ See `docs/10-admin-guide.md` and `docs/16-employer-guide.md`.
 
 ## What is still in the code from the paid days
 - The admin-only tools for money: **Payments**, **Packages**, **Offers**, **Mark as paid**, **Free ad**, **Refund**, and the database functions behind them (`admin_mark_paid`, `mark_job_paid`, `create_ad_order`, offers and plans). They work on ads made before posting became free and keep the records. Nothing in the employer's screens uses them. They can be removed later in a clean-up if the owner confirms they are never needed.
-- The database also keeps two unused tables from earlier work (payment proofs, QR picture setting). Nothing reads them.
+- The QR picture, the payment proof and the Razorpay code were removed (migrations 0025 and 0030). The admin's payment tools were kept on purpose: Payments, Packages, Offers, mark paid, free ad and refund.
 - The status name `paid_pending_review` is the stored name of "waiting for approval" (renaming it would touch live data and many rules).
 
 ## If a payment gateway is ever wanted

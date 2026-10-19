@@ -1,5 +1,10 @@
 # Changelog
 
+## Step 23 - QR picture and payment proof removed (migration 0030)
+- The QR picture and payment proof database parts (migration 0024) are dropped by migration 0030: the proof table and functions, the QR setting, the two storage buckets (when Supabase allows deleting them from SQL). `admin_mark_paid` no longer touches proofs.
+- Code: the UPI settings (`upiId`, `upiName`, the example values in `src/config.js`), the unused pay-screen, receipt and UPI texts in English and Hindi, and the unused styles were removed. The database still accepts the old UPI settings keys, so anything saved is not lost.
+- **Kept on purpose:** the admin Payments, Packages and Offers tabs, mark paid, free ad, refund and the plan and offer functions.
+
 ## Step 22 - Admin work queue and ending notes
 - **Dashboard = "What needs you today":** six cards, each a link: **Licenses to check** (employers who sent a license), **Waiting for approval**, **Ending in 3 days**, **Change requests**, **Ended in the last 30 days**, **Live ads**. Cards with work to do get a thick border. The money and offers numbers and the UPI "Settings missing" reminder are gone (employers do not pay).
 - **Lists open filtered:** Ads tab with `?ending=soon` (soonest first) or `?ending=ended` (ended in the last month: these can get **More days**), each with a "Show all" button; Employers tab with `?license=waiting`; waiting licenses are always listed first.

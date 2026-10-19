@@ -150,13 +150,6 @@ tfoot td { background: var(--blue-card); }
 .modal h3 { font-size: 18px; margin-top: 4px; }
 
 /* payment instructions + counts */
-.pay-box { display: flex; flex-direction: column; gap: 10px; padding: 16px; background: var(--blue-card); border: 1px solid var(--line); border-radius: var(--radius); margin: 0; }
-.pay-box > div { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
-.pay-box dt { color: var(--muted); }
-.pay-box dd { margin: 0; font-weight: 700; }
-.pay-amount { font-size: 28px; color: var(--blue-dark); }
-.pay-upi span:first-child { user-select: all; }
-.pay-upi { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 18px; overflow-wrap: anywhere; }
 .count-grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
 @media (min-width: 560px) { .count-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 960px) { .count-grid { grid-template-columns: repeat(4, 1fr); } }
@@ -189,7 +182,6 @@ tfoot td { background: var(--blue-card); }
 .ad-pdf { display: none; }
 @media (min-width: 768px) { .ad-pdf { display: block; } .pdf-open { min-height: var(--tap); font-size: 16px; } }
 
-.qr { width: 220px; height: 220px; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 8px; align-self: center; }
 .secret { font-family: ui-monospace, monospace; letter-spacing: 0.08em; overflow-wrap: anywhere; font-size: 16px; }
 
 @media print {
@@ -250,13 +242,6 @@ tfoot td { background: var(--blue-card); }
 .markdown hr { border: 0; border-top: 1px solid var(--line-strong); width: 100%; }
 @media print { .no-print, .site-header, .site-footer, .sub-nav { display: none !important; } }
 
-/* QR code on the payment screen: always black on white so every UPI app can read it, also in dark mode */
-.pay-qr { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 16px 0; text-align: center; }
-.qr { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); max-width: 100%; height: auto; }
-.proof-box { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); }
-.qr-admin { display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
-.proof-admin { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--blue-card); border: 1px solid var(--line); border-radius: var(--radius); margin: 12px 0; }
-.steps-list { list-style: none; padding: 0; margin: 12px 0; display: flex; flex-direction: column; gap: 6px; }
 .agency-list { list-style: none; padding: 0; margin: 12px 0; display: grid; gap: 12px; }
 .agency-card { padding: 14px 16px; background: #fff; border: 2px solid var(--line-strong); border-radius: var(--radius); display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
 .agency-name { display: flex; align-items: center; gap: 8px; font-size: 19px; margin: 0; }

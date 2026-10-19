@@ -1,4 +1,4 @@
-// Gives every screen the site settings (WhatsApp, UPI, emails, company name, site address) that the admin saved in the app.
+// Gives every screen the site settings (WhatsApp, emails, company name, site address) that the admin saved in the app.
 // While they load, or when a setting is not filled in yet, `has(name)` is false so a screen can hide the button instead of showing an example value.
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { api, isDemo } from '../data';
