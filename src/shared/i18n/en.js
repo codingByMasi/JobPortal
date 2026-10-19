@@ -786,6 +786,13 @@ Problem: `,
   settingsMissingText: (names) => `Not filled in yet: ${names}.`,
   settingsMissingLink: 'Open Settings',
   payNotReady: 'Payment details are not ready yet. Please contact us and we will help you.',
+  /* telling the employer after a decision */
+  tellEmployer: 'Tell the employer on WhatsApp',
+  msgApproved: (title, days, date) => `Hello, your ad "${title}" is now live on Jobs Abroad for ${days} days (until ${date}). Thank you.`,
+  msgRejected: (title, reason) => `Hello, we could not approve your ad "${title}". Reason: ${reason} Please fix it and send it again.`,
+  msgExtended: (title, days) => `Hello, we added ${days} days to your ad "${title}". It is live again. Thank you.`,
+  msgVerified: (company) => `Hello, your company ${company || ''} is now verified on Jobs Abroad. You can post your ads now. Thank you.`,
+  msgLicenseRejected: (reason) => `Hello, we could not accept your license. Reason: ${reason} Please send it again from the Post an ad page.`,
   /* the admin work queue and the employer's ending notes */
   queueTitle: 'What needs you today',
   cLicenses: 'Licenses to check',

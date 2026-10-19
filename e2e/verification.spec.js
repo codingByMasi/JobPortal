@@ -45,6 +45,7 @@ test.describe('license verification and free posting', () => {
     await dialog.getByRole('button', { name: 'Reject license' }).click();
     await expect(page.getByText('License rejected.')).toBeVisible();
     await expect(employerRow(page).getByText('License rejected', { exact: true })).toBeVisible();
+    expect(decodeURIComponent(await page.getByRole('link', { name: 'Tell the employer on WhatsApp' }).getAttribute('href'))).toContain('The picture is not readable');
     await logout(page);
 
     // the employer reads the reason and sends again
@@ -66,6 +67,8 @@ test.describe('license verification and free posting', () => {
     await expect(dialog.getByText('LIC-2024/78')).toBeVisible();
     await dialog.getByRole('button', { name: 'Verify this employer' }).click();
     await expect(employerRow(page).getByText('Verified').first()).toBeVisible();
+    const verifiedTell = page.getByRole('link', { name: 'Tell the employer on WhatsApp' });
+    expect(decodeURIComponent(await verifiedTell.getAttribute('href'))).toContain('Desert Transport');
     await logout(page);
 
     // now the employer can post, for free

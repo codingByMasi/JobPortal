@@ -7,6 +7,7 @@ import Modal from '../../shared/ui/Modal';
 import Notice from '../../shared/ui/Notice';
 import { StatusBadge } from '../../shared/ui/StatusBadge';
 import AdminLicenseDialog from './AdminLicenseDialog';
+import TellEmployer from './TellEmployer';
 import { AsyncView } from '../../shared/ui/StateViews';
 import { api } from '../../shared/data';
 import { formatDate } from '../../shared/lib/format';
@@ -67,12 +68,15 @@ export default function AdminEmployers() {
   const { notice, success, fail } = useNotice();
   const [details, setDetails] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [tell, setTell] = useState(null); // { phone, text }: the WhatsApp message offered after a decision
 
   const change = async (employer, patch) => {
     setBusy(true);
+    setTell(null);
     try {
       await api.adminSetRecruiter(employer.id, patch);
       success(t.employerSaved);
+      if (patch.verified === true) setTell({ phone: employer.phone, text: t.msgVerified(employer.companyName) });
       list.reload();
       licenses.reload();
     } catch (err) {
@@ -84,9 +88,11 @@ export default function AdminEmployers() {
 
   const rejectLicense = async (employer, reason) => {
     setBusy(true);
+    setTell(null);
     try {
       await api.adminRejectVerification(licenseOf(employer).id, reason);
       success(t.licenseRejectedDone);
+      setTell({ phone: employer.phone, text: t.msgLicenseRejected(reason) });
       licenses.reload();
     } catch (err) {
       fail(err);
@@ -99,6 +105,7 @@ export default function AdminEmployers() {
   return (
     <section className="section">
       <Notice tone={notice.tone}>{notice.text}</Notice>
+      <TellEmployer tell={tell} />
       {onlyWaiting && (
         <p className="help filter-note">{t.licenseFilter} <Button size="sm" tone="outline" onClick={() => setParams({}, { replace: true })}>{t.showAll}</Button></p>
       )}

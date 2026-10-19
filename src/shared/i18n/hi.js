@@ -785,6 +785,13 @@ export const hi = {
   settingsMissingText: (names) => `अभी भरा नहीं गया: ${names}।`,
   settingsMissingLink: 'सेटिंग खोलें',
   payNotReady: 'भुगतान की जानकारी अभी तैयार नहीं है। कृपया हमसे संपर्क करें, हम मदद करेंगे।',
+  /* telling the employer after a decision */
+  tellEmployer: 'नियोक्ता को WhatsApp पर बताएँ',
+  msgApproved: (title, days, date) => `नमस्ते, आपका विज्ञापन "${title}" अब Jobs Abroad पर ${days} दिन (${date} तक) के लिए चालू है। धन्यवाद।`,
+  msgRejected: (title, reason) => `नमस्ते, हम आपका विज्ञापन "${title}" मंज़ूर नहीं कर सके। कारण: ${reason} कृपया ठीक करके फिर भेजें।`,
+  msgExtended: (title, days) => `नमस्ते, हमने आपके विज्ञापन "${title}" में ${days} दिन जोड़ दिए हैं। यह फिर चालू है। धन्यवाद।`,
+  msgVerified: (company) => `नमस्ते, आपकी कंपनी ${company || ''} अब Jobs Abroad पर वेरिफ़ाइड है। आप अब अपने विज्ञापन डाल सकते हैं। धन्यवाद।`,
+  msgLicenseRejected: (reason) => `नमस्ते, हम आपका लाइसेंस स्वीकार नहीं कर सके। कारण: ${reason} कृपया "विज्ञापन डालें" पेज से फिर भेजें।`,
   /* the admin work queue and the employer's ending notes */
   queueTitle: 'आज क्या करना है',
   cLicenses: 'जाँचने वाले लाइसेंस',

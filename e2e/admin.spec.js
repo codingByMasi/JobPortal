@@ -41,6 +41,8 @@ test.describe('admin', () => {
     await reject.locator('textarea').fill('Please add the company name.');
     await reject.getByRole('button', { name: 'Reject the ad' }).click();
     await expect(row(page).getByText(/Rejected/).first()).toBeVisible();
+    const rejectedTell = page.getByRole('link', { name: 'Tell the employer on WhatsApp' });
+    expect(decodeURIComponent(await rejectedTell.getAttribute('href'))).toContain('Please add the company name.');
     await page.getByRole('button', { name: 'Log out' }).click();
 
     await login(page, 'employer');
@@ -61,6 +63,11 @@ test.describe('admin', () => {
     await approve.getByRole('button', { name: 'Approve and go live' }).click();
     await expect(row(page).getByText(/Live until/).first()).toBeVisible();
     await expect(row(page).getByRole('button', { name: 'Approve' })).toHaveCount(0);
+    const approvedTell = page.getByRole('link', { name: 'Tell the employer on WhatsApp' });
+    const approvedMessage = decodeURIComponent(await approvedTell.getAttribute('href'));
+    expect(approvedMessage).toContain('E2E Life Ad');
+    expect(approvedMessage).toContain('20 days');
+    expect(approvedMessage).toMatch(/wa\.me\/919876543210/);
 
     await page.getByRole('button', { name: 'Log out' }).click();
     await page.goto('/jobs');

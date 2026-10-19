@@ -51,7 +51,7 @@ export default function AdminHome() {
               <Card to="/admin/jobs?status=live" icon="eye" number={c.live} label={t.cLive} />
             </div>
             {c.waitingPayment > 0 && (
-              <p className="help"><Link to="/admin/jobs?status=pending_payment">{t.cOldUnpaid(c.waitingPayment)}</Link></p>
+              <Button to="/admin/jobs?status=pending_payment" tone="outline" icon="clock">{t.cOldUnpaid(c.waitingPayment)}</Button>
             )}
           </>
         )}

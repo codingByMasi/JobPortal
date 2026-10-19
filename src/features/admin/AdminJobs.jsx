@@ -6,13 +6,14 @@ import Field from '../../shared/ui/Field';
 import Icon from '../../shared/ui/Icon';
 import { AdFileDialog, ApproveDialog, DeleteDialog, PaidDialog, RejectDialog } from './AdminJobDialogs';
 import { ExtendDialog, FreeAdDialog } from './AdminJobExtras';
+import TellEmployer from './TellEmployer';
 import Notice from '../../shared/ui/Notice';
 import { StatusBadge } from '../../shared/ui/StatusBadge';
 import { AsyncView } from '../../shared/ui/StateViews';
 import { api } from '../../shared/data';
 import { adReference } from '../../shared/lib/adReference';
-import { candidateWhatsApp, describeStatus, whatsappLink } from '../../shared/lib/format';
-import { adminActions, adminExtraActions, endedRecently, endsSoon, ENDED_RECENTLY_DAYS, ENDING_SOON_DAYS, effectiveStatus, STATUSES } from '../../shared/lib/jobStatus';
+import { candidateWhatsApp, describeStatus, formatDate, whatsappLink } from '../../shared/lib/format';
+import { DAY, adminActions, adminExtraActions, endedRecently, endsSoon, ENDED_RECENTLY_DAYS, ENDING_SOON_DAYS, effectiveStatus, STATUSES } from '../../shared/lib/jobStatus';
 import { useLang } from '../../shared/i18n/LangContext';
 import { formatPrice } from '../../shared/lib/money';
 import { useAsync } from '../../shared/lib/useAsync';
@@ -38,16 +39,19 @@ export default function AdminJobs() {
   const { notice, success, fail } = useNotice(location.state?.notice || '');
   const [dialog, setDialog] = useState(null); // { kind: 'reject' | 'paid' | 'delete', job }
   const [busy, setBusy] = useState(false);
+  const [tell, setTell] = useState(null); // { phone, text }: the WhatsApp message offered after a decision
 
   const status = params.get('status') || 'all';
   const q = (params.get('q') || '').trim().toLowerCase();
   const setParam = (key, value) => setParams((prev) => withParam(prev, key, value, 'all'), { replace: true });
 
-  const run = async (work, doneText) => {
+  const run = async (work, doneText, followUp = null) => {
     setBusy(true);
+    setTell(null);
     try {
       await work();
       success(doneText);
+      setTell(followUp);
       ads.reload();
     } catch (err) {
       fail(err);
@@ -95,6 +99,7 @@ export default function AdminJobs() {
       </div>
 
       <Notice tone={notice.tone}>{notice.text}</Notice>
+      <TellEmployer tell={tell} />
       {ending && (
         <p className="help filter-note">
           {ending === 'soon' ? t.endingFilterSoon(ENDING_SOON_DAYS) : t.endingFilterEnded(ENDED_RECENTLY_DAYS)}{' '}
@@ -164,16 +169,16 @@ export default function AdminJobs() {
 
       {dialog?.kind === 'view' && <AdFileDialog job={dialog.job} onClose={() => setDialog(null)} />}
       {dialog?.kind === 'approve' && (
-        <ApproveDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={(days) => run(() => api.adminApprove(dialog.job.id, days), t.adApproved)} />
+        <ApproveDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={(days) => run(() => api.adminApprove(dialog.job.id, days), t.adApproved, { phone: dialog.job.recruiter?.phone, text: t.msgApproved(dialog.job.title, days, formatDate(Date.now() + days * DAY, lang)) })} />
       )}
       {dialog?.kind === 'reject' && (
-        <RejectDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={(reason) => run(() => api.adminReject(dialog.job.id, reason), t.adRejected)} />
+        <RejectDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={(reason) => run(() => api.adminReject(dialog.job.id, reason), t.adRejected, { phone: dialog.job.recruiter?.phone, text: t.msgRejected(dialog.job.title, reason) })} />
       )}
       {dialog?.kind === 'paid' && (
         <PaidDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={(reference) => run(() => api.adminMarkPaid(dialog.job.id, { reference }), t.adPaid)} />
       )}
       {dialog?.kind === 'extend' && (
-        <ExtendDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={(days, reason) => run(() => api.adminExtendJob(dialog.job.id, days, reason), t.adExtended)} />
+        <ExtendDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={(days, reason) => run(() => api.adminExtendJob(dialog.job.id, days, reason), t.adExtended, { phone: dialog.job.recruiter?.phone, text: t.msgExtended(dialog.job.title, days) })} />
       )}
       {dialog?.kind === 'freeAd' && (
         <FreeAdDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={(note) => run(() => api.adminGiveFreeAd(dialog.job.id, note), t.adFreeGiven)} />
