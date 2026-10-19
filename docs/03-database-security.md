@@ -76,6 +76,10 @@ Source of truth: the numbered files in `supabase/migrations` (0001 to 0022). Put
 - `admin_approve_job(job, days)`: the admin chooses 1 to 365 days (default: the ad's saved days, else 30). `admin_extend_job` now also works on **ended** ads and puts them back to live; a rejected or never-approved ad cannot be extended.
 - Tests: `scripts/rls.license.test.mjs` (and `rls.verified.test.mjs`), demo copies in `demo.license.test.js`, browser tests in `e2e/verification.spec.js` and `e2e/admin.spec.js`.
 
+## Verified agencies list (migration 0029)
+- The view `verified_agencies` is readable by visitors. It shows only verified, unblocked, non-admin employers that have a company name, and only three columns: company name, registration number, and the count of ads that are live right now. It never holds a phone, email, id or license. A person who loses the tag, or is blocked, leaves the list at once.
+- Tests: `scripts/rls.agencies.test.mjs` (and the demo copy in `demo.agencies.test.js`).
+
 ## Functions
 - `public_counts()` (visitors may call it): three numbers for the home page: live ads, verified employers, applications. Nothing else (0020).
 - `is_admin()` (also checks the two-step login), `is_blocked()` - helpers for the rules.

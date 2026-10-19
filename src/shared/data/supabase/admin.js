@@ -1,5 +1,6 @@
 // Supabase: admin-only actions. Approve and Mark-paid call database functions that check is_admin() themselves.
 import { toApplication, toChangeRequest, toErrorLog, toJob, toJobRow, toPayment, toProfile } from '../mappers';
+import { ENDED_RECENTLY_DAYS, ENDING_SOON_DAYS } from '../../lib/jobStatus';
 import { iso, JOB_FULL, ok, PROFILE_COLUMNS, raise, supabase, userId } from './client';
 
 const DAY = 86400000;
@@ -87,16 +88,23 @@ export async function adminCounts() {
     return n ?? 0;
   };
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
-  const [live, review, waitingPayment, paid, requests] = await Promise.all([
-    count((q) => q.eq('status', 'live').gt('expires_at', new Date().toISOString())),
+  const now = new Date();
+  const soon = new Date(now.getTime() + ENDING_SOON_DAYS * DAY).toISOString();
+  const since = new Date(now.getTime() - ENDED_RECENTLY_DAYS * DAY).toISOString();
+  const [live, review, waitingPayment, endingSoon, ended, paid, requests, licenses] = await Promise.all([
+    count((q) => q.eq('status', 'live').gt('expires_at', now.toISOString())),
     count((q) => q.eq('status', 'paid_pending_review')),
     count((q) => q.eq('status', 'pending_payment')),
+    count((q) => q.eq('status', 'live').gt('expires_at', now.toISOString()).lte('expires_at', soon)),
+    count((q) => q.in('status', ['live', 'expired']).lte('expires_at', now.toISOString()).gt('expires_at', since)),
     supabase.from('payments').select('amount_paise').eq('status', 'paid').gte('created_at', monthStart),
     supabase.from('change_requests').select('id', { count: 'exact', head: true }).eq('status', 'open'),
+    supabase.from('verification_requests').select('id', { count: 'exact', head: true }).eq('status', 'submitted'),
   ]);
   if (requests.error) raise(requests.error);
   if (paid.error) raise(paid.error);
-  return { live, review, waitingPayment, revenuePaise: paid.data.reduce((sum, x) => sum + x.amount_paise, 0), requests: requests.count ?? 0 };
+  if (licenses.error) raise(licenses.error);
+  return { live, review, waitingPayment, endingSoon, ended, licenses: licenses.count ?? 0, revenuePaise: paid.data.reduce((sum, x) => sum + x.amount_paise, 0), requests: requests.count ?? 0 };
 }
 
 export async function adminListChangeRequests() {

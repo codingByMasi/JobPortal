@@ -211,10 +211,10 @@ test.describe('admin', () => {
   test('settings: wrong values are refused in plain words; the WhatsApp number follows on the site', async ({ page }) => {
     await login(page, 'admin');
     await page.goto('/admin/settings');
-    await page.getByLabel('UPI ID for payments').fill('no-at-sign');
+    await page.getByLabel('Contact email').fill('not-an-email');
     await page.getByRole('button', { name: 'Save' }).click();
     await expect(page.getByText('Please correct the boxes marked in red.')).toBeVisible();
-    await page.getByLabel('UPI ID for payments').fill('e2eshop@okbank');
+    await page.getByLabel('Contact email').fill('hello@e2eshop.example');
     await page.getByLabel('WhatsApp number').fill('98123 45678');
     await page.getByLabel('Company name').fill('E2E Services Pvt Ltd');
     await page.getByRole('button', { name: 'Save' }).click();

@@ -1,5 +1,5 @@
 // Supabase: what visitors can do - read packages and live ads (through the safe public view), apply.
-import { toJob, toPackage } from '../mappers';
+import { toAgency, toJob, toPackage } from '../mappers';
 import { ok, raise, supabase } from './client';
 
 export async function listPackages() {
@@ -16,6 +16,11 @@ export async function listLiveJobs() {
 export async function getLiveJob(id) {
   const row = ok(await supabase.from('public_jobs').select('*').eq('id', id).maybeSingle());
   return row ? toJob(row) : null;
+}
+
+/** The verified agencies (company, registration number, live ads). Visitors can read this; it holds no contact details. */
+export async function listVerifiedAgencies() {
+  return ok(await supabase.from('verified_agencies').select('*')).map(toAgency);
 }
 
 export async function submitApplication({ jobId, name, phone, city, message }) {

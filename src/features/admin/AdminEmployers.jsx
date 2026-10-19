@@ -1,5 +1,6 @@
 // /admin/employers - check an employer's license and verify them, block employers, and look at their ads and payments.
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Button from '../../shared/ui/Button';
 import Icon from '../../shared/ui/Icon';
 import Modal from '../../shared/ui/Modal';
@@ -57,6 +58,12 @@ export default function AdminEmployers() {
   const licenses = useAsync(() => api.adminListVerifications(), []);
   const licenseOf = (employer) => (licenses.data || []).find((r) => r.recruiterId === employer.id) || null;
   const [checking, setChecking] = useState(null); // the employer whose license is open
+  const [params, setParams] = useSearchParams();
+  const onlyWaiting = params.get('license') === 'waiting'; // the dashboard links here
+  const waitingFirst = (rows) => {
+    const waiting = (e) => licenseOf(e)?.status === 'submitted';
+    return onlyWaiting ? rows.filter(waiting) : [...rows].sort((a, b) => Number(waiting(b)) - Number(waiting(a)));
+  };
   const { notice, success, fail } = useNotice();
   const [details, setDetails] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -92,8 +99,11 @@ export default function AdminEmployers() {
   return (
     <section className="section">
       <Notice tone={notice.tone}>{notice.text}</Notice>
-      <AsyncView state={list} empty={t.noEmployers} emptyIcon="users">
-        {(rows) => (
+      {onlyWaiting && (
+        <p className="help filter-note">{t.licenseFilter} <Button size="sm" tone="outline" onClick={() => setParams({}, { replace: true })}>{t.showAll}</Button></p>
+      )}
+      <AsyncView state={list} empty={onlyWaiting ? t.licenseFilterNone : t.noEmployers} emptyIcon="users">
+        {(all) => { const rows = waitingFirst(all); return (
           <div className="table-wrap">
             <table>
               <thead>
@@ -128,7 +138,7 @@ export default function AdminEmployers() {
               </tbody>
             </table>
           </div>
-        )}
+        ); }}
       </AsyncView>
       {details && <EmployerDetails employer={details} onClose={() => setDetails(null)} />}
       {checking && licenseOf(checking) && (

@@ -1,5 +1,5 @@
 // Demo: everything only an admin can do. Every function checks the caller is an admin, like the database does.
-import { approvalDates } from '../../lib/jobStatus';
+import { approvalDates, endedRecently, endsSoon } from '../../lib/jobStatus';
 import { toApplication, toChangeRequest, toErrorLog, toJobRow, toPayment, toProfile } from '../mappers';
 import { asJob, fail, findJob, isLive, logAdmin, needAdmin, newest, pkgOf, profileOf, requestRows, save, state, uid, wait } from './store';
 
@@ -177,6 +177,9 @@ export async function adminCounts() {
     review: state.db.jobs.filter((j) => j.status === 'paid_pending_review').length,
     waitingPayment: state.db.jobs.filter((j) => j.status === 'pending_payment').length,
     requests: requestRows().filter((r) => r.status === 'open').length,
+    endingSoon: state.db.jobs.map(asJob).filter((j) => endsSoon(j, now)).length,
+    ended: state.db.jobs.map(asJob).filter((j) => endedRecently(j, now)).length,
+    licenses: (state.db.verification_requests || []).filter((r) => r.status === 'submitted').length,
     revenuePaise: state.db.payments
       .filter((x) => x.status === 'paid' && Date.parse(x.created_at) >= monthStart)
       .reduce((sum, x) => sum + x.amount_paise, 0),

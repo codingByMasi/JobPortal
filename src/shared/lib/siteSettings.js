@@ -72,7 +72,7 @@ export function badSettings(values) {
 }
 
 /** Settings that must be filled in before the site takes payments / works fully, in the order they are shown to the admin. */
-export const REQUIRED_SETTINGS = ['whatsappNumber', 'upiId', 'upiName', 'contactEmail', 'grievanceName', 'grievanceEmail', 'companyName', 'siteUrl'];
+export const REQUIRED_SETTINGS = ['whatsappNumber', 'contactEmail', 'grievanceName', 'grievanceEmail', 'companyName', 'siteUrl'];
 
 /** Names of the required settings that are still not filled in. */
 export const missingSettings = (settings, demo = false) => REQUIRED_SETTINGS.filter((name) => !isFilledIn(name, settings[name], demo));

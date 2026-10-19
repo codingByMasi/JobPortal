@@ -5,7 +5,7 @@ import { expect, test } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { login } from './helpers.js';
 
-const PUBLIC = ['/', '/jobs', '/job/job-1', '/post-job', '/contact', '/login', '/signup', '/forgot-password', '/privacy', '/terms', '/about', '/faq', '/refund-policy', '/delete-account', '/jobs/uae'];
+const PUBLIC = ['/', '/jobs', '/job/job-1', '/post-job', '/agencies', '/check-agency', '/contact', '/login', '/signup', '/forgot-password', '/privacy', '/terms', '/about', '/faq', '/refund-policy', '/delete-account', '/jobs/uae'];
 const EMPLOYER = ['/dashboard', '/dashboard/new', '/dashboard/applications', '/dashboard/profile'];
 const ADMIN = ['/admin', '/admin/jobs', '/admin/jobs/new', '/admin/employers', '/admin/payments', '/admin/packages', '/admin/offers', '/admin/history', '/admin/reports', '/admin/settings', '/admin/guides', '/admin/applications', '/admin/requests', '/admin/security', '/admin/problems'];
 

@@ -8,7 +8,7 @@ For the person who runs the site every day. No technical knowledge needed. Use t
 3. Make a second admin (below) and have them turn on two-step login too.
 
 ## Making someone an admin
-An admin can do everything, including changing the UPI ID, so give it to as few people as possible (two or three) and only to people you trust. Each admin must turn on two-step login.
+An admin can do everything, including approving ads and verifying employers, so give it to as few people as possible (two or three) and only to people you trust. Each admin must turn on two-step login.
 1. The person signs up on the site like an employer and confirms their email.
 2. **On the computer with the project** (Supabase already linked): open a terminal in the project folder and run
    `node scripts/make-admin.mjs person@example.com`
@@ -23,7 +23,13 @@ An admin can do everything, including changing the UPI ID, so give it to as few 
 The guides are written in `docs/10-admin-guide.md`, `16-employer-guide.md`, `17-job-seeker-guide.md` and `18-app-features.md`. After you change one, run `npm run guides:publish` on the computer with the project: it saves the new text in the database for Admin > Guides.
 
 ## Every day (about 15 minutes)
-1. **Dashboard**: look at the four numbers. Tap "Waiting for approval", "Change requests".
+1. **Dashboard ("What needs you today")**: six cards. A card with a thick border has work for you. Tap it to open exactly that list:
+   - **Licenses to check**: employers who sent a license (see "Verify an employer" below).
+   - **Waiting for approval**: ads to read and approve (choose the days).
+   - **Ending in 3 days**: live ads that will stop showing soon, soonest first. If the employer wants to continue, tap **More days**. Tap **WhatsApp them** to ask first.
+   - **Change requests**: an employer asked for a change, or for **more days** (the message says so). For more days, open the ad in the Ads tab and tap **More days**.
+   - **Ended in the last 30 days**: ads that already stopped. **More days** puts one back live for the new days counted from today.
+   - **Live ads**: how many are showing now.
 2. **Licenses to check** (Employers tab): an employer who sent a license shows **License sent: check it**. See "Verify an employer" below.
 3. **Approve ads** (status "Waiting for approval"). Employers post for free, so there is nothing to pay or to mark as paid:
    - Tap **View ad** and read the whole ad. Reject if it asks job seekers for money (visa fee, registration fee, "security deposit"), has no company or contact, looks fake, or shows a personal document.
@@ -40,7 +46,7 @@ Only a **verified** employer can post ads, and you cannot verify an employer who
 2. You see the license number, the date and the company. Tap **Open license file** to see the picture or PDF (a private link that works for 5 minutes).
 3. Check that: the license is real (for a recruitment agent: check the number on the government list, `emigrate.gov.in`, after your lawyer tells you exactly what to check); it is in the same name as the company; it has not expired; the phone and WhatsApp number work (call them); there are no complaints.
 4. Good: tap **Verify this employer**. Not good: tap **License not accepted**, write the reason (the employer reads it) and tap **Reject license**. They can send a new one.
-Only after a **verified** tick can they post ads, and see applicants' names and phone numbers. Changing the company name or registration number removes the tick, and you check again (their old license is still on file: look at it and verify again if it is fine).
+When you verify an employer, their **company name and registration number appear on the public Verified agencies page** (with the number of their live ads; never a phone or email). So check that the company name is the real, correct one before you verify. Only after a **verified** tick can they post ads, and see applicants' names and phone numbers. Changing the company name or registration number removes the tick, and you check again (their old license is still on file: look at it and verify again if it is fine).
 
 ## Reports and complaints
 Job seekers can press **Report this ad**; it opens WhatsApp with the ad code. Open the ad (search the code). If it is bad: **Hide** it, then **Block** the employer if needed, then **Refund** if the money was taken by mistake. Answer the person who reported within 2 days (this is the promise on the Contact page).

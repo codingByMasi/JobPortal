@@ -74,6 +74,8 @@ export default function Layout() {
         )}
         <Link className="footer-link" to="/post-job"><Icon name="upload" size={22} /><span>{t.postTitle}</span></Link>
         <nav className="legal-links" aria-label={t.footerPages}>
+          <Link className="footer-link" to="/check-agency"><Icon name="shield" size={22} /><span>{t.checkLink}</span></Link>
+          <Link className="footer-link" to="/agencies"><Icon name="badge" size={22} /><span>{t.agenciesLink}</span></Link>
           <Link className="footer-link" to="/about"><Icon name="home" size={22} /><span>{t.aboutLink}</span></Link>
           <Link className="footer-link" to="/faq"><Icon name="search" size={22} /><span>{t.faqLink}</span></Link>
           <Link className="footer-link" to="/refund-policy"><Icon name="rupee" size={22} /><span>{t.refundLink}</span></Link>

@@ -15,15 +15,20 @@ One page that explains the whole product in plain words. Details for each role a
 - English / Hindi switch on every screen; big text and big buttons; works on cheap phones and slow networks.
 - Home page counters (live ads, verified employers, applications) appear only when the numbers are real.
 
+## Features for everyone (no login)
+- **Share this job on WhatsApp** on every ad.
+- **Verified agencies**: the employers whose license our team checked (company, registration number, live ads).
+- **How to check an agency**: a safety guide with a link to the government eMigrate website.
+
 ## Features for employers (login)
 - Sign up with company details and registration number, email confirmation, forgot-password.
 - **Get verified**: send the license number and a picture or PDF of the license; see if it is being checked or was rejected (with the reason) and send again.
 - **Post an ad** (verified employers only): picture or PDF, details, optional salary and job facts. Free; no plan, price or payment. It waits for the admin's approval.
-- **My ads** with plain statuses; **withdraw** a waiting, rejected or ended ad; **fix and send again** after a rejection; **renew** an ended ad; **ask us to change** an approved ad.
+- **My ads** with plain statuses, an "Ends in N days" note and an **Ask for more days** button; **withdraw** a waiting, rejected or ended ad; **fix and send again** after a rejection; **renew** an ended ad; **ask us to change** an approved ad.
 - **Applications** (names and phones after the company is verified), **My details**.
 
 ## Features for admins (login, optional two-step login)
-- **Dashboard**: counts, money this month after discounts, discounts given, top offers, a reminder if Settings are missing.
+- **Dashboard (work queue)**: licenses to check, ads waiting for approval, ads ending in 3 days, change requests, ads that ended in the last 30 days, live ads; each card opens that list. A reminder if Settings are missing.
 - **All ads**: view the ad, **approve and choose the days**, reject (with reason), hide, show, edit, delete, add an ad, **more days** (also for ended ads, which then go live again), **featured on or off**.
 - **Employers**: **check the license** (open the file, verify or reject with a reason), block, see their ads. An employer cannot be verified without a license.
 - **Applications**: search and download. **History**: every change of a plan or offer.

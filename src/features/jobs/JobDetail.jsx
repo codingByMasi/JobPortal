@@ -13,7 +13,7 @@ import Icon from '../../shared/ui/Icon';
 import { JobTags } from '../../shared/ui/StatusBadge';
 import { JobsStatus } from '../../shared/ui/StateViews';
 import { countryById } from '../../shared/lib/catalog';
-import { downloadLink, relativeDate, whatsappLink } from '../../shared/lib/format';
+import { downloadLink, relativeDate, whatsappLink, whatsappShareLink } from '../../shared/lib/format';
 import { useJobs } from './JobsContext';
 import { useLang } from '../../shared/i18n/LangContext';
 import { useAdImage } from './useAdImage';
@@ -88,6 +88,8 @@ export default function JobDetail() {
   const rel = relativeDate(job.startsAt || job.posted, t, lang);
   const postedText = !rel ? '' : rel === t.today ? t.postedToday : t.postedOn(rel);
   const waLink = whatsappLink(job.whatsapp || settings.whatsappNumber, t.waMessage(job.id, job.title, job.city));
+  const base = settings.siteUrl || window.location.origin;
+  const shareLink = whatsappShareLink(t.shareMessage(job.title, place, `${base}/job/${encodeURIComponent(job.id)}`));
 
   return (
     <div className="page detail">
@@ -146,6 +148,7 @@ export default function JobDetail() {
           </Button>
         )}
         <Button icon="whatsapp" href={waLink} target="_blank" rel="noopener noreferrer">{t.whatsapp}</Button>
+        <Button tone="outline" icon="whatsapp" href={shareLink} target="_blank" rel="noopener noreferrer">{t.shareWhatsapp}</Button>
       </div>
 
       <ApplyForm job={job} />

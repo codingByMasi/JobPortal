@@ -257,3 +257,9 @@ tfoot td { background: var(--blue-card); }
 .qr-admin { display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
 .proof-admin { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--blue-card); border: 1px solid var(--line); border-radius: var(--radius); margin: 12px 0; }
 .steps-list { list-style: none; padding: 0; margin: 12px 0; display: flex; flex-direction: column; gap: 6px; }
+.agency-list { list-style: none; padding: 0; margin: 12px 0; display: grid; gap: 12px; }
+.agency-card { padding: 14px 16px; background: #fff; border: 2px solid var(--line-strong); border-radius: var(--radius); display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.agency-name { display: flex; align-items: center; gap: 8px; font-size: 19px; margin: 0; }
+.count-card.is-todo { border-color: var(--orange, #c2410c); border-width: 3px; }
+.filter-note { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ends-note { font-weight: 700; }

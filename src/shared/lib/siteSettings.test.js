@@ -36,7 +36,8 @@ describe('badSettings', () => {
 describe('missingSettings', () => {
   it('lists what is still missing', () => {
     const s = { ...mergeSettings([]), whatsappNumber: '919876543210' };
-    expect(missingSettings(s)).toContain('upiId');
+    expect(missingSettings(s)).toContain('contactEmail');
+    expect(missingSettings(s)).not.toContain('upiId'); // employers do not pay, so the UPI details are not required
     expect(missingSettings(s)).not.toContain('whatsappNumber');
   });
 });

@@ -23,6 +23,8 @@ Until you are verified you cannot post an ad. Tap **Post an ad** and you see **Y
 5. If we cannot accept it, the screen tells you why. Fix it and tap **Send license again**.
 6. When we verify you, a **Verified** tag shows on your account and you can post.
 
+Once you are verified, your **company name and registration number are shown on the public Verified agencies page**, with the number of your live ads (your phone and email are not shown).
+
 **If you change your company name or registration number, the Verified tag is removed until we check again.** Only our team can give the tag.
 
 ## 3. Post an ad (free)
@@ -56,7 +58,7 @@ When a job seeker applies, you see their **name, phone and message** in **Applic
 An approved ad cannot be edited by you (this protects job seekers). Open **My ads**, tap **Ask us to change this**, and write what to change (up to 3 open requests per ad). Our team makes the change and marks it done.
 
 ## 7. More days
-When your ad's days are over it stops showing. Ask us (WhatsApp or **Ask us to change this**) and our team can add days; the ad then goes live again.
+When your ad has 3 days or less left, **My ads** shows "Ends in N days". When the days are over, the ad stops showing and **My ads** says so. In both cases tap **Ask for more days** (the message is already typed) and send it. Our team can add days, and the ad goes live again.
 
 ## 8. Rules you agree to
 Post only real jobs. Do not take money from job seekers for a job, an interview or a visa unless the law allows it. Be honest about salary and work. If a job seeker reports your ad, we may hide it and block your account. A false or expired license means we remove your Verified tag and your ads.

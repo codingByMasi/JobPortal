@@ -5,7 +5,7 @@ import { fillAd, login, logout, picture, smallPdf } from './helpers.js';
 
 const ADMIN_ROUTES = ['/admin', '/admin/jobs', '/admin/jobs/new', '/admin/jobs/job-1', '/admin/employers', '/admin/payments', '/admin/packages', '/admin/offers', '/admin/history', '/admin/reports', '/admin/settings', '/admin/guides', '/admin/applications', '/admin/requests', '/admin/security', '/admin/problems'];
 const EMPLOYER_ROUTES = ['/dashboard', '/dashboard/new', '/dashboard/edit/job-7', '/dashboard/applications', '/dashboard/profile'];
-const PUBLIC_ROUTES = ['/', '/jobs', '/jobs/uae', '/jobs/saudi-arabia', '/jobs/qatar', '/jobs/kuwait', '/jobs/oman', '/jobs/other-countries', '/job/job-1', '/post-job', '/contact', '/about', '/faq', '/privacy', '/terms', '/refund-policy', '/delete-account', '/login', '/signup', '/forgot-password', '/reset-password'];
+const PUBLIC_ROUTES = ['/', '/jobs', '/jobs/uae', '/jobs/saudi-arabia', '/jobs/qatar', '/jobs/kuwait', '/jobs/oman', '/jobs/other-countries', '/job/job-1', '/post-job', '/agencies', '/check-agency', '/contact', '/about', '/faq', '/privacy', '/terms', '/refund-policy', '/delete-account', '/login', '/signup', '/forgot-password', '/reset-password'];
 
 test.describe('release gate', () => {
   test('every private route sends a visitor to the login page', async ({ page }) => {

@@ -20,7 +20,7 @@ Everything that could be done in the code has been done (see the status table at
 - [ ] **Lawyer: overseas recruitment.** Which agents must be registered, what you must check and display, fee limits for job seekers, and whether you may advertise for employers without registration. Then tell your developer what the admin checklist and the registration-number rule should say.
 - [ ] **Lawyer: personal data.** The consent text on the apply form, the 180-day keeping time, deletion requests, and the privacy page (current texts are drafts: "not legal advice").
 - [ ] **Lawyer: employer terms and refund rule** (the draft says: full refund if we reject, none after the ad has run). **Intermediary rules**: whether you must publish a grievance officer and take-down times.
-- [ ] **Accountant**: GST registration and invoices for what you charge employers; how to record manual UPI payments; refunds.
+- [ ] **Accountant**: only needed if you start charging employers again (GST, invoices, refunds). Today employers post for free.
 - [ ] **Named complaints person** (`GRIEVANCE_NAME`, `GRIEVANCE_EMAIL`): someone who really answers within 2 days.
 
 ## B2. Pages and texts a professional must read before launch (new in this step)

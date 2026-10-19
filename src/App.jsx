@@ -9,6 +9,7 @@ import { Loading } from './shared/ui/StateViews';
 import Contact from './features/site/Contact';
 import CountryJobs from './features/jobs/CountryJobs';
 import DeleteAccount from './features/site/DeleteAccount';
+import Agencies from './features/site/Agencies';
 import InfoPage from './features/site/InfoPage';
 import Home from './features/jobs/Home';
 import JobDetail from './features/jobs/JobDetail';
@@ -51,6 +52,8 @@ export default function App() {
         <Route path="jobs/:countrySlug" element={<CountryJobs />} />
         <Route path="job/:id" element={<JobDetail />} />
         <Route path="post-job" element={<PostJob />} />
+        <Route path="agencies" element={<Agencies />} />
+        <Route path="check-agency" element={<InfoPage kind="check" />} />
         <Route path="contact" element={<Contact />} />
         <Route path="login" element={<Login />} />
         <Route path="signup" element={<Signup />} />

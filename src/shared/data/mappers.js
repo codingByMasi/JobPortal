@@ -122,6 +122,11 @@ export function toJobRow(input) {
   return row;
 }
 
+/** One row of the public list of verified agencies (no contact details). */
+export function toAgency(row) {
+  return { companyName: row.company_name, raNumber: row.ra_number || '', liveAds: Number(row.live_ads) || 0 };
+}
+
 /** The license an employer sent so the admin can verify them. */
 export function toVerification(row) {
   return {

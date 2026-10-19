@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { adminActions, approvalDates, canDelete, canEditAsRecruiter, canRenew, canRequestChange, DAY, effectiveStatus, isPubliclyVisible, publicJobs, sortForPublic } from './jobStatus';
+import { adminActions, adminExtraActions, approvalDates, canDelete, canEditAsRecruiter, canRenew, canRequestChange, DAY, daysLeft, effectiveStatus, endedRecently, endsSoon, isPubliclyVisible, publicJobs, sortForPublic } from './jobStatus';
 
 const NOW = Date.UTC(2026, 9, 5, 12);
 const job = (o) => ({ id: 'a', status: 'live', expiresAt: NOW + DAY, featured: false, startsAt: NOW - DAY, ...o });
@@ -90,5 +90,32 @@ describe('adminExtraActions', () => {
     expect(adminExtraActions({ ...live, featured: true })).toEqual(['extend', 'unfeature']);
     expect(adminExtraActions({ status: 'hidden', expiresAt: Date.now() + 86400000 })).toEqual(['extend']);
     expect(adminExtraActions({ status: 'rejected' })).toEqual([]);
+  });
+});
+
+describe('ending soon and ended recently', () => {
+  it('a live ad ending within 3 days is "ending soon"; later ones, ended ones and other statuses are not', () => {
+    expect(endsSoon(job({ expiresAt: NOW + 2 * DAY }), NOW)).toBe(true);
+    expect(endsSoon(job({ expiresAt: NOW + 3 * DAY }), NOW)).toBe(true);
+    expect(endsSoon(job({ expiresAt: NOW + 3 * DAY + 1 }), NOW)).toBe(false);
+    expect(endsSoon(job({ expiresAt: NOW }), NOW)).toBe(false);
+    expect(endsSoon(job({ expiresAt: NOW - 1 }), NOW)).toBe(false);
+    expect(endsSoon(job({ status: 'hidden', expiresAt: NOW + DAY }), NOW)).toBe(false);
+    expect(endsSoon(job({ expiresAt: null }), NOW)).toBe(false);
+  });
+  it('an ad is "ended recently" for 30 days after its days run out, whether or not the server has marked it expired yet', () => {
+    expect(endedRecently(job({ expiresAt: NOW - DAY }), NOW)).toBe(true);
+    expect(endedRecently(job({ status: 'expired', expiresAt: NOW - 29 * DAY }), NOW)).toBe(true);
+    expect(endedRecently(job({ status: 'expired', expiresAt: NOW - 31 * DAY }), NOW)).toBe(false);
+    expect(endedRecently(job({ expiresAt: NOW + DAY }), NOW)).toBe(false);
+    expect(endedRecently(job({ status: 'rejected', expiresAt: null }), NOW)).toBe(false);
+  });
+  it('counts whole days left, never less than 1 while live', () => {
+    expect(daysLeft(job({ expiresAt: NOW + 2 * DAY - 1000 }), NOW)).toBe(2);
+    expect(daysLeft(job({ expiresAt: NOW + 1000 }), NOW)).toBe(1);
+  });
+  it('the admin can add days to an ended ad', () => {
+    expect(adminExtraActions(job({ expiresAt: NOW - 1 }), NOW)).toContain('extend');
+    expect(adminExtraActions(job({ status: 'expired', expiresAt: NOW - DAY }), NOW)).toContain('extend');
   });
 });

@@ -12,7 +12,7 @@ import { AsyncView } from '../../shared/ui/StateViews';
 import { api } from '../../shared/data';
 import { adReference } from '../../shared/lib/adReference';
 import { candidateWhatsApp, describeStatus, whatsappLink } from '../../shared/lib/format';
-import { adminActions, adminExtraActions, effectiveStatus, STATUSES } from '../../shared/lib/jobStatus';
+import { adminActions, adminExtraActions, endedRecently, endsSoon, ENDED_RECENTLY_DAYS, ENDING_SOON_DAYS, effectiveStatus, STATUSES } from '../../shared/lib/jobStatus';
 import { useLang } from '../../shared/i18n/LangContext';
 import { formatPrice } from '../../shared/lib/money';
 import { useAsync } from '../../shared/lib/useAsync';
@@ -69,11 +69,15 @@ export default function AdminJobs() {
   const isFirstAd = (job) => !all.some((o) => o.id !== job.id && o.recruiterId === job.recruiterId && !['pending_payment', 'draft'].includes(o.status));
   const sameNumber = (job) => (job.whatsapp ? all.filter((o) => o.id !== job.id && o.whatsapp === job.whatsapp).length : 0);
 
+  // the dashboard links here with ?ending=soon (live ads ending in a few days) or ?ending=ended (ended in the last month: these can get more days)
+  const ending = params.get('ending') || '';
   const rows = all.filter((j) => {
+    if (ending === 'soon' && !endsSoon(j)) return false;
+    if (ending === 'ended' && !endedRecently(j)) return false;
     if (status !== 'all' && effectiveStatus(j) !== status) return false;
     if (!q) return true;
     return [j.title, j.company, j.city, j.recruiter?.companyName, j.recruiter?.email, adReference(j.id)].join(' ').toLowerCase().includes(q);
-  });
+  }).sort((a, b) => (ending === 'soon' ? a.expiresAt - b.expiresAt : ending === 'ended' ? b.expiresAt - a.expiresAt : 0));
 
   return (
     <section className="section">
@@ -91,6 +95,12 @@ export default function AdminJobs() {
       </div>
 
       <Notice tone={notice.tone}>{notice.text}</Notice>
+      {ending && (
+        <p className="help filter-note">
+          {ending === 'soon' ? t.endingFilterSoon(ENDING_SOON_DAYS) : t.endingFilterEnded(ENDED_RECENTLY_DAYS)}{' '}
+          <Button size="sm" tone="outline" onClick={() => setParam('ending', '')}>{t.showAll}</Button>
+        </p>
+      )}
 
       <AsyncView state={ads} isEmpty={() => false}>
         {() =>

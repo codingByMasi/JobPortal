@@ -64,6 +64,12 @@ Run the 8-point list in `03-database-security.md` with two employer accounts and
 ## License verification and free posting
 Automatic: `scripts/rls.license.test.mjs` (database rules), `src/shared/data/demo/demo.license.test.js` (demo copy) and `e2e/verification.spec.js` (an unverified employer sees the license form, sends a license, the admin rejects it with a reason, the employer sends again, the admin verifies, the employer posts for free, the admin approves with days) plus `e2e/admin.spec.js` (approve with days, an ended ad extended and live again). Hand check on the real project: send a real license from a test employer account, open the file as admin (the link is private and works for 5 minutes), reject once, then verify; post an ad and approve it with 2 days; wait for it to end (or set the end date in the past in Admin > Ads > Edit) and use **More days**.
 
+## Verified agencies, how to check an agency, share button
+Automatic: `scripts/rls.agencies.test.mjs` (what the public list shows and hides), `demo.agencies.test.js`, `e2e/agencies.spec.js` (share link, the agencies list, the check page and its government link, footer links, Hindi). Hand check: on the real site verify a test employer and see it appear on `/agencies`; remove the tag and see it leave; tap Share on an ad on a phone and see WhatsApp open with the link.
+
+## Admin work queue and ending notes
+Automatic: `src/shared/lib/jobStatus.test.js` (ending soon, ended recently, days left), `demo.queue.test.js` (the card numbers), `e2e/queue.spec.js` (dashboard cards and filtered lists, the employer's note and ready-typed request, licenses first). Hand check on the real project: approve a test ad for 2 days and see it under "Ending in 3 days"; set its end date in the past and see it under "Ended"; use More days and see it live again.
+
 ## Accessibility
 Automated axe scan (WCAG 2.1 AA) at 375 px in English and Hindi: **clean on every public, employer and admin screen** (one finding on the turned-off package row was fixed). Re-run after any visual change.
 

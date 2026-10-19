@@ -25,6 +25,21 @@ export const canRequestChange = (job) => job.status !== 'pending_payment' && job
 /** Employers can renew an ad that has ended. */
 export const canRenew = (job, now = Date.now()) => effectiveStatus(job, now) === 'expired';
 
+/** The admin's "ending soon" window and "ended recently" window, in days. */
+export const ENDING_SOON_DAYS = 3;
+export const ENDED_RECENTLY_DAYS = 30;
+
+/** A live ad that has not ended yet but ends within `days` days. */
+export const endsSoon = (job, now = Date.now(), days = ENDING_SOON_DAYS) =>
+  job.status === 'live' && job.expiresAt != null && job.expiresAt > now && job.expiresAt <= now + days * DAY;
+
+/** An ad whose days are over and that ended within the last `days` days (these are the ones worth extending). */
+export const endedRecently = (job, now = Date.now(), days = ENDED_RECENTLY_DAYS) =>
+  effectiveStatus(job, now) === 'expired' && job.expiresAt != null && job.expiresAt > now - days * DAY;
+
+/** Whole days left until the ad ends (at least 1 while it is still live). */
+export const daysLeft = (job, now = Date.now()) => Math.max(1, Math.ceil((job.expiresAt - now) / DAY));
+
 /** When approving: live from now for the package's days. */
 export function approvalDates(now, days) {
   return { startsAt: now, expiresAt: now + days * DAY };

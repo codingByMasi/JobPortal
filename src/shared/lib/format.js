@@ -36,6 +36,11 @@ export function whatsappLink(number, text = '') {
   return `https://wa.me/${String(number).replace(/\D/g, '')}${text ? `?text=${encodeURIComponent(text)}` : ''}`;
 }
 
+/** wa.me link that opens WhatsApp's "choose a chat" screen with a ready-typed message, to share something with anyone. */
+export function whatsappShareLink(text) {
+  return `https://wa.me/?text=${encodeURIComponent(text)}`;
+}
+
 /** Makes a downloadable link: real storage links get ?download= so the browser saves the file. */
 export function downloadLink(url, name = 'job-ad') {
   if (!url || url.startsWith('data:')) return url;

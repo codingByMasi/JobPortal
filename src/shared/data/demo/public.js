@@ -1,10 +1,22 @@
 // Demo: what visitors can do - read packages and live ads, apply.
-import { toPackage } from '../mappers';
+import { toAgency, toPackage } from '../mappers';
 import { asJob, fail, isLive, save, state, uid, wait } from './store';
 
 export async function listPackages() {
   await wait();
   return state.db.packages.map(toPackage).sort((a, b) => a.sortOrder - b.sortOrder || a.pricePaise - b.pricePaise);
+}
+
+/** Same rules as the database view (migration 0029): verified, not blocked, not an admin, a company name; live ads counted. */
+export async function listVerifiedAgencies() {
+  await wait();
+  return state.db.profiles
+    .filter((p) => p.verified && !p.blocked && p.role !== 'admin' && String(p.company_name || '').trim().length >= 2)
+    .map((p) => toAgency({
+      company_name: p.company_name, ra_number: String(p.ra_number || '').trim() || null,
+      live_ads: state.db.jobs.filter((j) => j.recruiter_id === p.id && isLive(j)).length,
+    }))
+    .sort((a, b) => b.liveAds - a.liveAds || a.companyName.localeCompare(b.companyName));
 }
 
 export async function listLiveJobs() {

@@ -1,5 +1,18 @@
 # Changelog
 
+## Step 22 - Admin work queue and ending notes
+- **Dashboard = "What needs you today":** six cards, each a link: **Licenses to check** (employers who sent a license), **Waiting for approval**, **Ending in 3 days**, **Change requests**, **Ended in the last 30 days**, **Live ads**. Cards with work to do get a thick border. The money and offers numbers and the UPI "Settings missing" reminder are gone (employers do not pay).
+- **Lists open filtered:** Ads tab with `?ending=soon` (soonest first) or `?ending=ended` (ended in the last month: these can get **More days**), each with a "Show all" button; Employers tab with `?license=waiting`; waiting licenses are always listed first.
+- **For the employer:** an ad that ends within 3 days shows "Ends in N days. Ask us to add days to keep it live."; an ended ad shows that it is no longer shown. Both get an **Ask for more days** button that opens the change-request pop-up with the message already typed; the admin sees it in Change requests.
+- Settings: the UPI boxes are no longer required or shown. Tests: helper unit tests, demo count tests, browser tests (`e2e/queue.spec.js`).
+- The test runner now starts at most 6 workers (`maxWorkers` in `vite.config.js`): with many cores, a dozen in-memory databases starting at once crashed workers at random.
+
+## Step 21 - Share button, Verified agencies page, How to check an agency (migration 0029)
+- **WhatsApp share button** on every ad ("Share this job on WhatsApp"): opens WhatsApp's chat chooser with the title, place and the ad's link.
+- **Verified agencies** (`/agencies`): a public list of employers the admin verified after checking their license: company name, registration number and the number of live ads, with a link to see their ads. A new database view `verified_agencies` (migration 0029) holds only these three columns, never a phone, email, id or license, and leaves out blocked employers and admins. The employer terms now say that a verified company appears there.
+- **How to check an agency** (`/check-agency`): a plain page in English and Hindi: ask for the registration number, check it on the government eMigrate website (button opens it in a new tab), get the offer in writing, never pay before checking, signs of a fake offer, what we check here (and that we cannot promise every employer is honest), and what to do if something goes wrong. A draft: a lawyer should confirm the wording (`11-owner-checklist.md`).
+- Both pages are in the footer and the sitemap. Tests: `rls.agencies`, demo tests, browser tests (`e2e/agencies.spec.js`), and both pages are in the accessibility, Hindi and refresh checks.
+
 ## Step 20 - License verification, free posting, approval with days (migrations 0027 and 0028)
 - **Employers do not pay.** A verified employer posts ads for free; there is no plan, price, coupon or payment screen for employers (the pay screen, payments tab, receipts, QR picture and payment proof screens were removed from the site; the admin's old payment tools stay for older ads).
 - **License verification:** an unverified employer sees a license form (number + picture/PDF in the private bucket `licenses`) instead of the ad form. The admin checks it in Admin > Employers (**Check license**: open the file, **Verify this employer** or reject with a reason the employer reads). The database refuses to verify an employer who sent no license.
