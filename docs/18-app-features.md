@@ -15,34 +15,40 @@ One page that explains the whole product in plain words. Details for each role a
 - English / Hindi switch on every screen; big text and big buttons; works on cheap phones and slow networks.
 - Home page counters (live ads, verified employers, applications) appear only when the numbers are real.
 
+## Features for everyone (no login)
+- **Share this job on WhatsApp** on every ad.
+- **Verified agencies**: the employers whose license our team checked (company, registration number, live ads).
+- **How to check an agency**: a safety guide with a link to the government eMigrate website.
+
 ## Features for employers (login)
 - Sign up with company details and registration number, email confirmation, forgot-password.
-- **Post an ad**: picture or PDF, details, optional salary and job facts, choose a **plan**.
-- **Offers and coupons**: automatic best offer, or a typed code; the price, discount, bonus days and total are shown before saving and are worked out by the server.
-- **Pay by UPI** (Phase 1): amount, UPI ID, name, ad code; send a WhatsApp screenshot; the admin marks it paid. Free offers skip payment.
-- **My ads** with plain statuses; edit and delete while unpaid; **fix and send again** after a rejection; **renew** an ended ad; **ask us to change** a paid ad.
-- **Applications** (names and phones after the company is verified), **My payments** and printable **receipts**, **My details**.
+- **Get verified**: send the license number and a picture or PDF of the license; see if it is being checked or was rejected (with the reason) and send again.
+- **Post an ad** (verified employers only): picture or PDF, details, optional salary and job facts. Free; no plan, price or payment. It waits for the admin's approval.
+- **My ads** with plain statuses, an "Ends in N days" note and an **Ask for more days** button; **withdraw** a waiting, rejected or ended ad; **fix and send again** after a rejection; **renew** an ended ad; **ask us to change** an approved ad.
+- **Edit an ad while it waits for approval**; **views and applications** for each ad; **My details** with the email choice; **Applications** (names and phones after the company is verified).
+- **Emails** about verification, approval, rejection, added days, ending soon and ended (off until the email key is set).
 
 ## Features for admins (login, optional two-step login)
-- **Dashboard**: counts, money this month after discounts, discounts given, top offers, a reminder if Settings are missing.
-- **All ads**: view the ad, approve, reject (with reason), hide, show, edit, delete, add an ad, mark paid (with the bank reference), **more days**, **featured on or off**, **free ad**.
-- **Employers**: verify, block, see their ads and payments, **give an offer** to one employer.
-- **Payments**: list, add, refund, download as a spreadsheet. **Applications**: search and download.
-- **Packages** (plans): price, days, badge, order, on or off. **Offers**: percent, rupees off, extra days or free; coupon codes; dates and limits; who used them. **History**: every change of a plan or offer.
+- **Dashboard (work queue)**: licenses to check, ads waiting for approval, ads ending in 3 days, change requests, ads that ended in the last 30 days, live ads; each card opens that list. A reminder if Settings are missing.
+- **All ads**: view the ad, **approve and choose the days**, reject (with reason), hide, show, edit, delete, add an ad, **more days** (also for ended ads, which then go live again), **featured on or off**.
+- **Employers**: **check the license** (open the file, verify or reject with a reason), block, see their ads. An employer cannot be verified without a license.
+- **Faster work:** ready-made reasons for rejecting, approve several ads at once, and pictures of deleted ads cleaned up by themselves.
+- **Applications**: search and download. **History**: every change of a plan or offer.
+- Older tools for ads made before posting became free (kept for the records): **Payments**, **Packages**, **Offers**, mark paid, free ad, refund.
 - **Reports** about ads and **account deletion requests**. **Change requests** from employers.
-- **Settings**: WhatsApp number, UPI ID and name, emails, company name, site address (no code change needed).
+- **Settings**: WhatsApp number, emails, company name, site address (no code change needed).
 - **Security**: two-step login with an authenticator app. **Problems**: crash list and the unused-files clean-up.
 - How to make another person an admin: see "Making someone an admin" in `10-admin-guide.md`.
 
 ## How an ad lives
-Waiting for payment, then (admin marks paid) waiting for approval, then (admin approves) live until its end date, then expired. Rejected ads can be fixed and sent again without paying again. Ads unpaid for 30 days are removed automatically.
+Waiting for approval, then (admin approves and chooses the days) live until its end date, then expired and no longer shown. The admin can add days to an ended ad and it goes live again. Rejected ads can be fixed and sent again.
 
 ## What protects people
-- Every ad is read by a person before it goes live; payments are checked in the bank first.
-- Only an admin can give the Verified tag; employers cannot change their status, price, dates or payments (the database enforces it).
+- Only verified employers can post, and only after the admin checked their license. Every ad is read by a person before it goes live.
+- Only an admin can give the Verified tag; employers cannot change their status, dates or verification (the database enforces it).
 - Limits stop floods of fake applications, reports and sign-ups; banned phone numbers cannot return.
 - Applicants' details are shown only to verified employers and deleted after 180 days.
 - Prices are always calculated by the server, never by the browser. The shop details are saved by admins and every change is logged.
 
 ## What is not built yet
-Online card/UPI payment (Phase 2, Razorpay); CAPTCHA on the apply form; email or WhatsApp notices to employers; Hindi search-engine pages; a mobile app (not needed: the site works on phones).
+CAPTCHA on the apply form; email or WhatsApp notices to employers; Hindi search-engine pages; a mobile app (not needed: the site works on phones).

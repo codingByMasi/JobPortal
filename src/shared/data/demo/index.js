@@ -8,6 +8,7 @@ import * as publicApi from './public';
 import * as recruiter from './recruiter';
 import * as settings from './settings';
 import * as trust from './trust';
+import * as verification from './verification';
 import { resetState } from './store';
 
 export const demoApi = {
@@ -20,6 +21,7 @@ export const demoApi = {
   ...trust,
   ...settings,
   ...guides,
+  ...verification,
   /** For the "Start again" button in the demo banner. */
   async resetDemo() {
     resetState();

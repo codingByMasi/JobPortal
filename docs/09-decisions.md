@@ -40,6 +40,7 @@
 | 36 | Apply-form flood limits in the database, per scrambled visitor address, generous (30 an hour, 100 a day) | A CAPTCHA needs an Edge Function; this stops cheap bots now, and shared mobile addresses are not locked out | CAPTCHA only; no limit |
 | 37 | Crash reports go to our own small table, not an outside service | No account, no new library, no change to the security headers, and no visitor data leaves the country | Sentry or similar (can still be added) |
 | 38 | Two development-only libraries for browser and accessibility tests: `@playwright/test` and `@axe-core/playwright` | The release needs repeatable tests of the real screens at phone and desktop width and a WCAG check on every screen; writing that by hand is not realistic. They are not shipped to visitors (0 vulnerabilities, only in `devDependencies`). | Manual browser checks only; Cypress |
+| 39 | Employers do not pay; a verified employer posts for free and the admin approves each ad and chooses its days (migration 0028). The QR-code library that was added for a payment screen was removed again | The owner wants to control who can post by checking a license, not to take money per ad. Checking the license is the gate; approving every ad is the second gate | Per-ad payment by UPI, QR and proof; an online payment gateway |
 
 ## Changed from the first plan
 - Data access is one folder (`shared/data`) split by area, instead of one `api.js` per feature. Reason: the demo copy must stay in sync with the real one, and one folder makes that easy to see.

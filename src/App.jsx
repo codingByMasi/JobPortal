@@ -9,6 +9,7 @@ import { Loading } from './shared/ui/StateViews';
 import Contact from './features/site/Contact';
 import CountryJobs from './features/jobs/CountryJobs';
 import DeleteAccount from './features/site/DeleteAccount';
+import Agencies from './features/site/Agencies';
 import InfoPage from './features/site/InfoPage';
 import Home from './features/jobs/Home';
 import JobDetail from './features/jobs/JobDetail';
@@ -22,10 +23,8 @@ const DashboardLayout = lazy(() => import('./features/recruiter/DashboardLayout'
 const EditAd = lazy(() => import('./features/recruiter/EditAd'));
 const MyAds = lazy(() => import('./features/recruiter/MyAds'));
 const MyApplications = lazy(() => import('./features/recruiter/MyApplications'));
-const MyPayments = lazy(() => import('./features/recruiter/MyPayments'));
 const Profile = lazy(() => import('./features/recruiter/Profile'));
 const NewAd = lazy(() => import('./features/recruiter/NewAd'));
-const Pay = lazy(() => import('./features/payments/Pay'));
 const AdminApplications = lazy(() => import('./features/admin/AdminApplications'));
 const AdminEmployers = lazy(() => import('./features/admin/AdminEmployers'));
 const AdminHome = lazy(() => import('./features/admin/AdminHome'));
@@ -42,7 +41,6 @@ const AdminPayments = lazy(() => import('./features/admin/AdminPayments'));
 const AdminRequests = lazy(() => import('./features/admin/AdminRequests'));
 const AdminSecurity = lazy(() => import('./features/admin/AdminSecurity'));
 const AdminProblems = lazy(() => import('./features/admin/AdminProblems'));
-const Receipt = lazy(() => import('./features/recruiter/Receipt'));
 
 export default function App() {
   return (
@@ -54,6 +52,8 @@ export default function App() {
         <Route path="jobs/:countrySlug" element={<CountryJobs />} />
         <Route path="job/:id" element={<JobDetail />} />
         <Route path="post-job" element={<PostJob />} />
+        <Route path="agencies" element={<Agencies />} />
+        <Route path="check-agency" element={<InfoPage kind="check" />} />
         <Route path="contact" element={<Contact />} />
         <Route path="login" element={<Login />} />
         <Route path="signup" element={<Signup />} />
@@ -71,11 +71,8 @@ export default function App() {
             <Route index element={<MyAds />} />
             <Route path="new" element={<NewAd />} />
             <Route path="edit/:id" element={<EditAd />} />
-            <Route path="pay/:id" element={<Pay />} />
-            <Route path="payments" element={<MyPayments />} />
             <Route path="applications" element={<MyApplications />} />
             <Route path="profile" element={<Profile />} />
-            <Route path="receipt/:id" element={<Receipt />} />
           </Route>
         </Route>
 

@@ -1,86 +1,57 @@
-// /admin - four big numbers: live ads, waiting for approval, waiting for payment, money this month.
+// /admin - the work queue: what needs the admin today (licenses to check, ads to approve, ads ending, change requests), then the live count. Each number links to its list.
 import { Link } from 'react-router-dom';
 import Button from '../../shared/ui/Button';
 import Icon from '../../shared/ui/Icon';
-import { AsyncView } from '../../shared/ui/StateViews';
-import { api } from '../../shared/data';
-import { useLang } from '../../shared/i18n/LangContext';
-import { formatPrice } from '../../shared/lib/money';
 import Notice from '../../shared/ui/Notice';
-import { isDemo } from '../../shared/data';
+import { AsyncView } from '../../shared/ui/StateViews';
+import { api, isDemo } from '../../shared/data';
+import { useLang } from '../../shared/i18n/LangContext';
+import { ENDED_RECENTLY_DAYS, ENDING_SOON_DAYS } from '../../shared/lib/jobStatus';
 import { missingSettings } from '../../shared/lib/siteSettings';
 import { useAsync } from '../../shared/lib/useAsync';
 import { useSettings } from '../../shared/settings/SettingsContext';
 
-/** Admin dashboard counts. Each number links to the matching list. */
+/** One card of the queue. A card with work to do is marked (a "todo" look) so the eye finds it first. */
+function Card({ to, icon, number, label, urgent }) {
+  return (
+    <Link className={`count-card${urgent && number > 0 ? ' is-todo' : ''}`} to={to}>
+      <Icon name={icon} size={32} />
+      <span className="count-number">{number}</span>
+      <span>{label}</span>
+    </Link>
+  );
+}
+
+/** Admin dashboard. */
 export default function AdminHome() {
   const { t } = useLang();
   const counts = useAsync(() => api.adminCounts(), []);
-  const sales = useAsync(() => api.adminSalesStats(), []);
   const { settings, ready } = useSettings();
   const missing = ready ? missingSettings(settings, isDemo) : [];
   return (
     <section className="section">
       {missing.length > 0 && (
         <>
-        <Notice tone="error">
-          <strong>{t.settingsMissingTitle}</strong> {t.settingsMissingText(missing.map((n) => t.settingLabel[n]).join(', '))}
-        </Notice>
-        <Button to="/admin/settings" icon="settings" tone="outline">{t.settingsMissingLink}</Button>
+          <Notice tone="error">
+            <strong>{t.settingsMissingTitle}</strong> {t.settingsMissingText(missing.map((n) => t.settingLabel[n]).join(', '))}
+          </Notice>
+          <Button to="/admin/settings" icon="settings" tone="outline">{t.settingsMissingLink}</Button>
         </>
       )}
       <AsyncView state={counts} isEmpty={() => false}>
         {(c) => (
-          <div className="count-grid">
-            <Link className="count-card" to="/admin/jobs?status=live">
-              <Icon name="eye" size={32} />
-              <span className="count-number">{c.live}</span>
-              <span>{t.cLive}</span>
-            </Link>
-            <Link className="count-card" to="/admin/jobs?status=paid_pending_review">
-              <Icon name="clock" size={32} />
-              <span className="count-number">{c.review}</span>
-              <span>{t.cReview}</span>
-            </Link>
-            <Link className="count-card" to="/admin/jobs?status=pending_payment">
-              <Icon name="rupee" size={32} />
-              <span className="count-number">{c.waitingPayment}</span>
-              <span>{t.cPay}</span>
-            </Link>
-            <Link className="count-card" to="/admin/requests">
-              <Icon name="edit" size={32} />
-              <span className="count-number">{c.requests}</span>
-              <span>{t.cRequests}</span>
-            </Link>
-            <Link className="count-card" to="/admin/payments">
-              <Icon name="card" size={32} />
-              <span className="count-number">{formatPrice(c.revenuePaise)}</span>
-              <span>{t.cRevenue}</span>
-            </Link>
-          </div>
-        )}
-      </AsyncView>
-      <h2 className="section-title">{t.salesTitle}</h2>
-      <AsyncView state={sales} isEmpty={() => false}>
-        {(s) => (
           <>
+            <h2 className="section-title">{t.queueTitle}</h2>
             <div className="count-grid">
-              <div className="count-card">
-                <Icon name="rupee" size={32} />
-                <span className="count-number">{formatPrice(s.revenuePaise)}</span>
-                <span>{t.salesRevenue}</span>
-              </div>
-              <div className="count-card">
-                <Icon name="badge" size={32} />
-                <span className="count-number">{formatPrice(s.discountPaise)}</span>
-                <span>{t.salesDiscounts}</span>
-              </div>
+              <Card urgent to="/admin/employers?license=waiting" icon="badge" number={c.licenses} label={t.cLicenses} />
+              <Card urgent to="/admin/jobs?status=paid_pending_review" icon="clock" number={c.review} label={t.cReview} />
+              <Card urgent to="/admin/jobs?ending=soon" icon="clock" number={c.endingSoon} label={t.cEnding(ENDING_SOON_DAYS)} />
+              <Card urgent to="/admin/requests" icon="edit" number={c.requests} label={t.cRequests} />
+              <Card to="/admin/jobs?ending=ended" icon="refresh" number={c.ended} label={t.cEnded(ENDED_RECENTLY_DAYS)} />
+              <Card to="/admin/jobs?status=live" icon="eye" number={c.live} label={t.cLive} />
             </div>
-            <h3>{t.topOffers}</h3>
-            {s.topOffers.length === 0 ? <p className="muted">{t.noOfferUse}</p> : (
-              <ul className="mini-list">
-                {s.topOffers.map((o) => <li key={o.offerId}><span>{o.name}</span><span>{t.offerUsedTimes(o.uses)} · {formatPrice(o.discountPaise)}</span></li>)}
-              </ul>
+            {c.waitingPayment > 0 && (
+              <Button to="/admin/jobs?status=pending_payment" tone="outline" icon="clock">{t.cOldUnpaid(c.waitingPayment)}</Button>
             )}
           </>
         )}

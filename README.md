@@ -40,7 +40,7 @@ The WhatsApp number, UPI ID, name on the UPI ID, emails, company name and site a
 | `docs/06-deploy.md` | Supabase and Cloudflare Pages set-up, go-live checklist |
 | `docs/13-cloudflare-pages.md` | Cloudflare Pages readiness: what was checked, what to set in the dashboard |
 | `docs/07-testing.md` | automated tests and the hand checklist |
-| `docs/08-phase2-payments.md` | plan for Razorpay |
+| `docs/08-phase2-payments.md` | why there is no online payment gateway |
 | `docs/09-decisions.md` | why we chose what |
 | `docs/10-admin-guide.md` | the daily guide for the admin, in plain words |
 | `docs/11-owner-checklist.md` | what only the owner can do (accounts, lawyer, accountant, settings) |

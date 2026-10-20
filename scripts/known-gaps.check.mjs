@@ -1,7 +1,7 @@
 // KNOWN GAPS: checks written for how the product SHOULD behave but does not yet. They are expected to FAIL today.
 // Run with `npm run test:gaps`. When one starts passing, the gap is closed: move it into rls.readiness.test.mjs.
 import { beforeAll, describe, expect, it } from 'vitest';
-import { addUser, as, countOf, makeDb, rowsOf } from './rls/harness.mjs';
+import { addUser, countOf, makeDb, rowsOf } from './rls/harness.mjs';
 
 let db; let owner; let pkg30;
 
@@ -13,14 +13,6 @@ beforeAll(async () => {
 }, 120000);
 
 describe('known gaps (expected to fail until fixed)', () => {
-  it('GAP-1: deleting an ad also removes its picture from storage (today only the browser does it, so a failed call leaves orphan files)', async () => {
-    const file = `${owner}/gone.jpg`;
-    await db.query("insert into storage.objects (bucket_id, name, owner) values ('job-files', $1, $2)", [file, owner]);
-    const id = (await as(db, owner, () => db.query("insert into public.jobs (package_id, title, whatsapp, file_path) values ($1, 'Will be deleted', '919876543210', $2) returning id", [pkg30, file]))).rows[0].id;
-    await as(db, owner, () => db.query('delete from public.jobs where id = $1', [id]));
-    expect(await countOf(db, 'select * from storage.objects where name = $1', [file])).toBe(0);
-  });
-
   it('GAP-2: an ad that waited for payment for more than 30 days is removed automatically', async () => {
     const id = (await db.query("insert into public.jobs (recruiter_id, package_id, title, whatsapp, created_at) values ($1, $2, 'Old unpaid ad', '919876543210', now() - interval '45 days') returning id", [owner, pkg30])).rows[0].id;
     await db.query('select public.cleanup_old_data()');

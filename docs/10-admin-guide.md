@@ -1,15 +1,14 @@
 # 10 - Admin guide (plain words)
 
-For the person who runs the site every day. No technical knowledge needed. Use the **Admin** tabs: Dashboard, All ads, Employers, Payments, Packages, Offers, Applications, Change requests, Guides, Settings, Security, Reports, History, Problems. A short description of every feature is in the **Guides** tab ("What the app does"). The guides are saved in the database and **only admins can read them** (Admin > Guides); the employer and job seeker guides are there too, with a **Copy the text** button so you can send them on WhatsApp.
+For the person who runs the site every day. No technical knowledge needed. Use the **Admin** tabs: Dashboard, All ads, Employers, Payments, Packages, Offers (the last three are not used for employers any more, see "Old payment tools"), Applications, Change requests, Guides, Settings, Security, Reports, History, Problems. A short description of every feature is in the **Guides** tab ("What the app does"). The guides are saved in the database and **only admins can read them** (Admin > Guides); the employer and job seeker guides are there too, with a **Copy the text** button so you can send them on WhatsApp.
 
 ## First day as admin (do once)
 1. Log in. Open **Security** and turn on two-step login (scan the QR code with an authenticator app, type the code). Save the app's recovery option.
-2. Open **Settings** and fill in the WhatsApp number, UPI ID and its name, emails, complaints person, company name and site address. Check the UPI ID twice.
-3. Open **Packages** and set your real plan prices. Open **Offers** only when you want a discount.
-4. Make a second admin (below) and have them turn on two-step login too.
+2. Open **Settings** and fill in the WhatsApp number, emails, complaints person, company name and site address.
+3. Make a second admin (below) and have them turn on two-step login too.
 
 ## Making someone an admin
-An admin can do everything, including changing the UPI ID, so give it to as few people as possible (two or three) and only to people you trust. Each admin must turn on two-step login.
+An admin can do everything, including approving ads and verifying employers, so give it to as few people as possible (two or three) and only to people you trust. Each admin must turn on two-step login.
 1. The person signs up on the site like an employer and confirms their email.
 2. **On the computer with the project** (Supabase already linked): open a terminal in the project folder and run
    `node scripts/make-admin.mjs person@example.com`
@@ -24,42 +23,47 @@ An admin can do everything, including changing the UPI ID, so give it to as few 
 The guides are written in `docs/10-admin-guide.md`, `16-employer-guide.md`, `17-job-seeker-guide.md` and `18-app-features.md`. After you change one, run `npm run guides:publish` on the computer with the project: it saves the new text in the database for Admin > Guides.
 
 ## Every day (about 15 minutes)
-1. **Dashboard**: look at the four numbers. Tap "Waiting for approval", "Change requests".
-2. **Payments in**: an employer pays by UPI and WhatsApps you the screenshot with their ad code (looks like `AD-1A2B3C4D`).
-   - Open **bank / UPI app** and find the payment. Check the amount and that the note has the same ad code. **Never mark paid from a screenshot alone.**
-   - **All ads**: search the code. Tap **Mark as paid**. Type the **reference number (UTR)** from your bank or UPI app. Each reference can be used only once; if the site says it was already used, someone is trying to use one payment twice.
-3. **Approve ads** (status "Waiting for approval"):
+1. **Dashboard ("What needs you today")**: six cards. A card with a thick border has work for you. Tap it to open exactly that list:
+   - **Licenses to check**: employers who sent a license (see "Verify an employer" below).
+   - **Waiting for approval**: ads to read and approve (choose the days).
+   - **Ending in 3 days**: live ads that will stop showing soon, soonest first. If the employer wants to continue, tap **More days**. Tap **WhatsApp them** to ask first.
+   - **Change requests**: an employer asked for a change, or for **more days** (the message says so). For more days, open the ad in the Ads tab and tap **More days**.
+   - **Ended in the last 30 days**: ads that already stopped. **More days** puts one back live for the new days counted from today.
+   - **Live ads**: how many are showing now.
+2. **Licenses to check** (Employers tab): an employer who sent a license shows **License sent: check it**. See "Verify an employer" below.
+3. **Approve ads** (status "Waiting for approval"). Employers post for free, so there is nothing to pay or to mark as paid:
    - Tap **View ad** and read the whole ad. Reject if it asks job seekers for money (visa fee, registration fee, "security deposit"), has no company or contact, looks fake, or shows a personal document.
    - If the row says **"First ad of this employer"**: call or WhatsApp the employer's number first. Ask who they are and for the registration number if they are a recruitment agent. Check the number on `emigrate.gov.in` (after your lawyer tells you exactly what to check).
    - If the row says **"N other ads use the same WhatsApp number"**: look at those ads. One number behind many companies is a warning sign.
-   - Good ad: **Approve**. Bad ad: **Reject** and write a short reason the employer can understand ("Please add a phone number"). They can fix the ad and send it again without paying again.
+   - Good ad: tap **Approve** and **choose how many days** it stays live (1 to 365; 30 is filled in). The ad goes live at once and ends after those days. Bad ad: **Reject** and write a short reason the employer can understand ("Please add a phone number"). They can fix the ad and send it again.
+   - **When the days end** the ad stops showing by itself. To show it again, tap **More days** on that ad (it works on ended ads too), write a reason, and it goes live again for the new days counted from today.
 4. **Change requests**: employers cannot edit a paid ad; they ask you. Tap **Open the ad to edit**, make the change, come back and tap **Mark done** (or **Decline** if you cannot). Tap **WhatsApp them** to tell them.
-5. **Employers**: tap **Verify** only when you are sure about the company (see the checklist below). Tap **Block** for a bad employer: all their live ads are hidden at once.
+5. **Employers**: verify only after you checked the license (see below). Tap **Block** for a bad employer: all their live ads are hidden at once.
 
-## Verify an employer: checklist
-- You spoke to them on the phone or WhatsApp number they gave.
-- Company name matches their ad and their messages.
-- A recruitment agent in India: registration number is filled in and you checked it.
-- No complaints about them.
-Only after a **verified** tick can they see applicants' names and phone numbers. Changing the company name or registration number removes the tick, and you check again.
+## Faster work
+- **Ready-made reasons:** when you reject an ad or a license, tap one of the reasons to fill the box, then change the words if you like. The employer reads what you send.
+- **Approve many ads:** on the **Ads** tab choose the status **Waiting for approval**. Tick the ads you have read (or **Select all**), tap **Approve selected**, choose the days, confirm. Read the ads first: it does not ask again for each one.
+- **Tell the employer:** after an approve, reject, more days or verify, tap **Tell the employer on WhatsApp**. If emails are set up (`20-notifications.md`) the employer also gets an email by itself.
+- **Pictures of deleted ads** are removed from storage quietly when you open the admin area.
+
+## Verify an employer: check the license
+Only a **verified** employer can post ads, and you cannot verify an employer who has not sent a license.
+1. **Employers** tab: find the row that says **License sent: check it**. Tap **Check license**.
+2. You see the license number, the date and the company. Tap **Open license file** to see the picture or PDF (a private link that works for 5 minutes).
+3. Check that: the license is real (for a recruitment agent: check the number on the government list, `emigrate.gov.in`, after your lawyer tells you exactly what to check); it is in the same name as the company; it has not expired; the phone and WhatsApp number work (call them); there are no complaints.
+4. Good: tap **Verify this employer**. Not good: tap **License not accepted**, write the reason (the employer reads it) and tap **Reject license**. They can send a new one.
+When you verify an employer, their **company name and registration number appear on the public Verified agencies page** (with the number of their live ads; never a phone or email). So check that the company name is the real, correct one before you verify. Only after a **verified** tick can they post ads, and see applicants' names and phone numbers. Changing the company name or registration number removes the tick, and you check again (their old license is still on file: look at it and verify again if it is fine).
 
 ## Reports and complaints
 Job seekers can press **Report this ad**; it opens WhatsApp with the ad code. Open the ad (search the code). If it is bad: **Hide** it, then **Block** the employer if needed, then **Refund** if the money was taken by mistake. Answer the person who reported within 2 days (this is the promise on the Contact page).
 
-## Plans and offers
-- **Packages tab = your plans.** Use the arrows to change the order employers see. Change the price in rupees. **A new price affects only new purchases**: ads already bought keep their old price. A plan that has ads cannot be deleted: turn it off.
-- **Offers tab.** Tap *New offer*. Choose what it gives (percent off, rupees off, extra days, free ad), who gets it (everyone, one plan, one employer), dates, and limits. The blue box shows an example in plain words (like "20% off the 30 Days plan: ₹1,000 becomes ₹800"): read it before saving.
-  - **With a coupon code** the employer must type it (tap *Make a code* for an easy one). **Without a code** the best offer is used by itself. Only one offer is used for one ad; offers never add up.
-  - The status word tells you: Active, Scheduled (not started), Expired, Used up, Off. *Copy* makes a new offer from an old one (it starts Off, without the code). *Uses* shows who used it.
-  - To give one employer a special price: **Employers** tab > *Give offer*.
-- **On one ad (Ads tab):** *More days* (write a reason: it is saved), *Make featured* / *Remove featured*, *Free ad* (only for an ad that is waiting for payment; write why: it is saved with a payment of 0 marked "complimentary").
-- **History tab** shows every change of a plan or an offer: who, when, from what to what. It cannot be edited.
-- **Home tab** shows this month's money after discounts, the discounts you gave, and which offers were used most.
+## Old payment tools (not used for employers)
+Employers post for free, so the **Payments**, **Packages** and **Offers** tabs, **Mark as paid**, **Free ad** and **Refund** are no longer part of the daily work. They stay only for ads made before posting became free and for your records. Each new ad is stored with the first active plan, price 0, and you choose the real days when you approve it.
 
 ## Settings tab (your shop details)
-- Fill in once, change any time: WhatsApp number, contact email, complaints person and email, UPI ID, the name on the UPI ID, company name and site address. Nothing else is needed: no developer, no new release.
-- **Check the UPI ID twice.** Employers pay to it. A wrong ID sends money to someone else. Every change is saved in the admin log (Supabase > `admin_log`) with the old and the new value.
-- If something is empty the site hides it (for example no WhatsApp button, or "payment details are not ready" on the payment screen). The home tab shows a red reminder until everything is filled in.
+- Fill in once, change any time: WhatsApp number, contact email, complaints person and email, company name and site address (the UPI boxes are not needed any more). No developer, no new release.
+- Every change is saved in the admin log (Supabase > `admin_log`) with the old and the new value.
+- If something is empty the site hides it (for example no WhatsApp button). The home tab shows a red reminder until everything is filled in.
 - The site address is used for the search pages and sitemap the next time the site is built (up to 3 hours, or press the deploy hook).
 
 ## Reports and deletion requests (Reports tab)
@@ -67,14 +71,10 @@ Job seekers can press **Report this ad**; it opens WhatsApp with the ad code. Op
 - **Account deletion requests:** anyone can send one with any email, so **never delete only because of a request**. Write to that email first and ask the owner to confirm (or confirm from the phone number on the account). Then ask your developer to delete the account (or in Supabase delete the employer's user), and tap *Mark done*. Payment records stay (the law may need them).
 - Employers' **registration number** shows to visitors only when you have tapped *Verify* in the Employers tab. Check the number first (the government list of registered agents) before you verify.
 
-## Refunds
-- You rejected a paid ad and the employer will not fix it: refund the full amount. Do the bank transfer yourself, then in **Payments** tap **Mark refunded** (tick "Also hide this ad" if it is live).
-- An ad that already ran: no refund, unless the mistake was ours. (This is the rule on the employer terms; confirm it with your accountant.)
-
 ## Money and records
-- **Payments** tab: tap **Download as spreadsheet** and send it to your accountant every month.
+- **Payments** tab: records of older payments; **Download as spreadsheet** if your accountant needs them.
 - **Applications** tab: tap the CSV button when you need the list. Applications are deleted automatically after 180 days. If a job seeker asks you to delete their details earlier, search their phone number in the **Applications** tab, then ask your developer to delete it (or, in Supabase > Table Editor > `applications`, delete the row).
-- Every approve, reject, hide, show, mark-paid and refund is written in the **admin log** (Supabase > Table Editor > `admin_log`).
+- Every approve (with its days), reject, hide, show, extend, verify and license decision is written in the **admin log** (Supabase > Table Editor > `admin_log`).
 
 ## Problems tab
 Open **Problems** once a week. It lists crashes the website reported (same crash counted, not repeated). Nothing there is normal; a few lines from old phones are not worrying. If one line keeps growing, send it to your developer. Tap **Clear the list** after you have read it.

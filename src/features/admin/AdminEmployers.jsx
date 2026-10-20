@@ -1,10 +1,13 @@
-// /admin/employers - verify or block employers, and look at their ads and payments.
+// /admin/employers - check an employer's license and verify them, block employers, and look at their ads and payments.
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Button from '../../shared/ui/Button';
 import Icon from '../../shared/ui/Icon';
 import Modal from '../../shared/ui/Modal';
 import Notice from '../../shared/ui/Notice';
 import { StatusBadge } from '../../shared/ui/StatusBadge';
+import AdminLicenseDialog from './AdminLicenseDialog';
+import TellEmployer from './TellEmployer';
 import { AsyncView } from '../../shared/ui/StateViews';
 import { api } from '../../shared/data';
 import { formatDate } from '../../shared/lib/format';
@@ -53,16 +56,29 @@ function EmployerDetails({ employer, onClose }) {
 export default function AdminEmployers() {
   const { t, lang } = useLang();
   const list = useAsync(() => api.adminListRecruiters(), []);
+  const licenses = useAsync(() => api.adminListVerifications(), []);
+  const licenseOf = (employer) => (licenses.data || []).find((r) => r.recruiterId === employer.id) || null;
+  const [checking, setChecking] = useState(null); // the employer whose license is open
+  const [params, setParams] = useSearchParams();
+  const onlyWaiting = params.get('license') === 'waiting'; // the dashboard links here
+  const waitingFirst = (rows) => {
+    const waiting = (e) => licenseOf(e)?.status === 'submitted';
+    return onlyWaiting ? rows.filter(waiting) : [...rows].sort((a, b) => Number(waiting(b)) - Number(waiting(a)));
+  };
   const { notice, success, fail } = useNotice();
   const [details, setDetails] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [tell, setTell] = useState(null); // { phone, text }: the WhatsApp message offered after a decision
 
   const change = async (employer, patch) => {
     setBusy(true);
+    setTell(null);
     try {
       await api.adminSetRecruiter(employer.id, patch);
       success(t.employerSaved);
+      if (patch.verified === true) setTell({ phone: employer.phone, text: t.msgVerified(employer.companyName) });
       list.reload();
+      licenses.reload();
     } catch (err) {
       fail(err);
     } finally {
@@ -70,11 +86,31 @@ export default function AdminEmployers() {
     }
   };
 
+  const rejectLicense = async (employer, reason) => {
+    setBusy(true);
+    setTell(null);
+    try {
+      await api.adminRejectVerification(licenseOf(employer).id, reason);
+      success(t.licenseRejectedDone);
+      setTell({ phone: employer.phone, text: t.msgLicenseRejected(reason) });
+      licenses.reload();
+    } catch (err) {
+      fail(err);
+    } finally {
+      setBusy(false);
+      setChecking(null);
+    }
+  };
+
   return (
     <section className="section">
       <Notice tone={notice.tone}>{notice.text}</Notice>
-      <AsyncView state={list} empty={t.noEmployers} emptyIcon="users">
-        {(rows) => (
+      <TellEmployer tell={tell} />
+      {onlyWaiting && (
+        <p className="help filter-note">{t.licenseFilter} <Button size="sm" tone="outline" onClick={() => setParams({}, { replace: true })}>{t.showAll}</Button></p>
+      )}
+      <AsyncView state={list} empty={onlyWaiting ? t.licenseFilterNone : t.noEmployers} emptyIcon="users">
+        {(all) => { const rows = waitingFirst(all); return (
           <div className="table-wrap">
             <table>
               <thead>
@@ -91,12 +127,12 @@ export default function AdminEmployers() {
                     <td data-label={t.colStatus}>
                       {e.verified && <span className="tag tag-verified"><Icon name="badge" size={16} />{t.verifiedTag}</span>}
                       {e.blocked && <span className="tag tag-blocked"><Icon name="ban" size={16} />{t.blockedTag}</span>}
+                      {!e.verified && e.role !== 'admin' && <span className="muted">{licenseOf(e) ? t.licenseState[licenseOf(e).status] : t.licenseState.none}</span>}
                     </td>
                     <td data-label={t.colActions}>
                       <div className="row-actions">
-                        <Button size="sm" tone="outline" icon="badge" disabled={busy} onClick={() => change(e, { verified: !e.verified })}>
-                          {e.verified ? t.unverify : t.verify}
-                        </Button>
+                        {e.verified && <Button size="sm" tone="outline" icon="badge" disabled={busy} onClick={() => change(e, { verified: false })}>{t.unverify}</Button>}
+                        {!e.verified && licenseOf(e) && <Button size="sm" tone="green" icon="badge" disabled={busy} onClick={() => setChecking(e)}>{t.licenseCheck}</Button>}
                         <Button size="sm" tone={e.blocked ? 'green' : 'danger'} icon="ban" disabled={busy || e.role === 'admin'} onClick={() => change(e, { blocked: !e.blocked })}>
                           {e.blocked ? t.unblock : t.block}
                         </Button>
@@ -109,9 +145,19 @@ export default function AdminEmployers() {
               </tbody>
             </table>
           </div>
-        )}
+        ); }}
       </AsyncView>
       {details && <EmployerDetails employer={details} onClose={() => setDetails(null)} />}
+      {checking && licenseOf(checking) && (
+        <AdminLicenseDialog
+          employer={checking}
+          request={licenseOf(checking)}
+          busy={busy}
+          onClose={() => setChecking(null)}
+          onVerify={async () => { await change(checking, { verified: true }); setChecking(null); }}
+          onReject={(reason) => rejectLicense(checking, reason)}
+        />
+      )}
     </section>
   );
 }

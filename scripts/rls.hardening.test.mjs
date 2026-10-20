@@ -44,6 +44,7 @@ beforeAll(async () => {
   const id = async (name) => (await rowsOf(db, 'select id from public.packages where name = $1', [name]))[0].id;
   pkg7 = await id('7 Days');
   pkg30 = await id('30 Days');
+  await db.query('update public.profiles set verified = true where id = any($1)', [[e1, e2]]); // only verified employers can start an ad (migration 0027)
   live1 = await seedJob(e1, 'Live one', 'live', pkg30, -1, 29);
 }, 120000);
 
@@ -57,7 +58,9 @@ describe('9. hardening (migration 0012)', () => {
   });
 
   it('the price and days are saved with the ad; a later package change does not alter them, and employers cannot change them', async () => {
-    const own = (await insertJob(e1, newJob(e1, { title: 'Snapshot ad', package_id: pkg7 }))).rows[0].id;
+    // the older paid path (an ad waiting for payment, ordered with a plan) still works for ads the admin creates; employers' own new ads are free (migration 0028)
+    const own = await seedJob(e1, 'Snapshot ad', 'pending_payment', pkg7, null, null);
+    await as(db, e1, () => db.query('select public.create_ad_order($1, $2, null)', [own, pkg7]));
     expect((await rowsOf(db, 'select price_paise_at_order p, days_at_order d from public.jobs where id = $1', [own]))[0]).toEqual({ p: 29900, d: 7 });
     await denied(as(db, e1, () => db.query('update public.jobs set price_paise_at_order = 1 where id = $1', [own])));
     await db.query('update public.packages set price_paise = 999900 where id = $1', [pkg7]);
@@ -76,7 +79,8 @@ describe('9. hardening (migration 0012)', () => {
   });
 
   it('approve uses the days saved with the ad', async () => {
-    const own = (await insertJob(e1, newJob(e1, { title: 'Seven day ad', package_id: pkg7 }))).rows[0].id;
+    const own = await seedJob(e1, 'Seven day ad', 'pending_payment', pkg7, null, null);
+    await as(db, e1, () => db.query('select public.create_ad_order($1, $2, null)', [own, pkg7]));
     await db.query('update public.packages set duration_days = 90 where id = $1', [pkg7]);
     await adminDo('select * from public.admin_mark_paid($1)', [own]);
     await adminDo('select public.admin_approve_job($1)', [own]);
@@ -136,7 +140,7 @@ describe('9. hardening (migration 0012)', () => {
   it('employers can delete unpaid, rejected or ended ads, but not a paid, live or hidden one', async () => {
     const del = (id) => as(db, e1, () => db.query('delete from public.jobs where id = $1', [id]));
     for (const [status, ok, a, b] of [['pending_payment', true, null, null], ['rejected', true, null, null], ['expired', true, -9, -1], ['live', true, -9, -1],
-      ['live', false, -1, 5], ['hidden', false, -1, 5], ['paid_pending_review', false, null, null]]) {
+      ['live', false, -1, 5], ['hidden', false, -1, 5], ['paid_pending_review', true, null, null]]) { // waiting for approval: can be withdrawn
       const id = await seedJob(e1, `To delete ${status}`, status, pkg30, a, b);
       expect((await del(id)).affectedRows).toBe(ok ? 1 : 0);
     }
@@ -254,7 +258,7 @@ describe('12. checker fixes (migration 0015)', () => {
     }
     // the triggers themselves still fire for the people who cause them
     const id = (await insertJob(e1, newJob(e1, { title: 'Trigger still fires', whatsapp: '9876543210' }))).rows[0].id;
-    expect((await rowsOf(db, 'select status, whatsapp from public.jobs where id = $1', [id]))[0]).toEqual({ status: 'pending_payment', whatsapp: '919876543210' });
+    expect((await rowsOf(db, 'select status, whatsapp from public.jobs where id = $1', [id]))[0]).toEqual({ status: 'paid_pending_review', whatsapp: '919876543210' });
     await denied(insertJob(e1, newJob(e1, { status: 'live', title: 'Forced values', whatsapp: '12' })));
     const owner = await addUser(db, 'trigger-signup@x.co', { company_name: 'Signup Co' });
     expect((await rowsOf(db, 'select role from public.profiles where id = $1', [owner]))[0].role).toBe('recruiter');

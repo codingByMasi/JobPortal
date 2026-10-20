@@ -8,10 +8,10 @@ import { api } from '../../shared/data';
 import { friendlyMessage } from '../../shared/lib/friendlyError';
 import { useLang } from '../../shared/i18n/LangContext';
 
-/** `job` is the ad; `onSent` runs after the request is saved; `onClose` closes the pop-up. */
-export default function ChangeRequestModal({ job, onClose, onSent }) {
+/** `job` is the ad; `onSent` runs after the request is saved; `onClose` closes the pop-up; `initialMessage` is an optional ready-typed message. */
+export default function ChangeRequestModal({ job, onClose, onSent, initialMessage = '' }) {
   const { t } = useLang();
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState(initialMessage);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 

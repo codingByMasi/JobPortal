@@ -1,5 +1,54 @@
 # Changelog
 
+## Step 24 - Edit while waiting, file clean-up, ready-made reasons, bulk approve, views, emails (migrations 0031 to 0034)
+- **Edit while waiting (0031):** an employer can edit an ad while it waits for approval (the status, dates, plan, price and owner stay locked by the database). "Ask us to change this" now appears only after approval.
+- **File clean-up (0032):** when an ad is deleted, or its picture replaced, the old file paths go into a queue (`file_cleanup_queue`). The admin's browser removes those files through the Storage API when an admin opens the admin area (Supabase blocks deleting storage files from SQL). This closes the known gap GAP-1.
+- **Ready-made reasons and bulk approve:** reasons to tap when rejecting an ad or a license (English and Hindi); on the Ads list filtered to "Waiting for approval" the admin can tick several ads and approve them for the same days.
+- **Views and applications (0033):** a plain counter per live ad per day (nothing about the visitor; once per browser per day; not for logged-in people). "My ads" shows "N views · M applications". The privacy page says so.
+- **Emails to employers (0034):** a queue the database fills for verified, license rejected, ad approved/rejected, days added, ends soon (3 days), ended; an Edge Function sends them by Resend; off until a key is set; employers can turn it off in My details. See `20-notifications.md`.
+- Tests: new database tests for each migration, unit tests for the sender and the file clean-up, browser tests; the lists of callable functions and of tables with row security were updated on purpose.
+
+## Step 23 - QR picture and payment proof removed (migration 0030)
+- The QR picture and payment proof database parts (migration 0024) are dropped by migration 0030: the proof table and functions, the QR setting, the two storage buckets (when Supabase allows deleting them from SQL). `admin_mark_paid` no longer touches proofs.
+- Code: the UPI settings (`upiId`, `upiName`, the example values in `src/config.js`), the unused pay-screen, receipt and UPI texts in English and Hindi, and the unused styles were removed. The database still accepts the old UPI settings keys, so anything saved is not lost.
+- **Kept on purpose:** the admin Payments, Packages and Offers tabs, mark paid, free ad, refund and the plan and offer functions.
+
+## Step 22 - Admin work queue and ending notes
+- **Dashboard = "What needs you today":** six cards, each a link: **Licenses to check** (employers who sent a license), **Waiting for approval**, **Ending in 3 days**, **Change requests**, **Ended in the last 30 days**, **Live ads**. Cards with work to do get a thick border. The money and offers numbers and the UPI "Settings missing" reminder are gone (employers do not pay).
+- **Lists open filtered:** Ads tab with `?ending=soon` (soonest first) or `?ending=ended` (ended in the last month: these can get **More days**), each with a "Show all" button; Employers tab with `?license=waiting`; waiting licenses are always listed first.
+- **For the employer:** an ad that ends within 3 days shows "Ends in N days. Ask us to add days to keep it live."; an ended ad shows that it is no longer shown. Both get an **Ask for more days** button that opens the change-request pop-up with the message already typed; the admin sees it in Change requests.
+- Settings: the UPI boxes are no longer required or shown. Tests: helper unit tests, demo count tests, browser tests (`e2e/queue.spec.js`).
+- The test runner now starts at most 6 workers (`maxWorkers` in `vite.config.js`): with many cores, a dozen in-memory databases starting at once crashed workers at random.
+
+## Step 21 - Share button, Verified agencies page, How to check an agency (migration 0029)
+- **WhatsApp share button** on every ad ("Share this job on WhatsApp"): opens WhatsApp's chat chooser with the title, place and the ad's link.
+- **Verified agencies** (`/agencies`): a public list of employers the admin verified after checking their license: company name, registration number and the number of live ads, with a link to see their ads. A new database view `verified_agencies` (migration 0029) holds only these three columns, never a phone, email, id or license, and leaves out blocked employers and admins. The employer terms now say that a verified company appears there.
+- **How to check an agency** (`/check-agency`): a plain page in English and Hindi: ask for the registration number, check it on the government eMigrate website (button opens it in a new tab), get the offer in writing, never pay before checking, signs of a fake offer, what we check here (and that we cannot promise every employer is honest), and what to do if something goes wrong. A draft: a lawyer should confirm the wording (`11-owner-checklist.md`).
+- Both pages are in the footer and the sitemap. Tests: `rls.agencies`, demo tests, browser tests (`e2e/agencies.spec.js`), and both pages are in the accessibility, Hindi and refresh checks.
+
+## Step 20 - License verification, free posting, approval with days (migrations 0027 and 0028)
+- **Employers do not pay.** A verified employer posts ads for free; there is no plan, price, coupon or payment screen for employers (the pay screen, payments tab, receipts, QR picture and payment proof screens were removed from the site; the admin's old payment tools stay for older ads).
+- **License verification:** an unverified employer sees a license form (number + picture/PDF in the private bucket `licenses`) instead of the ad form. The admin checks it in Admin > Employers (**Check license**: open the file, **Verify this employer** or reject with a reason the employer reads). The database refuses to verify an employer who sent no license.
+- **Approval with days:** **Approve** asks the admin how many days the ad stays live (1 to 365). An ad is never live until approved. When the days end it stops showing; **More days** works on ended ads and puts them back to live.
+- New ads from verified employers are stored as "waiting for approval" at price 0 with the default plan; they can be withdrawn (deleted) while waiting; at most 20 wait at a time.
+- Texts (English and Hindi), employer and admin guides, terms and refund drafts, the Post-a-job page (no prices) updated; the lawyer still has to read the terms and refund pages (`11-owner-checklist.md`).
+- Tests: new database tests (`rls.license`), demo tests, browser tests (`verification.spec.js`); the old payment-journey browser tests were replaced.
+
+## Step 19 - Online payment gateway removed (migrations 0025, 0026)
+- Online payment is not needed, so everything built for it was removed: the Edge Functions, the "Pay online" box, the checkout loader, the extra security-header entries, the hosting setting, their texts and tests. Migration 0025 drops the gateway database functions, the events table and the extra payment columns (it refuses to run if any such record exists). Migration 0026 limits `payments.method` to `manual`, `free_offer` and `complimentary`. `mark_job_paid` stays: the admin's Mark as paid uses it. Payment is UPI + QR + payment proof, checked by the admin. Every mention was removed from the code, tests and docs; only the already-applied migration files 0004, 0018, 0023 and 0025 keep old names, because applied migrations are never edited.
+
+## Step 18 - Admin QR picture and payment proof (migration 0024)
+- **QR picture:** the admin can upload, replace and remove the shop's own payment QR in Admin > Settings; employers see it on the payment screen (otherwise the generated UPI QR code). New public bucket `shop-assets` (admin writes only) and setting `qr_path`.
+- **Payment proof:** after paying, the employer sends the UTR reference number and a screenshot (private bucket `payment-proofs`, table `payment_proofs`). The Ads tab shows **Proof sent**; the **Mark as paid** pop-up shows the reference, the date and the screenshot, with **Money not found** (reject with a reason the employer reads). A reference can back only one live proof and is refused if a payment already uses it. Marking the ad paid accepts the proof. The website cannot see the money itself: the admin still checks the bank.
+- 11 database tests, 3 browser tests; the guard lists of callable functions and RLS tables were updated on purpose.
+
+## Step 17 - QR code on the manual payment screen
+- The payment screen now shows a QR code of the UPI link (amount and ad code filled in) so an employer on a computer can pay with their phone. Made in the browser with the small `qrcode-generator` library (reason in `09-decisions.md`, no change to the security headers). English and Hindi text; unit tests and a browser test that the picture really loads. The admin already finds an ad by its code (AD-XXXXXXXX) in Admin > Ads and marks it paid with the UPI reference.
+
+## Step 16 - One place that marks an ad paid (migration 0023) + fixes
+- New database function `mark_job_paid` (migration 0023): the admin's Mark as paid goes through it. Tests added.
+- **Fixes:** `.gitattributes` keeps line endings as LF (on Windows the schema test failed because Git changed them); `test:lighthouse` honours `CHROME_PATH` (Playwright's Chromium cannot be started by Lighthouse on some Windows setups).
+
 ## Step 15 - Guides (admin only) and the admin helper (migration 0022)
 - New guides in `docs/`: `16-employer-guide.md`, `17-job-seeker-guide.md` (English and Hindi), `18-app-features.md`; `10-admin-guide.md` got "First day as admin", "Making someone an admin" and "Updating the guides".
 - **Guides are for admins only:** they are saved in a new table `guides` that only admins can read (migration 0022), shown in **Admin > Guides** with a Copy button, and published from `docs/` with `npm run guides:publish`. They are not in the website files (a file there could be downloaded by anyone who knows its address). 4 database tests and a browser test check that visitors and employers cannot read them.

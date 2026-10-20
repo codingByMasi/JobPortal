@@ -30,8 +30,8 @@ export async function deleteJob(job) {
   await removeFile(job.thumbPath);
 }
 
-export async function updateProfile(id, { companyName, phone, raNumber }) {
-  const fields = { company_name: companyName.trim(), phone: phone.trim(), ra_number: (raNumber || '').trim() };
+export async function updateProfile(id, { companyName, phone, raNumber, emailNotifications = true }) {
+  const fields = { company_name: companyName.trim(), phone: phone.trim(), ra_number: (raNumber || '').trim(), email_notifications: Boolean(emailNotifications) };
   return toProfile(ok(await supabase.from('profiles').update(fields).eq('id', id).select(PROFILE_COLUMNS).single()));
 }
 
@@ -50,6 +50,12 @@ export async function listMyApplications(ownerId) {
       .order('created_at', { ascending: false }),
   );
   return rows.map(toApplication);
+}
+
+/** Views and applications (numbers only) for each of my ads: { [adId]: { views, applications } }. */
+export async function listMyAdStats() {
+  const rows = ok(await supabase.rpc('my_ad_stats'));
+  return Object.fromEntries(rows.map((r) => [r.job_id, { views: Number(r.views), applications: Number(r.applications) }]));
 }
 
 export async function createChangeRequest({ jobId, message }) {

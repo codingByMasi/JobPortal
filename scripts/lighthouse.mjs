@@ -24,7 +24,8 @@ if (!(await up())) {
   process.exit(2);
 }
 
-const chrome = spawnSync('node', ['-e', "console.log(require('@playwright/test').chromium.executablePath())"], { encoding: 'utf8' }).stdout.trim();
+// Use CHROME_PATH when set (e.g. Edge or Chrome on Windows, where Playwright's Chromium cannot be launched by Lighthouse); otherwise Playwright's Chromium.
+const chrome = process.env.CHROME_PATH || spawnSync('node', ['-e', "console.log(require('@playwright/test').chromium.executablePath())"], { encoding: 'utf8' }).stdout.trim();
 let worst = 100;
 for (const [name, path] of pages) {
   const out = `test-results/lighthouse/${name}.json`;

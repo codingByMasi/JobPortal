@@ -12,21 +12,33 @@ export function effectiveStatus(job, now = Date.now()) {
 /** True when visitors may see the ad. */
 export const isPubliclyVisible = (job, now = Date.now()) => job.status === 'live' && job.expiresAt != null && job.expiresAt > now;
 
-/** Employers can edit an ad while it waits for payment, or after it was rejected (then they send it for review again). */
-export const canEditAsRecruiter = (job) => job.status === 'pending_payment' || job.status === 'rejected';
+/** Employers can edit an ad that waits for approval, and fix an ad the admin rejected (then they send it for review again). Ads from before migration 0028 may still wait for payment. */
+export const canEditAsRecruiter = (job) => ['pending_payment', 'paid_pending_review', 'rejected'].includes(job.status);
 
-/** Employers pay only while the ad waits for payment. */
-export const canPay = (job) => job.status === 'pending_payment';
-
-/** Employers can delete an ad only when nothing is running: unpaid, rejected or ended. Paid ads are hidden by us, not deleted. */
+/** Employers can withdraw (delete) an ad only when it is not running: waiting for approval, rejected or ended. Live ads are hidden by us, not deleted. */
 export const canDelete = (job, now = Date.now()) =>
-  ['draft', 'pending_payment', 'rejected'].includes(job.status) || effectiveStatus(job, now) === 'expired';
+  ['draft', 'pending_payment', 'paid_pending_review', 'rejected'].includes(job.status) || effectiveStatus(job, now) === 'expired';
 
-/** Once an ad is past "waiting for payment" employers cannot edit it, but they can ask us to change it. */
-export const canRequestChange = (job) => job.status !== 'pending_payment' && job.status !== 'draft';
+/** Once an ad is approved employers cannot edit it, but they can ask us to change it (while it waits or after a rejection they edit it themselves). */
+export const canRequestChange = (job) => !['pending_payment', 'draft', 'paid_pending_review'].includes(job.status);
 
 /** Employers can renew an ad that has ended. */
 export const canRenew = (job, now = Date.now()) => effectiveStatus(job, now) === 'expired';
+
+/** The admin's "ending soon" window and "ended recently" window, in days. */
+export const ENDING_SOON_DAYS = 3;
+export const ENDED_RECENTLY_DAYS = 30;
+
+/** A live ad that has not ended yet but ends within `days` days. */
+export const endsSoon = (job, now = Date.now(), days = ENDING_SOON_DAYS) =>
+  job.status === 'live' && job.expiresAt != null && job.expiresAt > now && job.expiresAt <= now + days * DAY;
+
+/** An ad whose days are over and that ended within the last `days` days (these are the ones worth extending). */
+export const endedRecently = (job, now = Date.now(), days = ENDED_RECENTLY_DAYS) =>
+  effectiveStatus(job, now) === 'expired' && job.expiresAt != null && job.expiresAt > now - days * DAY;
+
+/** Whole days left until the ad ends (at least 1 while it is still live). */
+export const daysLeft = (job, now = Date.now()) => Math.max(1, Math.ceil((job.expiresAt - now) / DAY));
 
 /** When approving: live from now for the package's days. */
 export function approvalDates(now, days) {
@@ -56,6 +68,7 @@ export function adminExtraActions(job, now = Date.now()) {
   if (s === 'pending_payment') return ['freeAd'];
   if (s === 'live') return ['extend', job.featured ? 'unfeature' : 'feature'];
   if (s === 'hidden') return ['extend'];
+  if (s === 'expired') return ['extend']; // an ended ad can be extended and goes live again
   return [];
 }
 

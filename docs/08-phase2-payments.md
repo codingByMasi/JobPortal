@@ -1,29 +1,19 @@
-# 08 - Phase 2: online payments (Razorpay) - plan only, nothing built yet
+# 08 - Payments: employers do not pay (decision of the owner)
 
-## Why it is easy to add
-- All payment code is in `src/features/payments` (the screen) and `supabase/functions` (server code, not created yet). Nothing else in the app knows how payment works.
-- The only entry point is `startPayment(job, navigate)` in `features/payments/payments.js`. Today it goes to the "Payment instructions" screen.
-- The `payments` table already has `method` (`manual`/`razorpay`/`free_offer`/`complimentary`) and `status` (`created`/`paid`/`refunded`), and since 0018 every payment carries the price snapshot (list price, discount, final price, offer, final days). `startPayment()` and the payment screen read the amount from the saved snapshot, never from the plan.
-- A free total (a 100% offer) is already marked paid inside `create_ad_order`; the Razorpay flow must skip the checkout when the final price is 0.
-- "Paid" is decided in one database function. Today `admin_mark_paid`; in Phase 2 the shared part becomes `mark_job_paid(job, amount, method, reference)` which both the admin button and the webhook call, so there is one place that makes an ad "paid".
+Employers do not pay to post ads, and the site has no payment gateway and no payment screens for employers.
 
-## What to build (in order)
-1. **Razorpay account** in test mode. Keep the key secret and the webhook secret in Supabase **Edge Function secrets** only.
-2. **A new migration (the next free number; 0014 is the last one used):** add `razorpay_order_id` and `razorpay_payment_id` (unique) to `payments`; add `mark_job_paid(...)` and make `admin_mark_paid` call it. Already in place from migration 0012 and useful for Razorpay: the price and days saved with the ad (`price_paise_at_order`, `days_at_order`), the payment `reference` (unique), one paid payment per ad, and `admin_refund_payment`. Still to add: a `failed` payment status, a table of webhook event ids (so one event is never processed twice), a reconciliation view (Razorpay report against `payments`), and refund handling from the webhook.
-3. **Edge Function `create-razorpay-order`:** checks the caller is the ad's owner and the ad is `pending_payment`; reads the price **from the database, never from the browser**: since migration 0018 call `create_ad_order(job, package, coupon)` (or `quote_price_for(employer, package, coupon)` from the function with the service role) so offers, coupons and bonus days work exactly as in Phase 1; the order amount is the saved `final_price_paise`; creates the Razorpay order; stores a `created` payment; returns the order id.
-4. **Edge Function `razorpay-webhook`:** verifies Razorpay's signature (HMAC-SHA256 with the webhook secret) before doing anything; is idempotent (same payment id twice does nothing); calls `mark_job_paid`; handles refunds.
-5. **Frontend:** replace the body of `startPayment()` to call `create-razorpay-order` and open Razorpay Checkout; show "Payment received, waiting for approval" when done; keep the manual instructions as a fallback.
-6. **CSP:** add Razorpay's script and frame addresses in `scripts/headers.mjs` on purpose.
-7. **Test mode end to end**, then live mode. Add the hand test to `07-testing.md`.
+How it works now:
+1. An employer signs up and sends their **license** (number + picture or PDF).
+2. The admin checks the license and **verifies** the employer (or rejects it with a reason). An employer cannot be verified without a license.
+3. A verified employer **posts ads for free**. Each ad waits for the admin, who **approves it and chooses the days** it stays live.
+4. When the days end the ad is no longer shown. The admin can **add days** and the ad goes live again.
 
-## Ask Razorpay first
-Razorpay needs real Terms, Refund/Cancellation, Privacy and Contact pages to activate an account, and may treat overseas-job advertising as a restricted category. Ask their support BEFORE building. Keep the UPI link with the ad code (`Pay.jsx`) as the fallback.
+See `docs/10-admin-guide.md` and `docs/16-employer-guide.md`.
 
-## Decisions to make before building
-- Auto-approve ads after online payment, or keep admin approval? (Assumed: keep admin approval.)
-- Refund rules and who clicks refund. GST invoices or receipts for fees.
-- Failed or abandoned payments: how long an ad stays `pending_payment`.
+## What is still in the code from the paid days
+- The admin-only tools for money: **Payments**, **Packages**, **Offers**, **Mark as paid**, **Free ad**, **Refund**, and the database functions behind them (`admin_mark_paid`, `mark_job_paid`, `create_ad_order`, offers and plans). They work on ads made before posting became free and keep the records. Nothing in the employer's screens uses them. They can be removed later in a clean-up if the owner confirms they are never needed.
+- The QR picture, the payment proof and the Razorpay code were removed (migrations 0025 and 0030). The admin's payment tools were kept on purpose: Payments, Packages, Offers, mark paid, free ad and refund.
+- The status name `paid_pending_review` is the stored name of "waiting for approval" (renaming it would touch live data and many rules).
 
-## Do not
-- Put the Razorpay secret, the service-role key or price decisions in the browser.
-- Trust the browser saying "payment done". Only the verified webhook can mark paid.
+## If a payment gateway is ever wanted
+Start from a clean plan: a gateway needs KYC and a website review, and overseas-job advertising may be a restricted category (ask first). The server must be the only thing that marks an ad paid, after checking the gateway's signed message; never trust the browser.

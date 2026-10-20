@@ -3,12 +3,6 @@
 // PLACEHOLDER: your WhatsApp number with country code, digits only (example: 919876543210)
 export const WHATSAPP_NUMBER = '919999999999';
 
-// PLACEHOLDER: the UPI ID where employers pay (example: jobsabroad@upi)
-export const UPI_ID = 'yourname@upi';
-
-// PLACEHOLDER: the name that belongs to that UPI ID (shown to employers so they can check who they pay)
-export const UPI_NAME = 'Your Business Name';
-
 // PLACEHOLDER: contact email shown on the Contact page
 export const CONTACT_EMAIL = 'help@example.com';
 

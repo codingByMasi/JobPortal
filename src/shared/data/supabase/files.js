@@ -45,6 +45,29 @@ async function listAllFiles() {
   return files;
 }
 
+/**
+ * Admin: removes the files of deleted or replaced ads that wait in the queue (migration 0032), through the Storage API, then empties those queue rows.
+ * A queued path that an ad uses again is NOT removed (only dropped from the queue). Returns how many files were removed.
+ */
+export async function adminCleanQueuedFiles() {
+  const rows = ok(await supabase.from('file_cleanup_queue').select('path').limit(200));
+  const queued = rows.map((r) => r.path);
+  if (!queued.length) return 0;
+  const [byFile, byThumb] = await Promise.all([
+    supabase.from('jobs').select('file_path').in('file_path', queued),
+    supabase.from('jobs').select('thumb_path').in('thumb_path', queued),
+  ]);
+  const used = new Set([...ok(byFile).map((r) => r.file_path), ...ok(byThumb).map((r) => r.thumb_path)]);
+  const toRemove = queued.filter((p) => !used.has(p));
+  let removed = 0;
+  for (let i = 0; i < toRemove.length; i += 100) {
+    const done = ok(await supabase.storage.from(BUCKET).remove(toRemove.slice(i, i + 100)));
+    removed += done.length;
+  }
+  ok(await supabase.from('file_cleanup_queue').delete().in('path', queued));
+  return removed;
+}
+
 /** Files that no ad uses and that are at least a day old (left behind when an ad was deleted). */
 export async function adminListUnusedFiles() {
   const [files, jobs] = [await listAllFiles(), ok(await supabase.from('jobs').select('file_path, thumb_path'))];

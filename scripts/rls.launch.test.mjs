@@ -35,6 +35,7 @@ beforeAll(async () => {
   e2 = await addUser(db, 'e2@x.co', { company_name: 'Employer Two', phone: '9876500002' });
   await db.query("update public.profiles set role = 'admin' where id = $1", [admin]);
   pkg30 = (await rowsOf(db, "select id from public.packages where name = '30 Days'"))[0].id;
+  await db.query('update public.profiles set verified = true where id = any($1)', [[e1, e2]]); // only verified employers can start an ad (migration 0027)
   live1 = await seedJob(e1, 'Live ad', 'live');
 }, 120000);
 

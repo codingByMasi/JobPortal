@@ -10,7 +10,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 });
 
 export const BUCKET = 'job-files';
-export const PROFILE_COLUMNS = 'id, email, role, company_name, phone, ra_number, verified, blocked, created_at';
+export const PROFILE_COLUMNS = 'id, email, role, company_name, phone, ra_number, verified, blocked, email_notifications, created_at';
 export const JOB_FULL = `*, package:packages(*), recruiter:profiles(${PROFILE_COLUMNS})`;
 
 const AUTH_CODES = {

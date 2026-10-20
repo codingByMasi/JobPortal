@@ -8,5 +8,6 @@ import * as publicApi from './public';
 import * as recruiter from './recruiter';
 import * as settings from './settings';
 import * as trust from './trust';
+import * as verification from './verification';
 
-export const supabaseApi = { ...auth, ...publicApi, ...files, ...recruiter, ...admin, ...offers, ...trust, ...settings, ...guides };
+export const supabaseApi = { ...auth, ...publicApi, ...files, ...recruiter, ...admin, ...offers, ...trust, ...settings, ...guides, ...verification };

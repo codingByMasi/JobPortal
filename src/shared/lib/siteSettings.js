@@ -1,11 +1,9 @@
-// The settings an admin can change in the app (WhatsApp, UPI, emails, company, site address): their names, checks and "is it filled in?" rule.
+// The settings an admin can change in the app (WhatsApp, emails, company, site address): their names, checks and "is it filled in?" rule.
 import * as config from '../../config';
 
 /** Settings key in the database -> name used in the code. */
 export const SETTING_KEYS = {
   whatsapp_number: 'whatsappNumber',
-  upi_id: 'upiId',
-  upi_name: 'upiName',
   contact_email: 'contactEmail',
   grievance_name: 'grievanceName',
   grievance_email: 'grievanceEmail',
@@ -16,8 +14,6 @@ export const SETTING_KEYS = {
 /** The example values of src/config.js. A setting that still holds one of these (or nothing) counts as NOT filled in. */
 const EXAMPLES = {
   whatsappNumber: config.WHATSAPP_NUMBER,
-  upiId: config.UPI_ID,
-  upiName: config.UPI_NAME,
   contactEmail: config.CONTACT_EMAIL,
   grievanceName: config.GRIEVANCE_NAME,
   grievanceEmail: config.GRIEVANCE_EMAIL,
@@ -47,10 +43,8 @@ export function isFilledIn(name, value, demo = false) {
 
 const PATTERNS = {
   whatsappNumber: (v) => /^[0-9]{10,15}$/.test(v),
-  upiId: (v) => /^[A-Za-z0-9._-]{2,50}@[A-Za-z0-9]{2,30}$/.test(v),
   contactEmail: (v) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v) && v.length <= 120,
   grievanceEmail: (v) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v) && v.length <= 120,
-  upiName: (v) => v.length >= 2 && v.length <= 80,
   grievanceName: (v) => v.length >= 2 && v.length <= 80,
   companyName: (v) => v.length >= 2 && v.length <= 80,
   siteUrl: (v) => /^https:\/\/[A-Za-z0-9.-]+\.[A-Za-z]{2,}(:[0-9]{2,5})?$/.test(v),
@@ -72,7 +66,7 @@ export function badSettings(values) {
 }
 
 /** Settings that must be filled in before the site takes payments / works fully, in the order they are shown to the admin. */
-export const REQUIRED_SETTINGS = ['whatsappNumber', 'upiId', 'upiName', 'contactEmail', 'grievanceName', 'grievanceEmail', 'companyName', 'siteUrl'];
+export const REQUIRED_SETTINGS = ['whatsappNumber', 'contactEmail', 'grievanceName', 'grievanceEmail', 'companyName', 'siteUrl'];
 
 /** Names of the required settings that are still not filled in. */
 export const missingSettings = (settings, demo = false) => REQUIRED_SETTINGS.filter((name) => !isFilledIn(name, settings[name], demo));

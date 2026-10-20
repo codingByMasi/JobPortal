@@ -9,8 +9,9 @@ import { useLang } from '../../shared/i18n/LangContext';
 /**
  * `value` is { fileUrl, fileType, name?, size?, blob? } or null. `onChange` gets the same shape.
  * A new choice carries `blob` (the file to upload); an existing file only has `fileUrl`.
+ * `label` / `help` change the texts (the QR picture and the payment proof use this too); `imagesOnly` refuses PDFs.
  */
-export default function FileField({ value, onChange, error }) {
+export default function FileField({ value, onChange, error, label, help, imagesOnly = false }) {
   const { t } = useLang();
   const id = useId();
   const [busy, setBusy] = useState(false);
@@ -21,6 +22,10 @@ export default function FileField({ value, onChange, error }) {
     e.target.value = ''; // lets the same file be chosen again
     if (!file) return;
     setProblem('');
+    if (imagesOnly && (file.type === 'application/pdf' || /.pdf$/i.test(file.name))) {
+      setProblem(friendlyMessage({ code: 'FILE_TYPE' }, t));
+      return;
+    }
     setBusy(true);
     try {
       const { file: ready, fileType, thumb } = await prepareFile(file);
@@ -36,8 +41,8 @@ export default function FileField({ value, onChange, error }) {
   const preview = value?.previewUrl || value?.fileUrl;
   return (
     <div className={`field${error ? ' has-error' : ''}`}>
-      <span className="field-label" id={`${id}-label`}>{t.fFile}</span>
-      <p className="field-help">{t.fFileHelp}</p>
+      <span className="field-label" id={`${id}-label`}>{label || t.fFile}</span>
+      <p className="field-help">{help || t.fFileHelp}</p>
       {preview && (
         <div className="file-preview">
           {value.fileType === 'pdf' ? (
@@ -48,7 +53,7 @@ export default function FileField({ value, onChange, error }) {
           {value.name && <span className="file-name">{t.fileReady(value.name, Math.round((value.size || 0) / 1024))}</span>}
         </div>
       )}
-      <input id={id} className="sr-only" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={pick} aria-labelledby={`${id}-label`} />
+      <input id={id} className="sr-only" type="file" accept={imagesOnly ? 'image/jpeg,image/png,image/webp' : 'image/jpeg,image/png,image/webp,application/pdf'} onChange={pick} aria-labelledby={`${id}-label`} />
       <label htmlFor={id} className="btn btn-outline file-btn">
         <Icon name="upload" size={24} />
         <span>{busy ? t.fileWorking : preview ? t.fileChange : t.fileChoose}</span>

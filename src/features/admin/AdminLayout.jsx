@@ -1,7 +1,9 @@
 // Admin area frame: title, tabs, and the chosen tab below.
+import { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import Button from '../../shared/ui/Button';
 import SubNav from '../../shared/ui/SubNav';
+import { api } from '../../shared/data';
 import { useAuth } from '../auth/AuthContext';
 import { useLang } from '../../shared/i18n/LangContext';
 import { usePageMeta } from '../../shared/lib/usePageMeta';
@@ -11,6 +13,11 @@ export default function AdminLayout() {
   const { t } = useLang();
   const { signOut } = useAuth();
   usePageMeta(t.adminTitle, undefined, { noindex: true });
+
+  // pictures of deleted ads are queued by the database; remove them from storage now (quietly: a failure only means "try again next time")
+  useEffect(() => {
+    api.adminCleanQueuedFiles().catch(() => {});
+  }, []);
 
   const tabs = [
     { to: '/admin', icon: 'grid', label: t.tabDashboard, end: true },

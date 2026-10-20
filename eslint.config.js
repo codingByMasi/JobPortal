@@ -19,7 +19,7 @@ export default [
     },
   },
   {
-    files: ['scripts/**/*.{js,mjs}', 'e2e/**/*.js', '*.js', '*.mjs'],
+    files: ['scripts/**/*.{js,mjs}', 'supabase/functions/**/*.js', 'e2e/**/*.js', '*.js', '*.mjs'],
     languageOptions: { ecmaVersion: 'latest', sourceType: 'module', globals: { ...globals.node, ...globals.browser } },
     rules: { 'no-unused-vars': ['error', { argsIgnorePattern: '^_', caughtErrors: 'none' }] },
   },

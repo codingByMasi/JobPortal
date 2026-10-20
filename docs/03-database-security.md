@@ -11,7 +11,7 @@ Source of truth: the numbered files in `supabase/migrations` (0001 to 0022). Put
 | `offer_redemptions` | offer, employer, ad, discount (paise), bonus days | written only by `create_ad_order`; admin reads all, an employer reads their own; deleting an unpaid ad gives the use back (0018) |
 | `audit_log` | admin, action (insert/update/delete), table, record, old value, new value | filled by triggers on `packages` and `offers`; admin reads; nobody writes through the website (0018) |
 | `jobs` | the ads (**also the job facts (`salary_min`, `salary_max`, `currency`, `experience_level`, `vacancies`, `last_date`, `visa_type`: all optional, with value checks) and the price saved at order: list price, discount, final price, offer, final days, and an admin "featured" override**): owner, package, title, company, country, city, category, details text, file link/path/type, thumbnail link/path, WhatsApp, dates, `status`, `reject_reason`, **price and days saved at order time** | country and category limited by CHECKs; WhatsApp is 10-15 digits |
-| `payments` | amount (paise), method (`manual`/`razorpay`/`free_offer`/`complimentary`), status (`created`/`paid`/`refunded`), note, **reference (UTR)**, **the same price snapshot as the ad** | only admin functions write; reference is unique; one paid payment per ad; kept even if the employer is removed |
+| `payments` | amount (paise), method (`manual`/`free_offer`/`complimentary`), status (`created`/`paid`/`refunded`), note, **reference (UTR)**, **the same price snapshot as the ad** | only admin functions write; reference is unique; one paid payment per ad; kept even if the employer is removed |
 | `applications` | candidate name, phone, city, message | no login to insert; one per ad per phone, at most 1000 per ad; deleted after 180 days |
 | `change_requests` | an employer asks us to change a paid ad (message, `open`/`done`/`declined`) | migration 0011 |
 | `admin_log` | who did what (approve, reject, hide, show, mark paid, refund) | written only by the admin functions; read only by admins |
@@ -61,6 +61,29 @@ Source of truth: the numbered files in `supabase/migrations` (0001 to 0022). Put
 - **`create_ad_order(job, package, coupon)`** (own waiting ad only): takes a lock so offer limits hold when two orders come together; gives back an earlier use for the same ad; quotes; saves the snapshot on the ad (also in `price_paise_at_order` / `days_at_order`, so older code keeps working); saves or updates ONE waiting (`created`) payment; writes the redemption; if the total is 0 the payment becomes `paid` with method `free_offer` and the ad goes to `paid_pending_review`. A transaction-only switch (`app.order_in_progress`) lets this function change the locked columns; employers cannot set it for anything else because only this function turns it on.
 - **Old ads keep their price:** the snapshot is saved at order time; later changes to a plan or an offer never touch it. Approve uses the saved days (bonus days included); Mark as paid fills the waiting payment (no second row) and uses the saved final price.
 - **Admin only:** `admin_extend_job(job, days, reason)` (live or hidden ads, reason needed), `admin_set_featured(job, on/off)`, `admin_give_free_ad(job, note)` (payment of 0, method `complimentary`). All write to `admin_log`.
+
+## Mark as paid (migrations 0023 to 0026)
+- `mark_job_paid` is the one place an ad becomes paid. It is closed to anon and logged-in users; only `admin_mark_paid` calls it. Migration 0025 removed the online-payment functions, table and columns that 0023 had added; migration 0026 limits `payments.method` to `manual`, `free_offer` and `complimentary`.
+
+## QR picture and payment proof (migration 0024, removed by 0030)
+- Migration 0030 dropped the payment proof table and its two functions, the QR setting, and the two storage buckets `shop-assets` and `payment-proofs` (if Supabase refuses to delete the empty buckets from SQL, delete them in Dashboard > Storage). It stops if any payment proof exists. `admin_mark_paid` was rewritten without the proof step. Test: `scripts/rls.noqr.test.mjs`.
+- **Kept on purpose:** the admin's payment tools (Payments, Packages, Offers, mark paid, free ad, refund), the database functions behind them, and the UPI settings keys in `site_settings` (the database still accepts them; the site no longer shows or requires them).
+
+## License verification and free posting (migrations 0027 and 0028)
+- Only a **verified** employer (or an admin) can start a new ad (trigger `jobs_require_verified`). A new ad from an employer is stored as "waiting for approval" at price 0 with the first active plan (triggers `jobs_default_package` and `jobs_submit_for_review`, which run after the older guard that decides the owner and file links); the employer cannot choose the status, plan or price. At most 20 ads can wait for approval per employer. An employer may delete (withdraw) an ad that waits for approval.
+- Table `verification_requests` (one per employer; RLS: the owner or an admin reads; nobody writes directly). `submit_verification` checks: logged in, not blocked, not already verified, a license number of 3 to 40 characters, and a file that exists in the employer's own folder of the private bucket `licenses` (3 MB, pictures and PDF). `admin_reject_verification` needs a reason. The trigger `profiles_verified_needs_license` stops an admin from verifying an employer with no submitted or approved license, and marks the request approved when the admin verifies.
+- `admin_approve_job(job, days)`: the admin chooses 1 to 365 days (default: the ad's saved days, else 30). `admin_extend_job` now also works on **ended** ads and puts them back to live; a rejected or never-approved ad cannot be extended.
+- Tests: `scripts/rls.license.test.mjs` (and `rls.verified.test.mjs`), demo copies in `demo.license.test.js`, browser tests in `e2e/verification.spec.js` and `e2e/admin.spec.js`.
+
+## Verified agencies list (migration 0029)
+- The view `verified_agencies` is readable by visitors. It shows only verified, unblocked, non-admin employers that have a company name, and only three columns: company name, registration number, and the count of ads that are live right now. It never holds a phone, email, id or license. A person who loses the tag, or is blocked, leaves the list at once.
+- Tests: `scripts/rls.agencies.test.mjs` (and the demo copy in `demo.agencies.test.js`).
+
+## Later additions (migrations 0031 to 0034)
+- **0031** an employer may update their own ad while its status is waiting for payment, waiting for approval or rejected (policy `jobs recruiter update own waiting`); the guard trigger still locks status, dates, owner, plan, price and verification. Test: `rls.waiting.test.mjs`.
+- **0032** `file_cleanup_queue` (paths of deleted or replaced ad files; only an admin reads or empties it; nobody writes it except the triggers). Test: `rls.filequeue.test.mjs`.
+- **0033** `ad_views` (job, day, count; only an admin reads it; no visitor data) and two functions: `record_ad_view` (anyone; only counts an ad that is live now) and `my_ad_stats` (an employer's own views and applications, numbers only). Test: `rls.views.test.mjs`.
+- **0034** `notifications` queue, `profiles.email_notifications`, `jobs.ending_reminder_at`; `queue_notification`, `claim_notifications`, `mark_notification_sent/failed`, `queue_ending_reminders`, `purge_old_notifications` are server-only (nobody logged in can call them; only an admin reads the table). Tests: `rls.notifications.test.mjs`.
 
 ## Functions
 - `public_counts()` (visitors may call it): three numbers for the home page: live ads, verified employers, applications. Nothing else (0020).

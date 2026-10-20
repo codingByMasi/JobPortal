@@ -7,7 +7,7 @@
 # The two values below are PUBLIC on purpose: the project address and the public "anon" key (every table is protected by Row Level Security).
 # Never put the private (secret) key here. Optional: VITE_TURNSTILE_SITE_KEY (public site key of Cloudflare Turnstile).
 #
-# There are no runtime bindings (KV, D1, R2) and no secrets in this project. Anything secret (service-role key, Razorpay secret) lives
+# There are no runtime bindings (KV, D1, R2) and no secrets in this project. Anything secret (the service-role key) lives
 # only in Supabase (Edge Function secrets), never here.
 
 name = "jobs-abroad"

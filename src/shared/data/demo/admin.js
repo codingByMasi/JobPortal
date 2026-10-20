@@ -1,5 +1,5 @@
 // Demo: everything only an admin can do. Every function checks the caller is an admin, like the database does.
-import { approvalDates } from '../../lib/jobStatus';
+import { approvalDates, endedRecently, endsSoon } from '../../lib/jobStatus';
 import { toApplication, toChangeRequest, toErrorLog, toJobRow, toPayment, toProfile } from '../mappers';
 import { asJob, fail, findJob, isLive, logAdmin, needAdmin, newest, pkgOf, profileOf, requestRows, save, state, uid, wait } from './store';
 
@@ -37,13 +37,15 @@ export async function adminCreateJob(input, days) {
   return asJob(row);
 }
 
-export async function adminApprove(id) {
+export async function adminApprove(id, days = null) {
   await wait();
   needAdmin();
   const row = findJob(id);
   if (!['paid_pending_review', 'rejected'].includes(row.status)) throw fail('NOT_NOW', 'This ad cannot be approved now.');
-  const { startsAt, expiresAt } = approvalDates(Date.now(), row.duration_days_final || row.days_at_order || pkgOf(row.package_id)?.duration_days || 30);
-  logAdmin('approve_job', row.id);
+  if (days !== null && !(Number.isInteger(days) && days >= 1 && days <= 365)) throw fail('NOT_ALLOWED', 'Days must be between 1 and 365.');
+  const chosen = days ?? (row.duration_days_final || row.days_at_order || pkgOf(row.package_id)?.duration_days || 30);
+  const { startsAt, expiresAt } = approvalDates(Date.now(), chosen);
+  logAdmin('approve_job', row.id, `${chosen} days`);
   Object.assign(row, { status: 'live', starts_at: new Date(startsAt).toISOString(), expires_at: new Date(expiresAt).toISOString(), reject_reason: null });
   save();
   return asJob(row);
@@ -94,6 +96,7 @@ export async function adminMarkPaid(id, { amountPaise, note = '', reference = ''
     }));
   }
   logAdmin('mark_paid', row.id, `${amount} paise`);
+  (state.db.payment_proofs || []).forEach((x) => { if (x.job_id === row.id && x.status === 'submitted') x.status = 'accepted'; });
   row.status = 'paid_pending_review';
   save();
   return toPayment(pay);
@@ -110,6 +113,12 @@ export async function adminSetRecruiter(id, patch) {
   needAdmin();
   const row = profileOf(id);
   if (!row) throw fail('NOT_FOUND');
+  if (patch.verified && !row.verified) {
+    // like the database (migration 0028): an employer needs a license on file; verifying closes the request as approved
+    const req = (state.db.verification_requests || []).find((x) => x.recruiter_id === id && ['submitted', 'approved'].includes(x.status));
+    if (!req) throw fail('LICENSE_NEEDED', 'license: needed');
+    req.status = 'approved';
+  }
   if (patch.verified !== undefined) row.verified = patch.verified;
   if (patch.blocked !== undefined) {
     if (patch.blocked && !row.blocked) state.db.jobs.forEach((j) => { if (j.recruiter_id === id && j.status === 'live') j.status = 'hidden'; });
@@ -168,6 +177,9 @@ export async function adminCounts() {
     review: state.db.jobs.filter((j) => j.status === 'paid_pending_review').length,
     waitingPayment: state.db.jobs.filter((j) => j.status === 'pending_payment').length,
     requests: requestRows().filter((r) => r.status === 'open').length,
+    endingSoon: state.db.jobs.map(asJob).filter((j) => endsSoon(j, now)).length,
+    ended: state.db.jobs.map(asJob).filter((j) => endedRecently(j, now)).length,
+    licenses: (state.db.verification_requests || []).filter((r) => r.status === 'submitted').length,
     revenuePaise: state.db.payments
       .filter((x) => x.status === 'paid' && Date.parse(x.created_at) >= monthStart)
       .reduce((sum, x) => sum + x.amount_paise, 0),

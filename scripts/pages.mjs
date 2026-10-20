@@ -73,12 +73,14 @@ export function jobPageHtml(html, job, siteUrl) {
 export const STATIC_PAGES = [
   { path: '/jobs', title: 'Jobs | Jobs Abroad', description: 'Latest job ads for plumber, electrician, driver, technician, cook and helper jobs in the Gulf.' },
   { path: '/contact', title: 'Contact us | Jobs Abroad', description: 'WhatsApp or email us for help with job ads.' },
-  { path: '/post-job', title: 'Post a Job | Jobs Abroad', description: 'Employers can post a job ad in 3 easy steps. Making an account is free; you pay when you post an ad.' },
+  { path: '/post-job', title: 'Post a Job | Jobs Abroad', description: 'Verified employers can post job ads for free in 3 easy steps: make an account, send your license, post your ad.' },
+  { path: '/agencies', title: 'Verified agencies | Jobs Abroad', description: 'Employers whose license our team checked: company name, registration number and live ads.' },
+  { path: '/check-agency', title: 'How to check a recruitment agency | Jobs Abroad', description: 'Before you pay or send documents: check the registration number, the government list, the job offer and the signs of a fake offer.' },
   { path: '/privacy', title: 'Privacy | Jobs Abroad', description: 'No login to see jobs. If you apply, your name and phone go to the employer and are deleted after 180 days.' },
   { path: '/terms', title: 'Terms and safety | Jobs Abroad', description: 'Stay safe: never pay before checking the employer.' },
   { path: '/about', title: 'About us | Jobs Abroad', description: 'About Jobs Abroad: a free place to see job ads for work in the Gulf, with checks on every ad.' },
   { path: '/faq', title: 'Questions and answers | Jobs Abroad', description: 'Is it free, how to apply, how to stay safe from fake job offers.' },
-  { path: '/refund-policy', title: 'Refund policy | Jobs Abroad', description: 'Refund policy for employers who buy a job ad. Job seekers never pay.' },
+  { path: '/refund-policy', title: 'Refund policy | Jobs Abroad', description: 'Posting ads is free for verified employers and job seekers never pay, so there is nothing to refund.' },
   { path: '/delete-account', title: 'Delete my account | Jobs Abroad', description: 'Ask us to delete your account and your data.' },
 ];
 

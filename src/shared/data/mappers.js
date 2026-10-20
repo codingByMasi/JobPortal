@@ -49,6 +49,7 @@ export function toProfile(row) {
     raNumber: row.ra_number || '',
     verified: Boolean(row.verified),
     blocked: Boolean(row.blocked),
+    emailNotifications: row.email_notifications !== false,
     createdAt: toTime(row.created_at),
   };
 }
@@ -120,6 +121,38 @@ export function toJobRow(input) {
   if (row.details !== undefined) row.details = String(row.details).trim();
   if (row.whatsapp !== undefined) row.whatsapp = normalizeWhatsapp(row.whatsapp);
   return row;
+}
+
+/** One row of the public list of verified agencies (no contact details). */
+export function toAgency(row) {
+  return { companyName: row.company_name, raNumber: row.ra_number || '', liveAds: Number(row.live_ads) || 0 };
+}
+
+/** The license an employer sent so the admin can verify them. */
+export function toVerification(row) {
+  return {
+    id: row.id,
+    recruiterId: row.recruiter_id,
+    licenseNumber: row.license_number,
+    filePath: row.file_path,
+    status: row.status,
+    rejectReason: row.reject_reason || '',
+    createdAt: Date.parse(row.created_at) || null,
+  };
+}
+
+/** A payment proof the employer sent (UTR number + screenshot) for the admin to check. */
+export function toProof(row) {
+  return {
+    id: row.id,
+    jobId: row.job_id,
+    recruiterId: row.recruiter_id,
+    reference: row.reference,
+    filePath: row.file_path,
+    status: row.status,
+    rejectReason: row.reject_reason || '',
+    createdAt: Date.parse(row.created_at) || null,
+  };
 }
 
 export function toPayment(row) {

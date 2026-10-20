@@ -27,6 +27,11 @@ A free place to see job ads for work in the Gulf (UAE, Saudi Arabia, Qatar, Kuwa
 - **Or use the form**: write your name and phone number (and city and a short message if you like), tick the box that you agree your details go to the employer, and tap **Send my details**. You can apply once per ad with the same phone number.
 Your name and phone number go **only** to that employer. We delete applications after 180 days.
 
+### Check the agency before you trust it
+- Open **How to check an agency** (link at the bottom of every page). It shows how to check the registration number on the government eMigrate website, what a fake offer looks like, and what to do if you already paid.
+- Open **Verified agencies** to see the employers whose license our team checked, with their registration number. Being on the list is a good sign, not a promise: check the number yourself too.
+- Found a good job? Tap **Share this job on WhatsApp** on the ad to send it to a friend or family member.
+
 ### If something is wrong with an ad
 Tap **Report this ad**, choose what is wrong ("They asked me for money", "The company looks fake", "The details are wrong", "Something else"), and send. We check every report. Your report does not go to the employer. You can add your phone number if you want us to call you.
 
@@ -65,6 +70,11 @@ Go to **Delete my account** (link at the bottom of the page), write your email a
 - **WhatsApp पर आवेदन करें**: नियोक्ता से चैट खुलती है, विज्ञापन का कोड पहले से लिखा होता है।
 - **या फ़ॉर्म भरें**: अपना नाम और फ़ोन नंबर लिखिए (चाहें तो शहर और छोटा संदेश भी), यह खाना टिक कीजिए कि आपकी जानकारी नियोक्ता को जाएगी, और **मेरी जानकारी भेजें** दबाइए। एक फ़ोन नंबर से एक विज्ञापन पर एक बार आवेदन हो सकता है।
 आपका नाम और फ़ोन नंबर **सिर्फ़** उसी नियोक्ता को जाता है। हम 180 दिन बाद आवेदन हटा देते हैं।
+
+### एजेंसी पर भरोसा करने से पहले जाँचें
+- **एजेंसी कैसे जाँचें** खोलिए (हर पन्ने के नीचे लिंक है)। इसमें बताया है कि सरकारी eMigrate वेबसाइट पर रजिस्ट्रेशन नंबर कैसे जाँचें, नकली ऑफ़र कैसा दिखता है, और अगर आप पैसे दे चुके हैं तो क्या करें।
+- **वेरिफ़ाइड एजेंसियां** खोलिए: ये वे नियोक्ता हैं जिनका लाइसेंस हमारी टीम ने जाँचा है, रजिस्ट्रेशन नंबर के साथ। सूची में होना अच्छा संकेत है, गारंटी नहीं: नंबर खुद भी जाँचिए।
+- अच्छी नौकरी मिली? विज्ञापन पर **यह नौकरी WhatsApp पर भेजें** दबाकर किसी दोस्त या घरवाले को भेजिए।
 
 ### अगर विज्ञापन में कुछ गड़बड़ है
 **इस विज्ञापन की शिकायत करें** दबाइए, गड़बड़ चुनिए ("उन्होंने मुझसे पैसे माँगे", "कंपनी नकली लगती है", "जानकारी ग़लत है", "कुछ और") और भेजिए। हम हर शिकायत देखते हैं। आपकी शिकायत नियोक्ता को नहीं जाती। चाहें तो अपना फ़ोन नंबर लिखिए, हम आपको फ़ोन करेंगे।

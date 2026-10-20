@@ -1,6 +1,7 @@
 // Demo backend: the rules of migration 0012, so demo mode behaves like the real database.
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEMO_LOGINS } from './seed';
+import { setStatus, unpaid } from '../legacy.testkit';
 
 const DAY = 86400000;
 let api;
@@ -30,7 +31,7 @@ describe('hardening rules in demo mode (same as migration 0012)', () => {
 
   it('a new ad keeps its details text, picture link and small picture (found by the end-to-end run)', async () => {
     await asEmployer();
-    const job = await api.createJob(newAd({ details: 'Salary 1800 AED', fileUrl: 'data:image/png;base64,AAAA', filePath: 'u-rec/a.jpg', fileType: 'image', thumbUrl: 'data:image/png;base64,BBBB', thumbPath: 'u-rec/a-t.jpg' }));
+    const job = await setStatus(await api.createJob(newAd({ details: 'Salary 1800 AED', fileUrl: 'data:image/png;base64,AAAA', filePath: 'u-rec/a.jpg', fileType: 'image', thumbUrl: 'data:image/png;base64,BBBB', thumbPath: 'u-rec/a-t.jpg' })), 'rejected'); // a rejected ad is the one an employer edits
     const mine = (await api.listMyJobs()).find((j) => j.id === job.id);
     expect(mine).toMatchObject({ details: 'Salary 1800 AED', thumbPath: 'u-rec/a-t.jpg' });
     expect(mine.thumbUrl).toContain('data:image');
@@ -39,7 +40,7 @@ describe('hardening rules in demo mode (same as migration 0012)', () => {
   });
   it('the price and days are saved with the ad: a package change later does not alter what is charged', async () => {
     await asEmployer();
-    const job = await api.createJob(newAd({ packageId: 'pkg-7' }));
+    const job = await unpaid(api.createJob(newAd({ packageId: 'pkg-7' }))); // an ad from before migration 0028
     await api.signOut();
     await asAdmin();
     await api.adminSavePackage({ id: 'pkg-7', name: '7 Days', pricePaise: 999900, durationDays: 90, featured: false, active: true });
@@ -72,10 +73,10 @@ describe('hardening rules in demo mode (same as migration 0012)', () => {
     await expect(api.adminRefund('pay-1')).rejects.toMatchObject({ code: 'NOT_NOW' });
   });
 
-  it('employers delete only unpaid, rejected or ended ads', async () => {
+  it('employers withdraw only ads that are not running (waiting, rejected or ended), never live or hidden ones', async () => {
     await asEmployer();
     await expect(api.deleteJob({ id: 'job-1' })).rejects.toMatchObject({ code: 'NOT_ALLOWED' });
-    await expect(api.deleteJob({ id: 'job-6' })).rejects.toMatchObject({ code: 'NOT_ALLOWED' });
+    await expect(api.deleteJob({ id: 'job-6' })).resolves.toBeUndefined(); // waiting for approval: can be withdrawn
     await expect(api.deleteJob({ id: 'job-7' })).resolves.toBeUndefined();
     await expect(api.deleteJob({ id: 'job-8' })).resolves.toBeUndefined();
   });

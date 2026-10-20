@@ -1,4 +1,4 @@
-// /admin/settings - the WhatsApp number, UPI ID, emails, company name and site address, changed in the app (no code change, no new build).
+// /admin/settings - the WhatsApp number, emails, company name and site address, changed in the app (no code change, no new build).
 import { useEffect, useState } from 'react';
 import Button from '../../shared/ui/Button';
 import Field from '../../shared/ui/Field';
@@ -11,8 +11,6 @@ import { useSettings } from '../../shared/settings/SettingsContext';
 
 const FIELDS = {
   whatsappNumber: { inputMode: 'numeric', maxLength: 20 },
-  upiId: { maxLength: 80 },
-  upiName: { maxLength: 80 },
   contactEmail: { type: 'email', maxLength: 120 },
   grievanceName: { maxLength: 80 },
   grievanceEmail: { type: 'email', maxLength: 120 },
@@ -67,12 +65,9 @@ export default function AdminSettings() {
   return (
     <section className="section narrow-form">
       <p className="help">{t.settingsHelp}</p>
-      <Notice tone="info">{t.settingsMoneyWarning}</Notice>
       <form className="form" onSubmit={submit} noValidate>
         <h2>{t.settingsContact}</h2>
         {['whatsappNumber', 'contactEmail', 'grievanceName', 'grievanceEmail'].map(field)}
-        <h2>{t.settingsPayment}</h2>
-        {['upiId', 'upiName'].map(field)}
         <h2>{t.settingsBusiness}</h2>
         {['companyName', 'siteUrl'].map(field)}
         <Notice tone={notice.tone}>{notice.text}</Notice>

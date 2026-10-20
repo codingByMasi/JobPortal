@@ -16,7 +16,6 @@ export default function DashboardLayout() {
   const tabs = [
     { to: '/dashboard', icon: 'list', label: t.tabAds, end: true },
     { to: '/dashboard/new', icon: 'plus', label: t.tabNew },
-    { to: '/dashboard/payments', icon: 'card', label: t.tabPayments },
     { to: '/dashboard/applications', icon: 'users', label: t.tabApplications },
     { to: '/dashboard/profile', icon: 'user', label: t.tabProfile },
   ];

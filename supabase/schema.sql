@@ -2409,6 +2409,1046 @@ create policy "guides admin read" on public.guides for select using (public.is_a
 revoke insert, update, delete, truncate on public.guides from anon, authenticated;
 revoke all on public.guides from anon;
 
+-- 0023: online payments with Razorpay (Phase 2). See docs/08-phase2-payments.md.
+-- The browser can never mark an ad paid. Only the two Edge Functions (service role) call the razorpay_* functions below,
+-- and "paid" is decided in ONE place: mark_job_paid(), also used by the admin button.
+
+-- ===== Razorpay ids on the payment =====
+alter table public.payments add column if not exists razorpay_order_id text;
+alter table public.payments add column if not exists razorpay_payment_id text;
+create unique index if not exists payments_razorpay_order_unique on public.payments (razorpay_order_id) where razorpay_order_id is not null;
+create unique index if not exists payments_razorpay_payment_unique on public.payments (razorpay_payment_id) where razorpay_payment_id is not null;
+
+-- ===== every webhook event, so one event is never processed twice; admins can read it to reconcile =====
+create table if not exists public.razorpay_events (
+  event_id   text primary key,
+  event_type text not null,
+  outcome    text not null,
+  detail     text not null default '',
+  created_at timestamptz not null default now()
+);
+alter table public.razorpay_events enable row level security;
+drop policy if exists "razorpay events admin read" on public.razorpay_events;
+create policy "razorpay events admin read" on public.razorpay_events for select to authenticated using (public.is_admin());
+revoke insert, update, delete on public.razorpay_events from anon, authenticated;
+revoke all on public.razorpay_events from anon;
+
+-- ===== the one place that makes an ad "paid" =====
+create or replace function public.mark_job_paid(p_job uuid, p_amount_paise integer, p_method text, p_reference text, p_note text)
+returns public.payments language plpgsql security definer set search_path = public as $$
+declare
+  v_job     public.jobs;
+  v_payment public.payments;
+  v_ref     text := nullif(btrim(coalesce(p_reference, '')), '');
+begin
+  select * into v_job from public.jobs where id = p_job for update;
+  if not found then raise exception 'Ad not found.' using errcode = 'P0002'; end if;
+  if v_job.status <> 'pending_payment' then
+    raise exception 'This ad is not waiting for payment.' using errcode = '23514';
+  end if;
+  select * into v_payment from public.payments where job_id = v_job.id and status = 'created' order by created_at desc limit 1 for update;
+  if found then
+    update public.payments set status = 'paid', method = p_method, amount_paise = p_amount_paise, note = coalesce(p_note, ''), reference = v_ref
+     where id = v_payment.id returning * into v_payment;
+  else
+    insert into public.payments (job_id, recruiter_id, amount_paise, method, status, note, reference, list_price_paise, discount_paise, final_price_paise, offer_id, duration_days_final)
+    values (v_job.id, v_job.recruiter_id, p_amount_paise, p_method, 'paid', coalesce(p_note, ''), v_ref, v_job.list_price_paise, v_job.discount_paise, v_job.final_price_paise, v_job.offer_id, v_job.duration_days_final)
+    returning * into v_payment;
+  end if;
+  update public.jobs set status = 'paid_pending_review' where id = v_job.id;
+  return v_payment;
+end;
+$$;
+revoke all on function public.mark_job_paid(uuid, integer, text, text, text) from public, anon, authenticated;
+
+-- the admin button now goes through mark_job_paid (same rules and same answer as before)
+create or replace function public.admin_mark_paid(p_job uuid, p_amount_paise integer default null, p_note text default '', p_reference text default null)
+returns public.payments language plpgsql security definer set search_path = public as $$
+declare
+  v_job     public.jobs;
+  v_amount  integer;
+  v_payment public.payments;
+begin
+  if not public.is_admin() then raise exception 'Only admins can do this.' using errcode = '42501'; end if;
+  select * into v_job from public.jobs where id = p_job;
+  if not found then raise exception 'Ad not found.' using errcode = 'P0002'; end if;
+  v_amount := coalesce(p_amount_paise, v_job.final_price_paise, v_job.price_paise_at_order, (select price_paise from public.packages where id = v_job.package_id), 0);
+  v_payment := public.mark_job_paid(p_job, v_amount, 'manual', p_reference, p_note);
+  insert into public.admin_log (admin_id, action, target_id, detail) values (auth.uid(), 'mark_paid', p_job, v_amount || ' paise');
+  return v_payment;
+end;
+$$;
+revoke all on function public.admin_mark_paid(uuid, integer, text, text) from public, anon;
+grant execute on function public.admin_mark_paid(uuid, integer, text, text) to authenticated;
+
+-- ===== for the Edge Function "create-razorpay-order" (service role only) =====
+-- Checks the caller owns the ad and it waits for payment; the amount is the price SAVED with the order, never one from the browser.
+create or replace function public.razorpay_order_info(p_job uuid, p_user uuid)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  v_job public.jobs;
+  v_pay public.payments;
+begin
+  select * into v_job from public.jobs where id = p_job and recruiter_id = p_user for update;
+  if not found then raise exception 'Ad not found.' using errcode = 'P0002'; end if;
+  if v_job.status <> 'pending_payment' then raise exception 'This ad is not waiting for payment.' using errcode = '23514'; end if;
+  select * into v_pay from public.payments where job_id = p_job and status = 'created' order by created_at desc limit 1 for update;
+  if not found then raise exception 'Choose a plan first.' using errcode = '23514'; end if;
+  if coalesce(v_pay.amount_paise, 0) <= 0 then raise exception 'Nothing to pay.' using errcode = '23514'; end if;
+  return jsonb_build_object('payment_id', v_pay.id, 'amount_paise', v_pay.amount_paise, 'job_id', v_job.id);
+end;
+$$;
+
+create or replace function public.razorpay_attach_order(p_payment uuid, p_order_id text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  update public.payments set razorpay_order_id = p_order_id where id = p_payment and status = 'created';
+  if not found then raise exception 'Payment not found.' using errcode = 'P0002'; end if;
+end;
+$$;
+
+-- ===== for the Edge Function "razorpay-webhook" (service role only) =====
+-- Returns what happened: paid, duplicate, unknown_order, amount_mismatch, not_waiting. Never raises for a bad event, so Razorpay does not retry forever.
+create or replace function public.razorpay_capture(p_event_id text, p_order_id text, p_payment_id text, p_amount_paise integer)
+returns text language plpgsql security definer set search_path = public as $$
+declare
+  v_pay     public.payments;
+  v_job     public.jobs;
+  v_outcome text;
+begin
+  insert into public.razorpay_events (event_id, event_type, outcome) values (p_event_id, 'payment.captured', 'working') on conflict (event_id) do nothing;
+  if not found then return 'duplicate'; end if;
+
+  select * into v_pay from public.payments where razorpay_order_id = p_order_id for update;
+  if not found then
+    v_outcome := 'unknown_order';
+  elsif v_pay.status <> 'created' then
+    v_outcome := case when v_pay.razorpay_payment_id = p_payment_id then 'duplicate' else 'not_waiting' end;
+  elsif v_pay.amount_paise is distinct from p_amount_paise then
+    v_outcome := 'amount_mismatch';
+  else
+    select * into v_job from public.jobs where id = v_pay.job_id for update;
+    if not found or v_job.status <> 'pending_payment' then
+      v_outcome := 'not_waiting';
+    else
+      perform public.mark_job_paid(v_job.id, p_amount_paise, 'razorpay', p_payment_id, 'Razorpay');
+      update public.payments set razorpay_payment_id = p_payment_id where job_id = v_job.id and status = 'paid';
+      insert into public.admin_log (admin_id, action, target_id, detail) values (null, 'razorpay_paid', v_job.id, p_amount_paise || ' paise');
+      v_outcome := 'paid';
+    end if;
+  end if;
+  update public.razorpay_events set outcome = v_outcome, detail = left(p_order_id || ' ' || p_payment_id, 200) where event_id = p_event_id;
+  return v_outcome;
+end;
+$$;
+
+create or replace function public.razorpay_refund(p_event_id text, p_payment_id text)
+returns text language plpgsql security definer set search_path = public as $$
+declare
+  v_pay     public.payments;
+  v_outcome text;
+begin
+  insert into public.razorpay_events (event_id, event_type, outcome) values (p_event_id, 'refund.processed', 'working') on conflict (event_id) do nothing;
+  if not found then return 'duplicate'; end if;
+  select * into v_pay from public.payments where razorpay_payment_id = p_payment_id for update;
+  if not found then
+    v_outcome := 'unknown_payment';
+  elsif v_pay.status <> 'paid' then
+    v_outcome := 'not_paid';
+  else
+    update public.payments set status = 'refunded' where id = v_pay.id;
+    insert into public.admin_log (admin_id, action, target_id, detail) values (null, 'razorpay_refund', v_pay.id, 'refunded in Razorpay');
+    v_outcome := 'refunded';
+  end if;
+  update public.razorpay_events set outcome = v_outcome, detail = left(p_payment_id, 200) where event_id = p_event_id;
+  return v_outcome;
+end;
+$$;
+
+revoke all on function public.razorpay_order_info(uuid, uuid) from public, anon, authenticated;
+revoke all on function public.razorpay_attach_order(uuid, text) from public, anon, authenticated;
+revoke all on function public.razorpay_capture(text, text, text, integer) from public, anon, authenticated;
+revoke all on function public.razorpay_refund(text, text) from public, anon, authenticated;
+
+-- 0024: the admin's own payment QR picture, and payment proof from the employer (UTR number + screenshot) for the admin to check.
+-- Nothing here marks an ad paid: the admin still checks the money in the bank / UPI app and uses "Mark paid".
+
+-- ===== two storage buckets =====
+-- shop-assets: PUBLIC to read (the QR picture is shown on the payment screen), only admins write. 1 MB, pictures only.
+-- payment-proofs: PRIVATE; an employer writes in their own folder, reads their own files; admins read all. 3 MB, pictures and PDF.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types) values
+  ('shop-assets', 'shop-assets', true, 1048576, array['image/jpeg', 'image/png', 'image/webp']),
+  ('payment-proofs', 'payment-proofs', false, 3145728, array['image/jpeg', 'image/png', 'image/webp', 'application/pdf'])
+on conflict (id) do update
+  set public = excluded.public, file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "shop-assets admin all" on storage.objects;
+create policy "shop-assets admin all" on storage.objects
+  for all to authenticated using (bucket_id = 'shop-assets' and public.is_admin()) with check (bucket_id = 'shop-assets' and public.is_admin());
+
+drop policy if exists "payment-proofs read own or admin" on storage.objects;
+create policy "payment-proofs read own or admin" on storage.objects
+  for select to authenticated
+  using (bucket_id = 'payment-proofs' and ((storage.foldername(name))[1] = auth.uid()::text or public.is_admin()));
+drop policy if exists "payment-proofs upload own folder" on storage.objects;
+create policy "payment-proofs upload own folder" on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'payment-proofs' and (storage.foldername(name))[1] = auth.uid()::text and not public.is_blocked());
+drop policy if exists "payment-proofs delete own or admin" on storage.objects;
+create policy "payment-proofs delete own or admin" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'payment-proofs' and ((storage.foldername(name))[1] = auth.uid()::text or public.is_admin()));
+
+-- ===== the QR picture is a site setting: qr_path = a file in shop-assets, readable by logged-in people like the UPI ID =====
+alter table public.site_settings drop constraint if exists site_settings_key_check;
+alter table public.site_settings add constraint site_settings_key_check
+  check (key in ('whatsapp_number', 'upi_id', 'upi_name', 'contact_email', 'grievance_name', 'grievance_email', 'company_name', 'site_url', 'qr_path'));
+drop policy if exists "settings payee read" on public.site_settings;
+create policy "settings payee read" on public.site_settings
+  for select to authenticated using (key in ('upi_id', 'upi_name', 'qr_path'));
+
+create or replace function public.admin_save_settings(p_values jsonb)
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  r record;
+  v text;
+  v_old text;
+  v_detail text := '';
+begin
+  if not public.is_admin() then raise exception 'Only admins can do this.' using errcode = '42501'; end if;
+  if jsonb_typeof(p_values) <> 'object' then raise exception 'Bad settings.' using errcode = '22023'; end if;
+  for r in select key, btrim(value) as value from jsonb_each_text(p_values) loop
+    v := r.value;
+    if r.key not in ('whatsapp_number', 'upi_id', 'upi_name', 'contact_email', 'grievance_name', 'grievance_email', 'company_name', 'site_url', 'qr_path') then
+      raise exception 'setting: unknown' using errcode = '22023';
+    end if;
+    if r.key = 'whatsapp_number' then
+      v := regexp_replace(v, '[^0-9]', '', 'g');
+      if char_length(v) = 10 then v := '91' || v; end if;
+    end if;
+    if v <> '' and not (
+         (r.key = 'whatsapp_number' and v ~ '^[0-9]{10,15}$')
+      or (r.key = 'upi_id' and v ~ '^[A-Za-z0-9._-]{2,50}@[A-Za-z0-9]{2,30}$')
+      or (r.key in ('contact_email', 'grievance_email') and v ~ '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$' and char_length(v) <= 120)
+      or (r.key in ('upi_name', 'grievance_name', 'company_name') and char_length(v) between 2 and 80)
+      or (r.key = 'site_url' and v ~ '^https://[A-Za-z0-9.-]+\.[A-Za-z]{2,}(:[0-9]{2,5})?$')
+      -- the QR picture must be a file that really exists in our own bucket
+      or (r.key = 'qr_path' and v ~ '^qr/[0-9a-f-]{36}\.(png|jpg|webp)$'
+          and exists (select 1 from storage.objects o where o.bucket_id = 'shop-assets' and o.name = v))
+    ) then
+      raise exception 'setting: %', r.key using errcode = '22023';
+    end if;
+    select value into v_old from public.site_settings where key = r.key;
+    if v_old is distinct from v and not (v_old is null and v = '') then
+      insert into public.site_settings (key, value, updated_at, updated_by) values (r.key, v, now(), auth.uid())
+        on conflict (key) do update set value = excluded.value, updated_at = now(), updated_by = auth.uid();
+      v_detail := v_detail || r.key || ': ' || coalesce(v_old, '(empty)') || ' -> ' || coalesce(nullif(v, ''), '(empty)') || '; ';
+    end if;
+  end loop;
+  if v_detail <> '' then
+    insert into public.admin_log (admin_id, action, target_id, detail) values (auth.uid(), 'save_settings', null, left(v_detail, 500));
+  end if;
+end;
+$$;
+revoke all on function public.admin_save_settings(jsonb) from public, anon;
+grant execute on function public.admin_save_settings(jsonb) to authenticated;
+
+-- ===== payment proof: one per ad (sending again replaces it) =====
+create table if not exists public.payment_proofs (
+  id            uuid primary key default gen_random_uuid(),
+  job_id        uuid not null unique references public.jobs (id) on delete cascade,
+  recruiter_id  uuid not null references public.profiles (id) on delete cascade,
+  reference     text not null check (reference ~ '^[A-Z0-9]{6,30}$'),
+  file_path     text not null check (char_length(file_path) between 10 and 200),
+  status        text not null default 'submitted' check (status in ('submitted', 'rejected', 'accepted')),
+  reject_reason text check (reject_reason is null or char_length(reject_reason) <= 300),
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+-- one UTR number can back only one live proof (a rejected one frees it)
+create unique index if not exists payment_proofs_reference_unique on public.payment_proofs (reference) where status <> 'rejected';
+alter table public.payment_proofs enable row level security;
+drop policy if exists "proofs read own or admin" on public.payment_proofs;
+create policy "proofs read own or admin" on public.payment_proofs
+  for select to authenticated using (recruiter_id = auth.uid() or public.is_admin());
+revoke insert, update, delete, truncate on public.payment_proofs from anon, authenticated;
+revoke all on public.payment_proofs from anon;
+
+-- The employer sends the UTR number and the screenshot (already uploaded to their own folder).
+create or replace function public.submit_payment_proof(p_job uuid, p_reference text, p_file_path text)
+returns public.payment_proofs language plpgsql security definer set search_path = public as $$
+declare
+  v_job   public.jobs;
+  v_ref   text := upper(regexp_replace(coalesce(p_reference, ''), '[^A-Za-z0-9]', '', 'g'));
+  v_proof public.payment_proofs;
+begin
+  if auth.uid() is null then raise exception 'Please log in.' using errcode = '42501'; end if;
+  if public.is_blocked() then raise exception 'This account is blocked.' using errcode = '42501'; end if;
+  select * into v_job from public.jobs where id = p_job and recruiter_id = auth.uid() for update;
+  if not found then raise exception 'Ad not found.' using errcode = 'P0002'; end if;
+  if v_job.status <> 'pending_payment' then raise exception 'This ad is not waiting for payment.' using errcode = '23514'; end if;
+  if v_ref !~ '^[A-Z0-9]{6,30}$' then raise exception 'proof: reference' using errcode = '22023'; end if;
+  if exists (select 1 from public.payments where upper(reference) = v_ref) then raise exception 'proof: reference_used' using errcode = '23505'; end if;
+  if (storage.foldername(p_file_path))[1] is distinct from auth.uid()::text
+     or not exists (select 1 from storage.objects o where o.bucket_id = 'payment-proofs' and o.name = p_file_path) then
+    raise exception 'proof: file' using errcode = '22023';
+  end if;
+  insert into public.payment_proofs (job_id, recruiter_id, reference, file_path)
+  values (p_job, auth.uid(), v_ref, p_file_path)
+  on conflict (job_id) do update
+    set reference = excluded.reference, file_path = excluded.file_path, status = 'submitted', reject_reason = null, updated_at = now()
+  returning * into v_proof;
+  return v_proof;
+end;
+$$;
+revoke all on function public.submit_payment_proof(uuid, text, text) from public, anon;
+grant execute on function public.submit_payment_proof(uuid, text, text) to authenticated;
+
+-- The admin did not find the money: the proof is rejected with a reason the employer reads.
+create or replace function public.admin_reject_proof(p_proof uuid, p_reason text)
+returns void language plpgsql security definer set search_path = public as $$
+declare v_status text;
+begin
+  if not public.is_admin() then raise exception 'Only admins can do this.' using errcode = '42501'; end if;
+  if char_length(btrim(coalesce(p_reason, ''))) < 1 then raise exception 'Please write a reason.' using errcode = '23514'; end if;
+  select status into v_status from public.payment_proofs where id = p_proof for update;
+  if not found then raise exception 'Proof not found.' using errcode = 'P0002'; end if;
+  if v_status <> 'submitted' then raise exception 'This proof cannot be rejected now.' using errcode = '23514'; end if;
+  update public.payment_proofs set status = 'rejected', reject_reason = left(btrim(p_reason), 300), updated_at = now() where id = p_proof;
+  insert into public.admin_log (admin_id, action, target_id, detail) values (auth.uid(), 'reject_proof', p_proof, left(btrim(p_reason), 300));
+end;
+$$;
+revoke all on function public.admin_reject_proof(uuid, text) from public, anon;
+grant execute on function public.admin_reject_proof(uuid, text) to authenticated;
+
+-- Marking an ad paid closes its open proof as accepted.
+create or replace function public.admin_mark_paid(p_job uuid, p_amount_paise integer default null, p_note text default '', p_reference text default null)
+returns public.payments language plpgsql security definer set search_path = public as $$
+declare
+  v_job     public.jobs;
+  v_amount  integer;
+  v_payment public.payments;
+begin
+  if not public.is_admin() then raise exception 'Only admins can do this.' using errcode = '42501'; end if;
+  select * into v_job from public.jobs where id = p_job;
+  if not found then raise exception 'Ad not found.' using errcode = 'P0002'; end if;
+  v_amount := coalesce(p_amount_paise, v_job.final_price_paise, v_job.price_paise_at_order, (select price_paise from public.packages where id = v_job.package_id), 0);
+  v_payment := public.mark_job_paid(p_job, v_amount, 'manual', p_reference, p_note);
+  update public.payment_proofs set status = 'accepted', updated_at = now() where job_id = p_job and status = 'submitted';
+  insert into public.admin_log (admin_id, action, target_id, detail) values (auth.uid(), 'mark_paid', p_job, v_amount || ' paise');
+  return v_payment;
+end;
+$$;
+revoke all on function public.admin_mark_paid(uuid, integer, text, text) from public, anon;
+grant execute on function public.admin_mark_paid(uuid, integer, text, text) to authenticated;
+
+-- 0025: online payments with Razorpay are not used (decision of the owner). Removes what migration 0023 added for it.
+-- Kept on purpose: mark_job_paid() (the admin's "Mark as paid" still uses it) and the payment method list from migration 0018.
+-- Safety: stops if any Razorpay money record exists, so a real payment record is never dropped.
+do $$
+begin
+  if exists (select 1 from public.razorpay_events)
+     or exists (select 1 from public.payments where razorpay_order_id is not null or razorpay_payment_id is not null or method = 'razorpay') then
+    raise exception 'Razorpay payment records exist: keep them and do not run this migration.';
+  end if;
+end;
+$$;
+
+drop function if exists public.razorpay_order_info(uuid, uuid);
+drop function if exists public.razorpay_attach_order(uuid, text);
+drop function if exists public.razorpay_capture(text, text, text, integer);
+drop function if exists public.razorpay_refund(text, text);
+drop table if exists public.razorpay_events;
+drop index if exists public.payments_razorpay_order_unique;
+drop index if exists public.payments_razorpay_payment_unique;
+alter table public.payments drop column if exists razorpay_order_id;
+alter table public.payments drop column if exists razorpay_payment_id;
+
+-- 0026: payments are recorded as manual (UPI, checked by the admin), a free offer, or a complimentary ad. No other method exists.
+-- Fails (and changes nothing) if any payment row has a different method.
+alter table public.payments drop constraint if exists payments_method_check;
+alter table public.payments add constraint payments_method_check check (method in ('manual', 'free_offer', 'complimentary'));
+
+-- 0027: only a VERIFIED employer (or an admin) can start a new ad. An unverified employer waits until the admin verifies them.
+-- Ads that already exist are not touched: the employer can still pay for, edit and renew what they started before.
+create or replace function public.jobs_require_verified()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null or public.is_admin() then
+    return new;
+  end if;
+  if not exists (select 1 from public.profiles where id = auth.uid() and verified) then
+    raise exception 'Your account is not verified yet.' using errcode = 'P0001';
+  end if;
+  return new;
+end;
+$$;
+revoke all on function public.jobs_require_verified() from public, anon, authenticated;
+
+drop trigger if exists jobs_require_verified on public.jobs;
+create trigger jobs_require_verified before insert on public.jobs
+  for each row execute function public.jobs_require_verified();
+
+-- 0028: employers are VERIFIED by the admin after sending their license, and a verified employer posts ads with NO payment.
+--   1. License: an employer sends the license number and a picture/PDF of the license (private bucket). The admin checks it, then verifies or rejects.
+--      The admin cannot verify an employer who has not sent a license.
+--   2. Posting: a new ad from a verified employer goes straight to "waiting for approval" (no package, no price, no payment).
+--   3. Approval: the admin chooses the days when approving. An ended ad can be extended and goes live again.
+-- Ads that were already waiting for payment before this migration are left as they are.
+
+-- ===== private bucket for licenses =====
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('licenses', 'licenses', false, 3145728, array['image/jpeg', 'image/png', 'image/webp', 'application/pdf'])
+on conflict (id) do update
+  set public = excluded.public, file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "licenses read own or admin" on storage.objects;
+create policy "licenses read own or admin" on storage.objects
+  for select to authenticated
+  using (bucket_id = 'licenses' and ((storage.foldername(name))[1] = auth.uid()::text or public.is_admin()));
+drop policy if exists "licenses upload own folder" on storage.objects;
+create policy "licenses upload own folder" on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'licenses' and (storage.foldername(name))[1] = auth.uid()::text and not public.is_blocked());
+drop policy if exists "licenses delete own or admin" on storage.objects;
+create policy "licenses delete own or admin" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'licenses' and ((storage.foldername(name))[1] = auth.uid()::text or public.is_admin()));
+
+-- ===== verification requests: one per employer =====
+create table if not exists public.verification_requests (
+  id             uuid primary key default gen_random_uuid(),
+  recruiter_id   uuid not null unique references public.profiles (id) on delete cascade,
+  license_number text not null check (char_length(license_number) between 3 and 40),
+  file_path      text not null check (char_length(file_path) between 10 and 200),
+  status         text not null default 'submitted' check (status in ('submitted', 'rejected', 'approved')),
+  reject_reason  text check (reject_reason is null or char_length(reject_reason) <= 300),
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
+);
+alter table public.verification_requests enable row level security;
+drop policy if exists "verification read own or admin" on public.verification_requests;
+create policy "verification read own or admin" on public.verification_requests
+  for select to authenticated using (recruiter_id = auth.uid() or public.is_admin());
+revoke insert, update, delete, truncate on public.verification_requests from anon, authenticated;
+revoke all on public.verification_requests from anon;
+
+-- The employer sends (or sends again) the license number and the license file, already uploaded to their own folder.
+create or replace function public.submit_verification(p_license_number text, p_file_path text)
+returns public.verification_requests language plpgsql security definer set search_path = public as $$
+declare
+  v_number text := btrim(coalesce(p_license_number, ''));
+  v_req    public.verification_requests;
+begin
+  if auth.uid() is null then raise exception 'Please log in.' using errcode = '42501'; end if;
+  if public.is_blocked() then raise exception 'This account is blocked.' using errcode = '42501'; end if;
+  if exists (select 1 from public.profiles where id = auth.uid() and verified) then
+    raise exception 'Your company is already verified.' using errcode = '23514';
+  end if;
+  if char_length(v_number) < 3 or char_length(v_number) > 40 then raise exception 'license: number' using errcode = '22023'; end if;
+  if (storage.foldername(p_file_path))[1] is distinct from auth.uid()::text
+     or not exists (select 1 from storage.objects o where o.bucket_id = 'licenses' and o.name = p_file_path) then
+    raise exception 'license: file' using errcode = '22023';
+  end if;
+  insert into public.verification_requests (recruiter_id, license_number, file_path)
+  values (auth.uid(), v_number, p_file_path)
+  on conflict (recruiter_id) do update
+    set license_number = excluded.license_number, file_path = excluded.file_path, status = 'submitted', reject_reason = null, updated_at = now()
+  returning * into v_req;
+  return v_req;
+end;
+$$;
+revoke all on function public.submit_verification(text, text) from public, anon;
+grant execute on function public.submit_verification(text, text) to authenticated;
+
+-- The admin is not satisfied with the license: the employer reads the reason and can send again.
+create or replace function public.admin_reject_verification(p_request uuid, p_reason text)
+returns void language plpgsql security definer set search_path = public as $$
+declare v_status text;
+begin
+  if not public.is_admin() then raise exception 'Only admins can do this.' using errcode = '42501'; end if;
+  if char_length(btrim(coalesce(p_reason, ''))) < 1 then raise exception 'Please write a reason.' using errcode = '23514'; end if;
+  select status into v_status from public.verification_requests where id = p_request for update;
+  if not found then raise exception 'Request not found.' using errcode = 'P0002'; end if;
+  if v_status <> 'submitted' then raise exception 'This request cannot be rejected now.' using errcode = '23514'; end if;
+  update public.verification_requests set status = 'rejected', reject_reason = left(btrim(p_reason), 300), updated_at = now() where id = p_request;
+  insert into public.admin_log (admin_id, action, target_id, detail) values (auth.uid(), 'reject_verification', p_request, left(btrim(p_reason), 300));
+end;
+$$;
+revoke all on function public.admin_reject_verification(uuid, text) from public, anon;
+grant execute on function public.admin_reject_verification(uuid, text) to authenticated;
+
+-- Verifying an employer (the admin's Verify button) needs a license on file; it then closes the request as approved.
+create or replace function public.profiles_verified_needs_license()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if new.verified and not old.verified then
+    if auth.uid() is not null
+       and not exists (select 1 from public.verification_requests where recruiter_id = new.id and status in ('submitted', 'approved')) then
+      raise exception 'license: needed' using errcode = 'P0001';
+    end if;
+    update public.verification_requests set status = 'approved', reject_reason = null, updated_at = now()
+     where recruiter_id = new.id and status = 'submitted';
+  end if;
+  return new;
+end;
+$$;
+revoke all on function public.profiles_verified_needs_license() from public, anon, authenticated;
+drop trigger if exists profiles_verified_needs_license on public.profiles;
+create trigger profiles_verified_needs_license before update of verified on public.profiles
+  for each row execute function public.profiles_verified_needs_license();
+
+-- ===== posting: no package, no price, no payment =====
+-- a package is still stored on the ad (the table needs one): the first active plan, so the employer never has to choose
+create or replace function public.jobs_default_package()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if new.package_id is null and auth.uid() is not null and not public.is_admin() then
+    new.package_id := (select id from public.packages where active order by sort_order, created_at limit 1);
+  end if;
+  return new;
+end;
+$$;
+revoke all on function public.jobs_default_package() from public, anon, authenticated;
+drop trigger if exists jobs_default_package on public.jobs;
+create trigger jobs_default_package before insert on public.jobs
+  for each row execute function public.jobs_default_package();
+
+-- runs after jobs_guard_insert (triggers run in name order): a verified employer's new ad waits for approval, at no price
+create or replace function public.jobs_submit_for_review()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null or public.is_admin() then
+    return new;
+  end if;
+  if (select count(*) from public.jobs where recruiter_id = auth.uid() and status = 'paid_pending_review') >= 20 then
+    raise exception 'Too many ads waiting for approval.' using errcode = '53400';
+  end if;
+  new.status              := 'paid_pending_review';
+  new.price_paise_at_order := 0;
+  new.list_price_paise     := 0;
+  new.discount_paise       := 0;
+  new.final_price_paise    := 0;
+  new.days_at_order        := 30; -- the admin chooses the real number of days when approving
+  new.duration_days_final  := 30;
+  return new;
+end;
+$$;
+revoke all on function public.jobs_submit_for_review() from public, anon, authenticated;
+drop trigger if exists jobs_submit_for_review on public.jobs;
+create trigger jobs_submit_for_review before insert on public.jobs
+  for each row execute function public.jobs_submit_for_review();
+
+-- the stored status is decided by the triggers (never by the employer), so the policies accept both of the two possible results.
+-- An employer may also withdraw (delete) an ad that is still waiting for approval: nothing was paid.
+drop policy if exists "jobs recruiter insert" on public.jobs;
+create policy "jobs recruiter insert" on public.jobs
+  for insert to authenticated
+  with check (recruiter_id = (select auth.uid()) and status in ('pending_payment', 'paid_pending_review') and not public.is_blocked());
+drop policy if exists "jobs recruiter delete own" on public.jobs;
+create policy "jobs recruiter delete own" on public.jobs
+  for delete to authenticated
+  using (recruiter_id = (select auth.uid())
+         and (status in ('draft', 'pending_payment', 'paid_pending_review', 'rejected', 'expired')
+              or (status = 'live' and expires_at <= now())));
+
+-- ===== approving: the admin chooses the days (empty = the ad's saved days, or 30) =====
+drop function if exists public.admin_approve_job(uuid);
+create or replace function public.admin_approve_job(p_job uuid, p_days integer default null)
+returns public.jobs language plpgsql security definer set search_path = public as $$
+declare
+  v_job  public.jobs;
+  v_days integer;
+begin
+  if not public.is_admin() then raise exception 'Only admins can do this.' using errcode = '42501'; end if;
+  if p_days is not null and (p_days < 1 or p_days > 365) then raise exception 'Days must be between 1 and 365.' using errcode = '23514'; end if;
+  select * into v_job from public.jobs where id = p_job for update;
+  if not found then raise exception 'Ad not found.' using errcode = 'P0002'; end if;
+  if v_job.status not in ('paid_pending_review', 'rejected') then
+    raise exception 'This ad cannot be approved now.' using errcode = '23514';
+  end if;
+  v_days := coalesce(p_days, nullif(v_job.duration_days_final, 0), nullif(v_job.days_at_order, 0), (select duration_days from public.packages where id = v_job.package_id), 30);
+  update public.jobs
+     set status = 'live', starts_at = now(), expires_at = now() + make_interval(days => v_days), reject_reason = null
+   where id = p_job
+   returning * into v_job;
+  insert into public.admin_log (admin_id, action, target_id, detail) values (auth.uid(), 'approve_job', p_job, v_days || ' days');
+  return v_job;
+end;
+$$;
+revoke all on function public.admin_approve_job(uuid, integer) from public, anon;
+grant execute on function public.admin_approve_job(uuid, integer) to authenticated;
+
+-- ===== extending: a live, hidden or ENDED ad gets more days; an ended ad goes live again =====
+create or replace function public.admin_extend_job(p_job uuid, p_days integer, p_reason text)
+returns public.jobs language plpgsql security definer set search_path = public as $$
+declare v_job public.jobs;
+begin
+  if not public.is_admin() then raise exception 'Only admins can do this.' using errcode = '42501'; end if;
+  if p_days is null or p_days < 1 or p_days > 365 then raise exception 'Days must be between 1 and 365.' using errcode = '23514'; end if;
+  if char_length(btrim(coalesce(p_reason, ''))) < 3 then raise exception 'Please write a reason.' using errcode = '23514'; end if;
+  select * into v_job from public.jobs where id = p_job for update;
+  if not found then raise exception 'Ad not found.' using errcode = 'P0002'; end if;
+  if v_job.status not in ('live', 'hidden', 'expired') or v_job.expires_at is null then
+    raise exception 'Only a live, hidden or ended ad can get more days.' using errcode = '23514';
+  end if;
+  update public.jobs
+     set expires_at = greatest(expires_at, now()) + make_interval(days => p_days),
+         status = case when status = 'expired' then 'live' else status end
+   where id = p_job returning * into v_job;
+  insert into public.admin_log (admin_id, action, target_id, detail) values (auth.uid(), 'extend_job', p_job, '+' || p_days || ' days: ' || left(btrim(p_reason), 200));
+  return v_job;
+end;
+$$;
+
+-- 0029: a public list of VERIFIED employers (company name, registration number, number of live ads).
+-- Only employers the admin verified (after checking their license) appear. No phone, email or license is ever in this list.
+create or replace view public.verified_agencies as
+select
+  p.company_name,
+  nullif(btrim(p.ra_number), '') as ra_number,
+  (select count(*) from public.jobs j where j.recruiter_id = p.id and j.status = 'live' and j.expires_at > now())::integer as live_ads
+from public.profiles p
+where p.verified
+  and not p.blocked
+  and p.role <> 'admin'
+  and char_length(btrim(coalesce(p.company_name, ''))) >= 2
+order by live_ads desc, p.company_name
+limit 200;
+
+grant select on public.verified_agencies to anon, authenticated;
+
+-- 0030: employers do not pay by UPI/QR any more, so the QR picture and the payment proof (migration 0024) are removed.
+-- Kept on purpose: the admin's payment tools (Payments, Packages, Offers, mark paid, free ad, refund) and the UPI settings keys.
+-- Safety: stops if any payment proof exists, so nothing the admin might still need is dropped.
+do $$
+begin
+  if exists (select 1 from public.payment_proofs) then
+    raise exception 'Payment proofs exist: keep them and do not run this migration.';
+  end if;
+end;
+$$;
+
+-- admin_mark_paid no longer closes a proof (same behaviour as migration 0023 + the old rules)
+create or replace function public.admin_mark_paid(p_job uuid, p_amount_paise integer default null, p_note text default '', p_reference text default null)
+returns public.payments language plpgsql security definer set search_path = public as $$
+declare
+  v_job     public.jobs;
+  v_amount  integer;
+  v_payment public.payments;
+begin
+  if not public.is_admin() then raise exception 'Only admins can do this.' using errcode = '42501'; end if;
+  select * into v_job from public.jobs where id = p_job;
+  if not found then raise exception 'Ad not found.' using errcode = 'P0002'; end if;
+  v_amount := coalesce(p_amount_paise, v_job.final_price_paise, v_job.price_paise_at_order, (select price_paise from public.packages where id = v_job.package_id), 0);
+  v_payment := public.mark_job_paid(p_job, v_amount, 'manual', p_reference, p_note);
+  insert into public.admin_log (admin_id, action, target_id, detail) values (auth.uid(), 'mark_paid', p_job, v_amount || ' paise');
+  return v_payment;
+end;
+$$;
+revoke all on function public.admin_mark_paid(uuid, integer, text, text) from public, anon;
+grant execute on function public.admin_mark_paid(uuid, integer, text, text) to authenticated;
+
+-- the proof table and its two functions
+drop function if exists public.submit_payment_proof(uuid, text, text);
+drop function if exists public.admin_reject_proof(uuid, text);
+drop table if exists public.payment_proofs;
+
+-- the storage rules of the two buckets (the empty buckets themselves are removed below when Supabase allows it)
+drop policy if exists "shop-assets admin all" on storage.objects;
+drop policy if exists "payment-proofs read own or admin" on storage.objects;
+drop policy if exists "payment-proofs upload own folder" on storage.objects;
+drop policy if exists "payment-proofs delete own or admin" on storage.objects;
+do $$
+begin
+  delete from storage.buckets where id in ('shop-assets', 'payment-proofs') and not exists (select 1 from storage.objects o where o.bucket_id = storage.buckets.id);
+exception when others then
+  -- Supabase may refuse a direct delete on its storage tables: then remove the two empty buckets in Dashboard > Storage by hand
+  raise notice 'Could not delete the empty buckets shop-assets and payment-proofs here; delete them in Dashboard > Storage.';
+end;
+$$;
+
+-- the QR picture setting
+delete from public.site_settings where key = 'qr_path';
+alter table public.site_settings drop constraint if exists site_settings_key_check;
+alter table public.site_settings add constraint site_settings_key_check
+  check (key in ('whatsapp_number', 'upi_id', 'upi_name', 'contact_email', 'grievance_name', 'grievance_email', 'company_name', 'site_url'));
+drop policy if exists "settings payee read" on public.site_settings;
+create policy "settings payee read" on public.site_settings
+  for select to authenticated using (key in ('upi_id', 'upi_name'));
+
+create or replace function public.admin_save_settings(p_values jsonb)
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  r record;
+  v text;
+  v_old text;
+  v_detail text := '';
+begin
+  if not public.is_admin() then raise exception 'Only admins can do this.' using errcode = '42501'; end if;
+  if jsonb_typeof(p_values) <> 'object' then raise exception 'Bad settings.' using errcode = '22023'; end if;
+  for r in select key, btrim(value) as value from jsonb_each_text(p_values) loop
+    v := r.value;
+    if r.key not in ('whatsapp_number', 'upi_id', 'upi_name', 'contact_email', 'grievance_name', 'grievance_email', 'company_name', 'site_url') then
+      raise exception 'setting: unknown' using errcode = '22023';
+    end if;
+    if r.key = 'whatsapp_number' then
+      v := regexp_replace(v, '[^0-9]', '', 'g');
+      if char_length(v) = 10 then v := '91' || v; end if;
+    end if;
+    if v <> '' and not (
+         (r.key = 'whatsapp_number' and v ~ '^[0-9]{10,15}$')
+      or (r.key = 'upi_id' and v ~ '^[A-Za-z0-9._-]{2,50}@[A-Za-z0-9]{2,30}$')
+      or (r.key in ('contact_email', 'grievance_email') and v ~ '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$' and char_length(v) <= 120)
+      or (r.key in ('upi_name', 'grievance_name', 'company_name') and char_length(v) between 2 and 80)
+      or (r.key = 'site_url' and v ~ '^https://[A-Za-z0-9.-]+\.[A-Za-z]{2,}(:[0-9]{2,5})?$')
+    ) then
+      raise exception 'setting: %', r.key using errcode = '22023';
+    end if;
+    select value into v_old from public.site_settings where key = r.key;
+    if v_old is distinct from v and not (v_old is null and v = '') then
+      insert into public.site_settings (key, value, updated_at, updated_by) values (r.key, v, now(), auth.uid())
+        on conflict (key) do update set value = excluded.value, updated_at = now(), updated_by = auth.uid();
+      v_detail := v_detail || r.key || ': ' || coalesce(v_old, '(empty)') || ' -> ' || coalesce(nullif(v, ''), '(empty)') || '; ';
+    end if;
+  end loop;
+  if v_detail <> '' then
+    insert into public.admin_log (admin_id, action, target_id, detail) values (auth.uid(), 'save_settings', null, left(v_detail, 500));
+  end if;
+end;
+$$;
+revoke all on function public.admin_save_settings(jsonb) from public, anon;
+grant execute on function public.admin_save_settings(jsonb) to authenticated;
+
+-- 0031: an employer can edit an ad while it WAITS FOR APPROVAL (before, only a rejected ad could be edited).
+-- Nothing is locked less: the guard trigger still stops them from changing the status, dates, owner, plan, price or verification.
+-- Once the admin approves (or rejects) the ad, the policy no longer matches and the change is refused.
+drop policy if exists "jobs recruiter update own waiting" on public.jobs;
+create policy "jobs recruiter update own waiting" on public.jobs
+  for update to authenticated
+  using (recruiter_id = (select auth.uid()) and status in ('pending_payment', 'paid_pending_review', 'rejected') and not public.is_blocked())
+  with check (recruiter_id = (select auth.uid()));
+
+-- 0032: when an ad is deleted (or its picture is replaced), the old file paths are put in a queue.
+-- The database cannot safely delete files from Supabase Storage itself (Supabase blocks direct deletes on its storage tables),
+-- so the admin's browser removes the queued files through the Storage API the next time an admin opens the admin area.
+-- This closes GAP-1: a failed delete in the employer's browser no longer leaves a file behind for ever.
+create table if not exists public.file_cleanup_queue (
+  path       text primary key,
+  created_at timestamptz not null default now()
+);
+alter table public.file_cleanup_queue enable row level security;
+drop policy if exists "cleanup queue admin read" on public.file_cleanup_queue;
+create policy "cleanup queue admin read" on public.file_cleanup_queue for select to authenticated using (public.is_admin());
+drop policy if exists "cleanup queue admin delete" on public.file_cleanup_queue;
+create policy "cleanup queue admin delete" on public.file_cleanup_queue for delete to authenticated using (public.is_admin());
+revoke insert, update, truncate on public.file_cleanup_queue from anon, authenticated;
+revoke all on public.file_cleanup_queue from anon;
+
+create or replace function public.queue_job_files_after_delete()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.file_cleanup_queue (path) select p from unnest(array[old.file_path, old.thumb_path]) as p where p is not null on conflict do nothing;
+  return old;
+end;
+$$;
+revoke all on function public.queue_job_files_after_delete() from public, anon, authenticated;
+drop trigger if exists jobs_queue_files_after_delete on public.jobs;
+create trigger jobs_queue_files_after_delete after delete on public.jobs
+  for each row execute function public.queue_job_files_after_delete();
+
+create or replace function public.queue_job_files_after_replace()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.file_cleanup_queue (path)
+  select p from unnest(array[
+    case when old.file_path is distinct from new.file_path then old.file_path end,
+    case when old.thumb_path is distinct from new.thumb_path then old.thumb_path end
+  ]) as p where p is not null on conflict do nothing;
+  return new;
+end;
+$$;
+revoke all on function public.queue_job_files_after_replace() from public, anon, authenticated;
+drop trigger if exists jobs_queue_files_after_replace on public.jobs;
+create trigger jobs_queue_files_after_replace after update of file_path, thumb_path on public.jobs
+  for each row execute function public.queue_job_files_after_replace();
+
+-- 0033: how many times each live ad was opened (a plain number per ad per day, nothing about the visitor) and per-ad numbers for the employer.
+create table if not exists public.ad_views (
+  job_id uuid not null references public.jobs (id) on delete cascade,
+  day    date not null default current_date,
+  views  integer not null default 0 check (views >= 0),
+  primary key (job_id, day)
+);
+alter table public.ad_views enable row level security;
+drop policy if exists "ad views admin read" on public.ad_views;
+create policy "ad views admin read" on public.ad_views for select to authenticated using (public.is_admin());
+revoke insert, update, delete, truncate on public.ad_views from anon, authenticated;
+revoke all on public.ad_views from anon;
+
+-- Anyone can count a view, but only for an ad that is live right now; nothing about the visitor is stored.
+create or replace function public.record_ad_view(p_job uuid)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if exists (select 1 from public.jobs where id = p_job and status = 'live' and expires_at > now()) then
+    insert into public.ad_views (job_id, day, views) values (p_job, current_date, 1)
+    on conflict (job_id, day) do update set views = public.ad_views.views + 1;
+  end if;
+end;
+$$;
+revoke all on function public.record_ad_view(uuid) from public;
+grant execute on function public.record_ad_view(uuid) to anon, authenticated;
+
+-- The employer's own numbers: views (all days) and applications (a number only) for each of THEIR ads.
+create or replace function public.my_ad_stats()
+returns table (job_id uuid, views bigint, applications bigint)
+language sql stable security definer set search_path = public as $$
+  select j.id,
+         coalesce((select sum(v.views) from public.ad_views v where v.job_id = j.id), 0)::bigint,
+         (select count(*) from public.applications a where a.job_id = j.id)::bigint
+    from public.jobs j
+   where j.recruiter_id = auth.uid()
+$$;
+revoke all on function public.my_ad_stats() from public, anon;
+grant execute on function public.my_ad_stats() to authenticated;
+
+-- 0034: messages to employers (email): a queue the database fills, and functions the sender (an Edge Function) uses.
+-- Events: license verified, license rejected, ad approved, ad rejected, days added, ad ending soon (3 days), ad ended.
+-- The database only QUEUES. Nothing is sent until the sender function is deployed with an email key (docs/20-notifications.md).
+-- An employer can turn the emails off in "My details" (profiles.email_notifications); blocked employers get none.
+
+alter table public.profiles add column if not exists email_notifications boolean not null default true;
+alter table public.jobs add column if not exists ending_reminder_at timestamptz; -- set when the "ends soon" message was queued; cleared when days are added
+
+create table if not exists public.notifications (
+  id           uuid primary key default gen_random_uuid(),
+  recipient_id uuid not null references public.profiles (id) on delete cascade,
+  kind         text not null check (kind in ('license_verified', 'license_rejected', 'ad_approved', 'ad_rejected', 'ad_extended', 'ad_ending_soon', 'ad_ended')),
+  data         jsonb not null default '{}',
+  created_at   timestamptz not null default now(),
+  sent_at      timestamptz,
+  attempts     integer not null default 0,
+  last_error   text
+);
+create index if not exists notifications_due_idx on public.notifications (created_at) where sent_at is null;
+alter table public.notifications enable row level security;
+drop policy if exists "notifications admin read" on public.notifications;
+create policy "notifications admin read" on public.notifications for select to authenticated using (public.is_admin());
+revoke insert, update, delete, truncate on public.notifications from anon, authenticated;
+revoke all on public.notifications from anon;
+
+-- put one message in the queue (internal; called by the functions below)
+create or replace function public.queue_notification(p_recipient uuid, p_kind text, p_data jsonb default '{}')
+returns void language sql security definer set search_path = public as $$
+  insert into public.notifications (recipient_id, kind, data)
+  select p.id, p_kind, coalesce(p_data, '{}') from public.profiles p where p.id = p_recipient and not p.blocked;
+$$;
+revoke all on function public.queue_notification(uuid, text, jsonb) from public, anon, authenticated;
+
+-- ===== the events =====
+create or replace function public.admin_approve_job(p_job uuid, p_days integer default null)
+returns public.jobs language plpgsql security definer set search_path = public as $$
+declare
+  v_job  public.jobs;
+  v_days integer;
+begin
+  if not public.is_admin() then raise exception 'Only admins can do this.' using errcode = '42501'; end if;
+  if p_days is not null and (p_days < 1 or p_days > 365) then raise exception 'Days must be between 1 and 365.' using errcode = '23514'; end if;
+  select * into v_job from public.jobs where id = p_job for update;
+  if not found then raise exception 'Ad not found.' using errcode = 'P0002'; end if;
+  if v_job.status not in ('paid_pending_review', 'rejected') then
+    raise exception 'This ad cannot be approved now.' using errcode = '23514';
+  end if;
+  v_days := coalesce(p_days, nullif(v_job.duration_days_final, 0), nullif(v_job.days_at_order, 0), (select duration_days from public.packages where id = v_job.package_id), 30);
+  update public.jobs
+     set status = 'live', starts_at = now(), expires_at = now() + make_interval(days => v_days), reject_reason = null, ending_reminder_at = null
+   where id = p_job
+   returning * into v_job;
+  insert into public.admin_log (admin_id, action, target_id, detail) values (auth.uid(), 'approve_job', p_job, v_days || ' days');
+  perform public.queue_notification(v_job.recruiter_id, 'ad_approved', jsonb_build_object('job_id', v_job.id, 'title', v_job.title, 'days', v_days, 'ends', v_job.expires_at));
+  return v_job;
+end;
+$$;
+revoke all on function public.admin_approve_job(uuid, integer) from public, anon;
+grant execute on function public.admin_approve_job(uuid, integer) to authenticated;
+
+create or replace function public.admin_reject_job(p_job uuid, p_reason text)
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  v_status text;
+  v_owner  uuid;
+  v_title  text;
+begin
+  if not public.is_admin() then raise exception 'Only admins can do this.' using errcode = '42501'; end if;
+  if char_length(btrim(coalesce(p_reason, ''))) < 1 then raise exception 'Please write a reason.' using errcode = '23514'; end if;
+  select status, recruiter_id, title into v_status, v_owner, v_title from public.jobs where id = p_job for update;
+  if not found then raise exception 'Ad not found.' using errcode = 'P0002'; end if;
+  if v_status <> 'paid_pending_review' then raise exception 'This ad cannot be rejected now.' using errcode = '23514'; end if;
+  update public.jobs set status = 'rejected', reject_reason = left(btrim(p_reason), 300) where id = p_job;
+  insert into public.admin_log (admin_id, action, target_id, detail) values (auth.uid(), 'reject_job', p_job, left(btrim(p_reason), 300));
+  perform public.queue_notification(v_owner, 'ad_rejected', jsonb_build_object('job_id', p_job, 'title', v_title, 'reason', left(btrim(p_reason), 300)));
+end;
+$$;
+revoke all on function public.admin_reject_job(uuid, text) from public, anon;
+grant execute on function public.admin_reject_job(uuid, text) to authenticated;
+
+create or replace function public.admin_extend_job(p_job uuid, p_days integer, p_reason text)
+returns public.jobs language plpgsql security definer set search_path = public as $$
+declare v_job public.jobs;
+begin
+  if not public.is_admin() then raise exception 'Only admins can do this.' using errcode = '42501'; end if;
+  if p_days is null or p_days < 1 or p_days > 365 then raise exception 'Days must be between 1 and 365.' using errcode = '23514'; end if;
+  if char_length(btrim(coalesce(p_reason, ''))) < 3 then raise exception 'Please write a reason.' using errcode = '23514'; end if;
+  select * into v_job from public.jobs where id = p_job for update;
+  if not found then raise exception 'Ad not found.' using errcode = 'P0002'; end if;
+  if v_job.status not in ('live', 'hidden', 'expired') or v_job.expires_at is null then
+    raise exception 'Only a live, hidden or ended ad can get more days.' using errcode = '23514';
+  end if;
+  update public.jobs
+     set expires_at = greatest(expires_at, now()) + make_interval(days => p_days),
+         status = case when status = 'expired' then 'live' else status end,
+         ending_reminder_at = null
+   where id = p_job returning * into v_job;
+  insert into public.admin_log (admin_id, action, target_id, detail) values (auth.uid(), 'extend_job', p_job, '+' || p_days || ' days: ' || left(btrim(p_reason), 200));
+  perform public.queue_notification(v_job.recruiter_id, 'ad_extended', jsonb_build_object('job_id', v_job.id, 'title', v_job.title, 'days', p_days, 'ends', v_job.expires_at));
+  return v_job;
+end;
+$$;
+
+create or replace function public.admin_reject_verification(p_request uuid, p_reason text)
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  v_status text;
+  v_owner  uuid;
+begin
+  if not public.is_admin() then raise exception 'Only admins can do this.' using errcode = '42501'; end if;
+  if char_length(btrim(coalesce(p_reason, ''))) < 1 then raise exception 'Please write a reason.' using errcode = '23514'; end if;
+  select status, recruiter_id into v_status, v_owner from public.verification_requests where id = p_request for update;
+  if not found then raise exception 'Request not found.' using errcode = 'P0002'; end if;
+  if v_status <> 'submitted' then raise exception 'This request cannot be rejected now.' using errcode = '23514'; end if;
+  update public.verification_requests set status = 'rejected', reject_reason = left(btrim(p_reason), 300), updated_at = now() where id = p_request;
+  insert into public.admin_log (admin_id, action, target_id, detail) values (auth.uid(), 'reject_verification', p_request, left(btrim(p_reason), 300));
+  perform public.queue_notification(v_owner, 'license_rejected', jsonb_build_object('reason', left(btrim(p_reason), 300)));
+end;
+$$;
+revoke all on function public.admin_reject_verification(uuid, text) from public, anon;
+grant execute on function public.admin_reject_verification(uuid, text) to authenticated;
+
+create or replace function public.profiles_verified_needs_license()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if new.verified and not old.verified then
+    if auth.uid() is not null
+       and not exists (select 1 from public.verification_requests where recruiter_id = new.id and status in ('submitted', 'approved')) then
+      raise exception 'license: needed' using errcode = 'P0001';
+    end if;
+    update public.verification_requests set status = 'approved', reject_reason = null, updated_at = now()
+     where recruiter_id = new.id and status = 'submitted';
+    perform public.queue_notification(new.id, 'license_verified', '{}');
+  end if;
+  return new;
+end;
+$$;
+
+-- ads that end: one message each (the job runs every 10 minutes)
+create or replace function public.expire_jobs()
+returns integer language plpgsql security definer set search_path = public as $$
+declare
+  r record;
+  n integer := 0;
+begin
+  for r in
+    with ended as (
+      update public.jobs set status = 'expired' where status = 'live' and expires_at <= now() returning id, recruiter_id, title
+    )
+    select * from ended
+  loop
+    perform public.queue_notification(r.recruiter_id, 'ad_ended', jsonb_build_object('job_id', r.id, 'title', r.title));
+    n := n + 1;
+  end loop;
+  return n;
+end;
+$$;
+revoke all on function public.expire_jobs() from public, anon, authenticated;
+
+-- ads that end within 3 days: one message each, once (cleared when days are added)
+create or replace function public.queue_ending_reminders()
+returns integer language plpgsql security definer set search_path = public as $$
+declare
+  r record;
+  n integer := 0;
+begin
+  for r in
+    with soon as (
+      update public.jobs set ending_reminder_at = now()
+       where status = 'live' and expires_at > now() and expires_at <= now() + interval '3 days' and ending_reminder_at is null
+       returning id, recruiter_id, title, expires_at
+    )
+    select * from soon
+  loop
+    perform public.queue_notification(r.recruiter_id, 'ad_ending_soon', jsonb_build_object('job_id', r.id, 'title', r.title, 'ends', r.expires_at));
+    n := n + 1;
+  end loop;
+  return n;
+end;
+$$;
+revoke all on function public.queue_ending_reminders() from public, anon, authenticated;
+
+-- ===== for the sender (Edge Function, service role only) =====
+-- Takes up to p_limit messages that are due: not sent, fewer than 5 tries, the employer wants emails, is not blocked and has an email address.
+create or replace function public.claim_notifications(p_limit integer default 50)
+returns table (id uuid, kind text, data jsonb, email text)
+language plpgsql security definer set search_path = public as $$
+begin
+  return query
+  with due as (
+    select n.id
+      from public.notifications n
+      join public.profiles p on p.id = n.recipient_id
+     where n.sent_at is null and n.attempts < 5 and p.email_notifications and not p.blocked and coalesce(p.email, '') like '%@%'
+     order by n.created_at
+     limit greatest(1, least(coalesce(p_limit, 50), 100))
+     for update of n skip locked
+  )
+  update public.notifications n set attempts = n.attempts + 1
+    from due
+   where n.id = due.id
+  returning n.id, n.kind, n.data, (select p2.email from public.profiles p2 where p2.id = n.recipient_id);
+end;
+$$;
+create or replace function public.mark_notification_sent(p_id uuid)
+returns void language sql security definer set search_path = public as $$
+  update public.notifications set sent_at = now(), last_error = null where id = p_id;
+$$;
+create or replace function public.mark_notification_failed(p_id uuid, p_error text)
+returns void language sql security definer set search_path = public as $$
+  update public.notifications set last_error = left(coalesce(p_error, ''), 300) where id = p_id;
+$$;
+create or replace function public.purge_old_notifications()
+returns integer language plpgsql security definer set search_path = public as $$
+declare n integer;
+begin
+  delete from public.notifications where created_at < now() - interval '60 days';
+  get diagnostics n = row_count;
+  return n;
+end;
+$$;
+revoke all on function public.claim_notifications(integer) from public, anon, authenticated;
+revoke all on function public.mark_notification_sent(uuid) from public, anon, authenticated;
+revoke all on function public.mark_notification_failed(uuid, text) from public, anon, authenticated;
+revoke all on function public.purge_old_notifications() from public, anon, authenticated;
+
+-- daily: queue the "ends soon" messages and drop old ones (when pg_cron is available; otherwise run these by hand, docs/20-notifications.md)
+do $$
+begin
+  create extension if not exists pg_cron;
+  perform cron.schedule('queue-ending-reminders', '45 3 * * *', 'select public.queue_ending_reminders()');
+  perform cron.schedule('purge-old-notifications', '50 3 * * *', 'select public.purge_old_notifications()');
+exception when others then
+  raise notice 'pg_cron is not available here: schedule queue_ending_reminders() and purge_old_notifications() by hand (docs/20-notifications.md).';
+end;
+$$;
+
 -- Jobs Abroad sample data. Safe to run more than once (adds packages only when there are none).
 
 -- Placeholder packages: change prices in the Admin > Packages screen.

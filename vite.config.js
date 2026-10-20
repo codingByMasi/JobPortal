@@ -7,6 +7,8 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.test.js', 'scripts/**/*.test.mjs'],
+    // every database-rule test file starts its own in-memory Postgres (WebAssembly); on a machine with many cores, starting a dozen at once crashed workers at random
+    maxWorkers: 6,
     env: { VITE_SUPABASE_URL: '', VITE_SUPABASE_ANON_KEY: '', VITE_ALLOW_DEMO: '' },
   },
 });

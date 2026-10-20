@@ -14,18 +14,21 @@ export async function createJob(input) {
   await wait();
   const p = needUser();
   if (p.blocked) throw fail('BLOCKED');
-  const pkg = state.db.packages.find((x) => x.id === input.packageId && x.active);
+  if (!p.verified && p.role !== 'admin') throw fail('NOT_VERIFIED', 'Your account is not verified yet.'); // migration 0027
+  // employers never choose a plan: the default plan is stored (migration 0028)
+  if (input.packageId && !state.db.packages.some((x) => x.id === input.packageId && x.active)) throw fail('NOT_ALLOWED'); // an unknown or inactive plan is refused
+  const pkg = state.db.packages.find((x) => x.id === input.packageId) || [...state.db.packages].filter((x) => x.active).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))[0];
   if (!pkg) throw fail('NOT_ALLOWED');
-  // same limit as the database (migration 0009): at most 20 ads waiting for payment
-  if (state.db.jobs.filter((j) => j.recruiter_id === p.id && j.status === 'pending_payment').length >= 20) throw fail('TOO_MANY_ADS');
+  // like the database: at most 20 ads waiting for approval
+  if (state.db.jobs.filter((j) => j.recruiter_id === p.id && j.status === 'paid_pending_review').length >= 20) throw fail('TOO_MANY_ADS');
   const fields = toJobRow(input);
   if ((fields.title || '').length < 2) throw fail('NOT_ALLOWED');
   if (!isValidWhatsapp(fields.whatsapp || '')) throw fail('NOT_ALLOWED');
   const row = {
     file_url: null, file_path: null, thumb_url: null, thumb_path: null, details: '', file_type: 'image', company: '', city: '', whatsapp: '', ...fields,
-    price_paise_at_order: pkg.price_paise, days_at_order: pkg.duration_days,
-    list_price_paise: pkg.price_paise, discount_paise: 0, final_price_paise: pkg.price_paise, duration_days_final: pkg.duration_days, offer_id: null, featured_override: null,
-    id: uid(), recruiter_id: p.id, package_id: pkg.id, status: 'pending_payment', starts_at: null, expires_at: null,
+    price_paise_at_order: 0, days_at_order: 30,
+    list_price_paise: 0, discount_paise: 0, final_price_paise: 0, duration_days_final: 30, offer_id: null, featured_override: null,
+    id: uid(), recruiter_id: p.id, package_id: pkg.id, status: 'paid_pending_review', starts_at: null, expires_at: null,
     reject_reason: null, posted_date: new Date().toISOString().slice(0, 10), created_at: new Date().toISOString(),
   };
   state.db.jobs.push(row);
@@ -38,7 +41,7 @@ export async function updateJob(id, patch) {
   const p = needUser();
   const row = findJob(id);
   if (p.blocked) throw fail('BLOCKED');
-  if (row.recruiter_id !== p.id || !['pending_payment', 'rejected'].includes(row.status)) throw fail('NOT_ALLOWED');
+  if (row.recruiter_id !== p.id || !['pending_payment', 'paid_pending_review', 'rejected'].includes(row.status)) throw fail('NOT_ALLOWED');
   const { package_id: _locked, ...fields } = toJobRow(patch);
   if (fields.whatsapp !== undefined && !isValidWhatsapp(fields.whatsapp)) throw fail('NOT_ALLOWED');
   Object.assign(row, fields);
@@ -58,12 +61,12 @@ export async function resubmitJob(id) {
   return asJob(row);
 }
 
-export async function updateProfile(id, { companyName, phone, raNumber }) {
+export async function updateProfile(id, { companyName, phone, raNumber, emailNotifications = true }) {
   await wait();
   const p = needUser();
   if (p.id !== id) throw fail('NOT_ALLOWED');
   const identityChanged = companyName.trim() !== p.company_name || (raNumber || '').trim() !== (p.ra_number || '');
-  Object.assign(p, { company_name: companyName.trim(), phone: phone.trim(), ra_number: (raNumber || '').trim() });
+  Object.assign(p, { company_name: companyName.trim(), phone: phone.trim(), ra_number: (raNumber || '').trim(), email_notifications: Boolean(emailNotifications) });
   if (identityChanged) p.verified = false; // same rule as the database: a changed identity must be checked again
   save();
   return toProfile(p);
@@ -108,6 +111,17 @@ export async function listMyApplications() {
 }
 
 // same rules as the database (migration 0011): own ad, past "waiting for payment", not blocked, 3 to 300 letters, 3 open at most
+/** Views and applications for each of my ads (numbers only). */
+export async function listMyAdStats() {
+  await wait();
+  const p = needUser();
+  const views = state.db.ad_views || {};
+  return Object.fromEntries(state.db.jobs.filter((j) => j.recruiter_id === p.id).map((j) => [j.id, {
+    views: views[j.id] || 0,
+    applications: state.db.applications.filter((a) => a.job_id === j.id).length,
+  }]));
+}
+
 export async function createChangeRequest({ jobId, message }) {
   await wait();
   const p = needUser();

@@ -3,7 +3,7 @@
    (loaded after index.css)
    ===================================================================== */
 .muted { color: var(--muted); font-size: 14px; }
-.text-link { color: var(--blue); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; padding: 12px 6px; } /* the padding only makes the tap area 44 px high: an inline link's padding does not move the text */
+.text-link { display: inline-block; box-sizing: border-box; min-height: 48px; color: var(--blue); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; padding: 12px 6px; } /* a real box with a minimum height: fonts differ between machines, and an inline link's padding alone came out 43 px high on Linux */
 .inline-icon { color: var(--blue); vertical-align: -3px; margin-left: 4px; }
 .page.narrow { max-width: 520px; }
 .page.wide { max-width: 1280px; }
@@ -30,7 +30,7 @@
 
 /* buttons */
 .btn-danger { background: #fff; color: var(--red); border-color: var(--red); }
-.btn-sm { width: auto; min-height: 44px; padding: 6px 14px; font-size: 14px; gap: 8px; }
+.btn-sm { width: auto; min-height: 48px; min-width: 48px; padding: 6px 14px; font-size: 14px; gap: 8px; }
 .btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
 /* forms */
@@ -150,13 +150,6 @@ tfoot td { background: var(--blue-card); }
 .modal h3 { font-size: 18px; margin-top: 4px; }
 
 /* payment instructions + counts */
-.pay-box { display: flex; flex-direction: column; gap: 10px; padding: 16px; background: var(--blue-card); border: 1px solid var(--line); border-radius: var(--radius); margin: 0; }
-.pay-box > div { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
-.pay-box dt { color: var(--muted); }
-.pay-box dd { margin: 0; font-weight: 700; }
-.pay-amount { font-size: 28px; color: var(--blue-dark); }
-.pay-upi span:first-child { user-select: all; }
-.pay-upi { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 18px; overflow-wrap: anywhere; }
 .count-grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
 @media (min-width: 560px) { .count-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 960px) { .count-grid { grid-template-columns: repeat(4, 1fr); } }
@@ -189,7 +182,6 @@ tfoot td { background: var(--blue-card); }
 .ad-pdf { display: none; }
 @media (min-width: 768px) { .ad-pdf { display: block; } .pdf-open { min-height: var(--tap); font-size: 16px; } }
 
-.qr { width: 220px; height: 220px; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 8px; align-self: center; }
 .secret { font-family: ui-monospace, monospace; letter-spacing: 0.08em; overflow-wrap: anywhere; font-size: 16px; }
 
 @media print {
@@ -249,3 +241,15 @@ tfoot td { background: var(--blue-card); }
 .markdown pre { overflow-x: auto; padding: 12px; background: #f1f1f1; border-radius: 8px; }
 .markdown hr { border: 0; border-top: 1px solid var(--line-strong); width: 100%; }
 @media print { .no-print, .site-header, .site-footer, .sub-nav { display: none !important; } }
+
+.agency-list { list-style: none; padding: 0; margin: 12px 0; display: grid; gap: 12px; }
+.agency-card { padding: 14px 16px; background: #fff; border: 2px solid var(--line-strong); border-radius: var(--radius); display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.agency-name { display: flex; align-items: center; gap: 8px; font-size: 19px; margin: 0; }
+.count-card.is-todo { border-color: var(--orange, #c2410c); border-width: 3px; }
+.filter-note { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ends-note { font-weight: 700; }
+.reason-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.check-cell input { width: 44px; height: 44px; cursor: pointer; }
+.ad-stats { font-weight: 700; }
+.check-row { display: flex; gap: 12px; align-items: flex-start; padding: 8px 0; }
+.check-row input { width: 44px; height: 44px; flex: none; }

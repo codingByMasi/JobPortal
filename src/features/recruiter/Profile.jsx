@@ -13,7 +13,7 @@ import { isValidPhone } from '../../shared/lib/phone';
 export default function Profile() {
   const { t } = useLang();
   const { user, profile, refresh } = useAuth();
-  const [v, setV] = useState({ companyName: profile?.companyName || '', phone: profile?.phone || '', raNumber: profile?.raNumber || '' });
+  const [v, setV] = useState({ companyName: profile?.companyName || '', phone: profile?.phone || '', raNumber: profile?.raNumber || '', emailNotifications: profile?.emailNotifications !== false });
   const [errors, setErrors] = useState({});
   const [notice, setNotice] = useState({ tone: 'success', text: '' });
   const [busy, setBusy] = useState(false);
@@ -57,6 +57,10 @@ export default function Profile() {
         <Field label={t.raNumber} help={t.raNumberHelp}>
           <input type="text" value={v.raNumber} onChange={set('raNumber')} maxLength={40} />
         </Field>
+        <label className="check-row">
+          <input type="checkbox" checked={v.emailNotifications} onChange={(e) => { setV((x) => ({ ...x, emailNotifications: e.target.checked })); setNotice({ tone: 'success', text: '' }); }} />
+          <span><strong>{t.emailPrefLabel}</strong><br /><span className="help">{t.emailPrefHelp}</span></span>
+        </label>
         <Notice tone={notice.tone}>{notice.text}</Notice>
         <Button type="submit" icon="check" disabled={busy}>{busy ? t.saving : t.save}</Button>
       </form>

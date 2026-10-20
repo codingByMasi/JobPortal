@@ -22,6 +22,11 @@ export async function adminListUnusedFiles() {
   return [];
 }
 
+/** Demo files live inside the ad rows, so there is never a queue. */
+export async function adminCleanQueuedFiles() {
+  return 0;
+}
+
 export async function adminRemoveFiles() {
   return 0;
 }

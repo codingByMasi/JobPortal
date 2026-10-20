@@ -4,15 +4,16 @@ import { useLocation, useSearchParams } from 'react-router-dom';
 import Button from '../../shared/ui/Button';
 import Field from '../../shared/ui/Field';
 import Icon from '../../shared/ui/Icon';
-import { AdFileDialog, DeleteDialog, PaidDialog, RejectDialog } from './AdminJobDialogs';
+import { AdFileDialog, ApproveDialog, BulkApproveDialog, DeleteDialog, PaidDialog, RejectDialog } from './AdminJobDialogs';
 import { ExtendDialog, FreeAdDialog } from './AdminJobExtras';
+import TellEmployer from './TellEmployer';
 import Notice from '../../shared/ui/Notice';
 import { StatusBadge } from '../../shared/ui/StatusBadge';
 import { AsyncView } from '../../shared/ui/StateViews';
 import { api } from '../../shared/data';
 import { adReference } from '../../shared/lib/adReference';
-import { candidateWhatsApp, describeStatus, whatsappLink } from '../../shared/lib/format';
-import { adminActions, adminExtraActions, effectiveStatus, STATUSES } from '../../shared/lib/jobStatus';
+import { candidateWhatsApp, describeStatus, formatDate, whatsappLink } from '../../shared/lib/format';
+import { DAY, adminActions, adminExtraActions, endedRecently, endsSoon, ENDED_RECENTLY_DAYS, ENDING_SOON_DAYS, effectiveStatus, STATUSES } from '../../shared/lib/jobStatus';
 import { useLang } from '../../shared/i18n/LangContext';
 import { formatPrice } from '../../shared/lib/money';
 import { useAsync } from '../../shared/lib/useAsync';
@@ -38,16 +39,40 @@ export default function AdminJobs() {
   const { notice, success, fail } = useNotice(location.state?.notice || '');
   const [dialog, setDialog] = useState(null); // { kind: 'reject' | 'paid' | 'delete', job }
   const [busy, setBusy] = useState(false);
+  const [picked, setPicked] = useState([]); // ids ticked for "approve selected"
+  const [tell, setTell] = useState(null); // { phone, text }: the WhatsApp message offered after a decision
 
   const status = params.get('status') || 'all';
   const q = (params.get('q') || '').trim().toLowerCase();
   const setParam = (key, value) => setParams((prev) => withParam(prev, key, value, 'all'), { replace: true });
 
-  const run = async (work, doneText) => {
+  const approveMany = async (days) => {
     setBusy(true);
+    setTell(null);
+    let done = 0;
+    let failed = 0;
+    for (const id of picked) {
+      try {
+        await api.adminApprove(id, days);
+        done += 1;
+      } catch {
+        failed += 1;
+      }
+    }
+    success(t.bulkApproved(done, failed));
+    setPicked([]);
+    ads.reload();
+    setBusy(false);
+    setDialog(null);
+  };
+
+  const run = async (work, doneText, followUp = null) => {
+    setBusy(true);
+    setTell(null);
     try {
       await work();
       success(doneText);
+      setTell(followUp);
       ads.reload();
     } catch (err) {
       fail(err);
@@ -58,11 +83,10 @@ export default function AdminJobs() {
   };
 
   const act = (kind, job) => {
-    if (kind === 'approve') run(() => api.adminApprove(job.id), t.adApproved);
-    else if (kind === 'hide') run(() => api.adminSetHidden(job.id, true), t.adHidden);
+    if (kind === 'hide') run(() => api.adminSetHidden(job.id, true), t.adHidden);
     else if (kind === 'show') run(() => api.adminSetHidden(job.id, false), t.adShown);
     else if (kind === 'feature' || kind === 'unfeature') run(() => api.adminSetFeatured(job.id, kind === 'feature'), t.adFeaturedSaved);
-    else setDialog({ kind: kind === 'markPaid' ? 'paid' : kind, job });
+    else setDialog({ kind: kind === 'markPaid' ? 'paid' : kind, job }); // approve, reject, paid, extend ... open a pop-up first
   };
 
   const all = ads.data || [];
@@ -70,11 +94,16 @@ export default function AdminJobs() {
   const isFirstAd = (job) => !all.some((o) => o.id !== job.id && o.recruiterId === job.recruiterId && !['pending_payment', 'draft'].includes(o.status));
   const sameNumber = (job) => (job.whatsapp ? all.filter((o) => o.id !== job.id && o.whatsapp === job.whatsapp).length : 0);
 
+  // the dashboard links here with ?ending=soon (live ads ending in a few days) or ?ending=ended (ended in the last month: these can get more days)
+  const ending = params.get('ending') || '';
+  const bulk = status === 'paid_pending_review' && !ending; // tick boxes only when the list shows just the ads waiting for approval
   const rows = all.filter((j) => {
+    if (ending === 'soon' && !endsSoon(j)) return false;
+    if (ending === 'ended' && !endedRecently(j)) return false;
     if (status !== 'all' && effectiveStatus(j) !== status) return false;
     if (!q) return true;
     return [j.title, j.company, j.city, j.recruiter?.companyName, j.recruiter?.email, adReference(j.id)].join(' ').toLowerCase().includes(q);
-  });
+  }).sort((a, b) => (ending === 'soon' ? a.expiresAt - b.expiresAt : ending === 'ended' ? b.expiresAt - a.expiresAt : 0));
 
   return (
     <section className="section">
@@ -92,6 +121,20 @@ export default function AdminJobs() {
       </div>
 
       <Notice tone={notice.tone}>{notice.text}</Notice>
+      <TellEmployer tell={tell} />
+      {ending && (
+        <p className="help filter-note">
+          {ending === 'soon' ? t.endingFilterSoon(ENDING_SOON_DAYS) : t.endingFilterEnded(ENDED_RECENTLY_DAYS)}{' '}
+          <Button size="sm" tone="outline" onClick={() => setParam('ending', '')}>{t.showAll}</Button>
+        </p>
+      )}
+
+      {bulk && rows.length > 0 && (
+        <p className="help filter-note">
+          <Button size="sm" tone="outline" onClick={() => setPicked(picked.length === rows.length ? [] : rows.map((j) => j.id))}>{picked.length === rows.length ? t.selectNone : t.selectAll}</Button>
+          <Button size="sm" icon="check" disabled={busy || picked.length === 0} onClick={() => setDialog({ kind: 'bulk' })}>{t.approveSelected(picked.length)}</Button>
+        </p>
+      )}
 
       <AsyncView state={ads} isEmpty={() => false}>
         {() =>
@@ -101,11 +144,16 @@ export default function AdminJobs() {
             <div className="table-wrap">
               <table>
                 <thead>
-                  <tr><th>{t.colAd}</th><th>{t.colEmployer}</th><th>{t.colPackage}</th><th>{t.colStatus}</th><th>{t.colActions}</th></tr>
+                  <tr>{bulk && <th>{t.colSelect}</th>}<th>{t.colAd}</th><th>{t.colEmployer}</th><th>{t.colPackage}</th><th>{t.colStatus}</th><th>{t.colActions}</th></tr>
                 </thead>
                 <tbody>
                   {rows.map((job) => (
                     <tr key={job.id}>
+                      {bulk && (
+                        <td data-label={t.colSelect} className="check-cell">
+                          <input type="checkbox" checked={picked.includes(job.id)} aria-label={t.selectAd(job.title)} onChange={() => setPicked((p) => (p.includes(job.id) ? p.filter((x) => x !== job.id) : [...p, job.id]))} />
+                        </td>
+                      )}
                       <td data-label={t.colAd}>
                         <strong>{job.title}</strong>
                         <br /><span className="muted">{[job.company, job.city, t.country[job.country]].filter(Boolean).join(' · ')}</span>
@@ -154,14 +202,18 @@ export default function AdminJobs() {
       </AsyncView>
 
       {dialog?.kind === 'view' && <AdFileDialog job={dialog.job} onClose={() => setDialog(null)} />}
+      {dialog?.kind === 'bulk' && <BulkApproveDialog count={picked.length} busy={busy} onClose={() => setDialog(null)} onConfirm={approveMany} />}
+      {dialog?.kind === 'approve' && (
+        <ApproveDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={(days) => run(() => api.adminApprove(dialog.job.id, days), t.adApproved, { phone: dialog.job.recruiter?.phone, text: t.msgApproved(dialog.job.title, days, formatDate(Date.now() + days * DAY, lang)) })} />
+      )}
       {dialog?.kind === 'reject' && (
-        <RejectDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={(reason) => run(() => api.adminReject(dialog.job.id, reason), t.adRejected)} />
+        <RejectDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={(reason) => run(() => api.adminReject(dialog.job.id, reason), t.adRejected, { phone: dialog.job.recruiter?.phone, text: t.msgRejected(dialog.job.title, reason) })} />
       )}
       {dialog?.kind === 'paid' && (
         <PaidDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={(reference) => run(() => api.adminMarkPaid(dialog.job.id, { reference }), t.adPaid)} />
       )}
       {dialog?.kind === 'extend' && (
-        <ExtendDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={(days, reason) => run(() => api.adminExtendJob(dialog.job.id, days, reason), t.adExtended)} />
+        <ExtendDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={(days, reason) => run(() => api.adminExtendJob(dialog.job.id, days, reason), t.adExtended, { phone: dialog.job.recruiter?.phone, text: t.msgExtended(dialog.job.title, days) })} />
       )}
       {dialog?.kind === 'freeAd' && (
         <FreeAdDialog job={dialog.job} busy={busy} onClose={() => setDialog(null)} onConfirm={(note) => run(() => api.adminGiveFreeAd(dialog.job.id, note), t.adFreeGiven)} />
