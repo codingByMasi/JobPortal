@@ -81,7 +81,7 @@ export function renderEmail(kind, data = {}, { siteUrl = '' } = {}) {
   const text = `${plain(parts.en)}\n\n---\n\n${plain(parts.hi)}\n\n---\n${FOOTER.en}\n${FOOTER.hi}\n`;
   const html = renderHtml({
     siteUrl,
-    footer: FOOTER,
+    footer: { en: FOOTER.en, hi: FOOTER.hi, links: [[FOOTER.contact, `${siteUrl}/contact`], [FOOTER.details, `${siteUrl}/dashboard/profile`]] },
     sections: [{ lang: 'en', ...parts.en, url: parts.url }, { lang: 'hi', ...parts.hi, url: parts.url }],
   });
   return { subject: oneLine(parts.subject), text, html };

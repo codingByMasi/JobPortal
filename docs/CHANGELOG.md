@@ -1,5 +1,8 @@
 # Changelog
 
+## Step 28 - Job alerts (migration 0035)
+- A job seeker taps **Get job alerts** on the jobs list, leaves an email, confirms it from a confirm mail, and then gets one email a day with the new matching ads. Every mail has an Unsubscribe link (deletes all alerts of that email). Confirm first, 5 alerts per email, 300 sign-ups an hour, unconfirmed alerts deleted after 7 days. New tables `job_alerts` and `alert_outbox` closed to the website; three public functions; server-only sender functions; daily cron. The `send-notifications` function now sends these mails too (new file `_shared/alertMail.js`; the email page builder now takes its footer links). New pages `/alerts/confirm` and `/alerts/unsubscribe` (kept out of search engines). Privacy page updated. Details: `docs/21-job-alerts.md`. Needs migration 0035 applied and the function redeployed to work on the live site.
+
 ## Step 27 - Agency page
 - Each verified agency now has a public page `/agency?ra=<registration number>` with its name, registration number and live ads; "See their ads" on /agencies opens it. No database change: it uses the verified list and the registration number the ads already show (no phone or email). If two verified accounts used the same registration number their ads would show together; the admin should not verify duplicates. `AgencyPage.jsx`, browser tests in `e2e/agencies.spec.js`.
 

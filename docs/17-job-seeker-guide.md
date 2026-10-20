@@ -17,7 +17,7 @@ A free place to see job ads for work in the Gulf (UAE, Saudi Arabia, Qatar, Kuwa
 
 ### How to find a job
 1. Open the site. Choose your **country** or your **kind of work** (plumber, electrician, driver, technician, cook, helper, office).
-2. Or tap **Jobs** and use the filters: country, kind of work, how much **experience** the job needs, and **salary**: choose a currency (for example AED), then write the lowest salary per month you want, and choose **Highest salary first** if you like. Use the search box for a city or company.
+2. Or tap **Jobs** and use the filters: country, kind of work, how much **experience** the job needs, and **salary**: choose a currency (for example AED), then write the lowest salary per month you want, and choose **Highest salary first** if you like. Tap **Get job alerts** to get an email when a new ad matches the country and work you chose: write your email, open the email we send and tap **Confirm**. You get one email a day at most, and every email has an **Unsubscribe** link. Use the search box for a city or company.
 3. The card shows the salary (if the employer wrote it), the experience, the place and a **New** tag for ads under 3 days old. Ads with a star are **Featured**.
 4. Tap **View** to open the whole ad. You can **zoom** a picture, **download** it, or open a **PDF**.
 5. On the ad page you also see: salary, vacancies, the last date to apply and the visa type (if given).

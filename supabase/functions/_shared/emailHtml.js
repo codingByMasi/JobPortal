@@ -28,12 +28,13 @@ const section = (s, siteUrl) => {
 };
 
 /**
- * The whole email page. sections: [{ lang, lines, button, url }] (English first, then Hindi); footer: { en, hi, contact, details }.
+ * The whole email page. sections: [{ lang, lines, button, url }] (English first, then Hindi); footer: { en, hi, links: [[label, url]] }.
  * `siteUrl` has no trailing slash; links that do not start with it are dropped.
  */
 export function renderHtml({ sections, footer, siteUrl }) {
-  const links = [[footer.contact, '/contact'], [footer.details, '/dashboard/profile']]
-    .map(([label, path]) => { const href = safeLink(`${siteUrl}${path}`, siteUrl); return href ? `<a href="${href}" style="color:${BLUE};text-decoration:underline">${esc(label)}</a>` : ''; })
+  if (!Array.isArray(footer.links)) throw new Error('footer.links is needed');
+  const links = footer.links
+    .map(([label, url]) => { const href = safeLink(url, siteUrl); return href ? `<a href="${href}" style="color:${BLUE};text-decoration:underline">${esc(label)}</a>` : ''; })
     .filter(Boolean).join(' &nbsp;|&nbsp; ');
   const body = sections.map((s) => section(s, siteUrl)).join(`<tr><td style="padding:0 28px"><hr style="border:0;border-top:1px solid ${LINE};margin:16px 0 0"></td></tr>`);
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Jobs Abroad</title></head>`

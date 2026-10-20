@@ -6,6 +6,7 @@ import Icon from '../../shared/ui/Icon';
 import JobCard from './JobCard';
 import SectionHeading from '../../shared/ui/SectionHeading';
 import { Empty, JobsStatus } from '../../shared/ui/StateViews';
+import AlertSignup from './AlertSignup';
 import SalaryFilter from './SalaryFilter';
 import { CATEGORIES, COUNTRIES, CURRENCIES, EXPERIENCE } from '../../shared/lib/catalog';
 import { currenciesIn, matchSalary, sortJobs } from '../../shared/lib/jobFilters';
@@ -115,6 +116,8 @@ export default function Jobs({ fixedCountry = '' }) {
         </fieldset>
         <SalaryFilter currencies={currencies} currency={currency} min={min} sort={sort} setParam={setParam} onClear={clearSalary} />
       </div>
+
+      <div className="more"><AlertSignup country={fixedCountry || country} category={category} /></div>
 
       <JobsStatus status={status} onRetry={reload} />
 

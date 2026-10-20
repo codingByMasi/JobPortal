@@ -41,6 +41,9 @@ For the step that takes the work from the branch `feat/razorpay-and-fixes` to th
 - **A migration fails halfway:** Supabase stops at the first error. Read the message, tell the developer, and do not run the next file. Do not edit a migration that already ran; a fix is a new numbered file.
 - **Live test fails:** do not deploy. The new database rules only block posting by unverified employers, so the live site (no employers yet) keeps working for visitors.
 
+## Later: job alerts (migration 0035)
+Not part of the first go-live. When you want them: follow "Putting it live" in `21-job-alerts.md` (apply 0035, redeploy `send-notifications`, merge the website change).
+
 ## After go-live (not part of this step)
 - Emails to employers are off until you set them up: `20-notifications.md` (Resend account, domain, key, deploy the function, cron). Without it the messages just wait in the queue. If `pg_cron` is not turned on, migration 0034 prints a notice: turn on `pg_cron` and run its last block again, or run `select public.queue_ending_reminders();` by hand.
 - Add the two GitHub secrets for the weekly backup (`SUPABASE_DB_URL`, `BACKUP_PASSPHRASE`).

@@ -14,6 +14,7 @@ Run before every "done". Currently 275 tests (about 15 seconds). The test settin
 | `shared/i18n` | Hindi has exactly the English keys; no empty text |
 | `scripts/rls.test.mjs`, `rls.hardening.test.mjs`, `rls.mfa.test.mjs`, `rls.launch.test.mjs` | **about 100 security tests on the REAL database rules** (real Postgres engine, real migrations): file links, change requests, admin functions and log, payment reference, price saved with the ad, blocking, verified tag, delete rules, applicants only for verified employers, admin two-step login. See `03-database-security.md` |
 | `shared/data/env.test.js`, `features/auth/landing.test.js`, `shared/lib/urlParams.test.js` | a published site without keys is blocked (never fake data); login never sends an employer to /admin; filter helper |
+| `scripts/rls.alerts.test.mjs`, `scripts/alertmail.test.mjs`, `shared/data/demo/demo.alerts.test.js`, `e2e/alerts.spec.js` | job alerts: limits, confirm, digest rules, unsubscribe, clean-up, closed tables, email texts and escaping, the sender, the pages, Hindi |
 | `shared/lib/jobFilters.test.js`, `e2e/salary.spec.js` | salary filter: only used currencies, lowest salary, highest first, different currencies never mixed; works in Hindi |
 | `scripts/schema.test.mjs` | `schema.sql` is up to date; every table has RLS; the locking rules and storage rules exist in the SQL; admin functions check `is_admin()` |
 | `scripts/pages.test.mjs` | search pages, Google job data (with the end date), share picture, sitemap; HTML from ads is escaped; public wording is true |

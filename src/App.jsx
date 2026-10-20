@@ -11,6 +11,7 @@ import CountryJobs from './features/jobs/CountryJobs';
 import DeleteAccount from './features/site/DeleteAccount';
 import Agencies from './features/site/Agencies';
 import AgencyPage from './features/jobs/AgencyPage';
+import AlertLink from './features/jobs/AlertLink';
 import InfoPage from './features/site/InfoPage';
 import Home from './features/jobs/Home';
 import JobDetail from './features/jobs/JobDetail';
@@ -55,6 +56,8 @@ export default function App() {
         <Route path="post-job" element={<PostJob />} />
         <Route path="agencies" element={<Agencies />} />
         <Route path="agency" element={<AgencyPage />} />
+        <Route path="alerts/confirm" element={<AlertLink kind="confirm" />} />
+        <Route path="alerts/unsubscribe" element={<AlertLink kind="unsubscribe" />} />
         <Route path="check-agency" element={<InfoPage kind="check" />} />
         <Route path="contact" element={<Contact />} />
         <Route path="login" element={<Login />} />
