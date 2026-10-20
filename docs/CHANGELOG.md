@@ -1,5 +1,8 @@
 # Changelog
 
+## Step 25 - Styled employer emails
+- The emails to employers now carry a styled page (header bar, English and Hindi each with a button, footer with Contact and My details links) together with the plain-text copy. New file `supabase/functions/_shared/emailHtml.js`; `notify.js` sends both. Everything an employer typed is escaped; only links that start with our own https address are used; no images, no tracking. Tests added in `scripts/notify.test.mjs` (escaping checked by breaking it on purpose). No database change.
+
 ## Step 24 - Edit while waiting, file clean-up, ready-made reasons, bulk approve, views, emails (migrations 0031 to 0034)
 - **Edit while waiting (0031):** an employer can edit an ad while it waits for approval (the status, dates, plan, price and owner stay locked by the database). "Ask us to change this" now appears only after approval.
 - **File clean-up (0032):** when an ad is deleted, or its picture replaced, the old file paths go into a queue (`file_cleanup_queue`). The admin's browser removes those files through the Storage API when an admin opens the admin area (Supabase blocks deleting storage files from SQL). This closes the known gap GAP-1.
