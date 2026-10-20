@@ -1,5 +1,12 @@
 # Changelog
 
+## Step 30 - Help articles, CV maker, install bar, admin Activity
+- **Help articles:** `/articles` and four short articles (papers to keep ready, how to read a job offer, before you pay anyone, a CV that gets replies), English and Hindi, in the sitemap. General guidance with a "not legal advice" note; a professional should read them (`docs/11-owner-checklist.md`).
+- **CV maker:** `/cv`, a free one-page CV built in the browser and printed or saved as a PDF with the browser; only the CV prints; nothing is stored or sent.
+- **Install bar:** offers to put the site on the phone's home screen where the browser allows it; quiet for 30 days after "Not now".
+- **Admin Activity tab:** `/admin/activity` shows the admin log (who approved, rejected, hid, refunded, changed settings), newest 300, with a filter. No database change (the admin log was already written and admins could already read it).
+- Tests: `cvModel.test.js`, `installPrompt.test.js`, `demo.activity.test.js`, `e2e/extras.spec.js`; the accessibility scan now also covers these pages and the agency page.
+
 ## Step 29 - Reports in the admin work queue
 - The admin dashboard now shows **Reports to check** and **Account deletions** as cards (they were easy to miss before). On the Reports screen, a live reported ad gets one button, **Hide the ad and close the report**, and an ad with several open reports says so. No database change (the counts and the hide use what admins could already read and do). Tests: `reports.test.js`, `e2e/reportsqueue.spec.js`.
 

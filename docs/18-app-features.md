@@ -7,6 +7,8 @@ One page that explains the whole product in plain words. Details for each role a
 
 ## Features for job seekers (no login)
 - Browse the latest and **featured** ads; pages for **UAE, Saudi Arabia, Qatar, Kuwait, Oman and other countries**.
+- **Help articles** (4 short guides in English and Hindi), a **free CV maker** that prints or saves a one-page PDF (nothing stored or sent), and an **install bar** to put the site on the phone's home screen.
+- **Admin Activity tab:** what the admins did, newest first, with a filter.
 - **Job alerts:** a job seeker leaves an email (after choosing a country or kind of work if they like), confirms it, and gets one email a day with new matching ads; one tap to unsubscribe.
 - **Agency page:** each verified agency has its own page (name, registration number, live ads), opened from the Verified agencies list.
 - **Filters** by country, kind of work, experience and **salary** (a currency, a lowest monthly salary, highest first), plus a **search box**; a **New** tag for ads under 3 days.

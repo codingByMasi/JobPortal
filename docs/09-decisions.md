@@ -49,5 +49,8 @@
 ## Employer emails are styled HTML plus a plain-text copy (step 25)
 Why: plain text looked unprofessional. The page uses simple tables and inline styles (works in Gmail, Outlook and phones), no library, no images, no tracking. Anything an employer typed is escaped, and only links under our own https address are allowed. The plain-text copy stays for mail apps and spam filters.
 
+## CV maker prints with the browser; the install bar has no service worker (step 30)
+Why: a CV library or a PDF generator would add weight and a new thing to keep safe. The browser can already print a page or save it as a PDF, so the CV is a plain page with a print style that shows only the CV. Nothing typed is stored or sent. The install bar listens for the browser's own install offer; we did not add a service worker because an offline copy of the site could show old job ads. If the browser does not offer installing (for example Safari on iPhone), the bar simply does not show.
+
 ## ESLint added as a development tool (step 11)
 Why: the project had no code checker. It found a real mistake on its first run (a text key written twice, so the first text was silently ignored). It is a development tool only (`eslint`, `@eslint/js`, `eslint-plugin-react-hooks`, `globals`): nothing is added to the website the visitors download. Two style rules of the newest hooks plugin are switched off because they flag data-loading patterns that work correctly here. Run it with `npm run lint`; it also runs in CI and in `npm run test:all`.

@@ -1,0 +1,24 @@
+/* CV maker and the install bar. On screen the CV is a white sheet; when printed, only the sheet is printed. */
+.cv-page { display: flex; flex-direction: column; gap: 18px; }
+.cv-screen { display: flex; flex-direction: column; gap: 18px; }
+.cv-job { border: 2px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.cv-job legend { padding: 0 8px; font-weight: 700; color: var(--blue-dark); }
+.cv-sheet { background: #fff; color: #000; border: 2px solid var(--line-strong); border-radius: 12px; padding: 24px; line-height: 1.45; overflow-wrap: anywhere; }
+.cv-sheet h2.cv-name { font-size: 26px; margin: 0 0 4px; }
+.cv-sheet h3 { font-size: 16px; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #000; padding-bottom: 2px; margin: 16px 0 6px; }
+.cv-sheet p { margin: 0 0 4px; }
+.cv-sheet ul { margin: 0; padding-left: 20px; list-style: disc; }
+.cv-contact { color: #222; }
+.cv-want { font-weight: 700; margin-top: 6px; }
+.cv-entry { margin-bottom: 8px; }
+
+.install-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 16px; background: var(--blue-soft); border-bottom: 1px solid var(--line); }
+.install-bar p { margin: 0; flex: 1 1 220px; }
+.install-bar .install-title { font-weight: 700; color: var(--blue-dark); }
+.install-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+@media print {
+  body * { visibility: hidden; }
+  .cv-sheet, .cv-sheet * { visibility: visible; }
+  .cv-sheet { position: absolute; left: 0; top: 0; width: 100%; border: 0; border-radius: 0; padding: 0; }
+}
