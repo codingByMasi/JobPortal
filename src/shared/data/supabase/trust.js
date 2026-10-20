@@ -19,7 +19,7 @@ export async function getPublicCounts() {
 
 export async function adminListReports() {
   return ok(
-    await supabase.from('reports').select('*, job:jobs(id, title, recruiter:profiles(company_name))').order('created_at', { ascending: false }).limit(500),
+    await supabase.from('reports').select('*, job:jobs(id, title, status, recruiter:profiles(company_name))').order('created_at', { ascending: false }).limit(500),
   ).map(toReport);
 }
 

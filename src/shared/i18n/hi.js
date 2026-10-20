@@ -801,6 +801,10 @@ export const hi = {
   /* the admin work queue and the employer's ending notes */
   queueTitle: 'आज क्या करना है',
   cLicenses: 'जाँचने वाले लाइसेंस',
+  cReports: 'जाँचने वाली शिकायतें',
+  cDeletions: 'खाता मिटाने के अनुरोध',
+  reportHideAd: 'विज्ञापन छिपाएँ और पूरा करें',
+  reportsOnAd: (n) => `इस विज्ञापन पर ${n} खुली शिकायतें`,
   cEnding: (days) => `${days} दिन में खत्म`,
   cEnded: (days) => `पिछले ${days} दिन में खत्म हुए`,
   cOldUnpaid: (n) => `${n} पुराने विज्ञापन अभी भी भुगतान के इंतज़ार में हैं (विज्ञापन मुफ़्त होने से पहले के)।`,

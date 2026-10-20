@@ -15,7 +15,7 @@ Every screen that loads data has **loading, empty and error** states (shared `St
 | `/delete-account` | all | `features/site/DeleteAccount` | email + note; saved as an open request; the page explains what is deleted | demo tests, browser tests |
 | `/admin/guides` | admin | `features/admin/AdminGuides` | the guides, readable by admins only, with Copy and Print | demo tests, browser test |
 | `/admin/settings` | admin | `features/admin/AdminSettings` | the shop details (WhatsApp, UPI ID and name, emails, company, site address) with a help line each; checks before saving; red reminder on the admin home while any is missing | demo tests, browser test |
-| `/admin/reports` | admin | `features/admin/AdminReports` | reports about ads (reason, message, contact, find the ad, mark done, dismiss) and account deletion requests | demo tests, browser tests |
+| `/admin/reports` | admin | `features/admin/AdminReports` | reports about ads (reason, message, contact, find the ad, "Hide the ad and close the report" for a live ad, mark done, dismiss; "N open reports on this ad" when an ad was reported many times) and account deletion requests; both counts are cards on `/admin` | demo tests, browser tests (`e2e/reportsqueue.spec.js`) |
 | `/post-job` | all | `features/site/PostJob` | 3 steps + the prices of the packages + the right button | demo, axe clean |
 | `/contact`, `/privacy`, `/terms`, 404 | all | `features/site` | simple pages | by hand (earlier version) |
 | `/login`, `/signup` | visitor | `features/auth` | employer login (demo logins shown in demo mode), signup; never sends an employer to /admin; not indexed by search engines | demo, by hand + axe clean |

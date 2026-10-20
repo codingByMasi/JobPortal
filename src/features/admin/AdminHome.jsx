@@ -47,6 +47,8 @@ export default function AdminHome() {
               <Card urgent to="/admin/jobs?status=paid_pending_review" icon="clock" number={c.review} label={t.cReview} />
               <Card urgent to="/admin/jobs?ending=soon" icon="clock" number={c.endingSoon} label={t.cEnding(ENDING_SOON_DAYS)} />
               <Card urgent to="/admin/requests" icon="edit" number={c.requests} label={t.cRequests} />
+              <Card urgent to="/admin/reports" icon="alert" number={c.reports} label={t.cReports} />
+              <Card urgent to="/admin/reports" icon="trash" number={c.deletions} label={t.cDeletions} />
               <Card to="/admin/jobs?ending=ended" icon="refresh" number={c.ended} label={t.cEnded(ENDED_RECENTLY_DAYS)} />
               <Card to="/admin/jobs?status=live" icon="eye" number={c.live} label={t.cLive} />
             </div>

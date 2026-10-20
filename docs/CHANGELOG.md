@@ -1,5 +1,8 @@
 # Changelog
 
+## Step 29 - Reports in the admin work queue
+- The admin dashboard now shows **Reports to check** and **Account deletions** as cards (they were easy to miss before). On the Reports screen, a live reported ad gets one button, **Hide the ad and close the report**, and an ad with several open reports says so. No database change (the counts and the hide use what admins could already read and do). Tests: `reports.test.js`, `e2e/reportsqueue.spec.js`.
+
 ## Step 28 - Job alerts (migration 0035)
 - A job seeker taps **Get job alerts** on the jobs list, leaves an email, confirms it from a confirm mail, and then gets one email a day with the new matching ads. Every mail has an Unsubscribe link (deletes all alerts of that email). Confirm first, 5 alerts per email, 300 sign-ups an hour, unconfirmed alerts deleted after 7 days. New tables `job_alerts` and `alert_outbox` closed to the website; three public functions; server-only sender functions; daily cron. The `send-notifications` function now sends these mails too (new file `_shared/alertMail.js`; the email page builder now takes its footer links). New pages `/alerts/confirm` and `/alerts/unsubscribe` (kept out of search engines). Privacy page updated. Details: `docs/21-job-alerts.md`. Needs migration 0035 applied and the function redeployed to work on the live site.
 

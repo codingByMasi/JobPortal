@@ -91,7 +91,7 @@ export async function adminCounts() {
   const now = new Date();
   const soon = new Date(now.getTime() + ENDING_SOON_DAYS * DAY).toISOString();
   const since = new Date(now.getTime() - ENDED_RECENTLY_DAYS * DAY).toISOString();
-  const [live, review, waitingPayment, endingSoon, ended, paid, requests, licenses] = await Promise.all([
+  const [live, review, waitingPayment, endingSoon, ended, paid, requests, licenses, reports, deletions] = await Promise.all([
     count((q) => q.eq('status', 'live').gt('expires_at', now.toISOString())),
     count((q) => q.eq('status', 'paid_pending_review')),
     count((q) => q.eq('status', 'pending_payment')),
@@ -100,11 +100,11 @@ export async function adminCounts() {
     supabase.from('payments').select('amount_paise').eq('status', 'paid').gte('created_at', monthStart),
     supabase.from('change_requests').select('id', { count: 'exact', head: true }).eq('status', 'open'),
     supabase.from('verification_requests').select('id', { count: 'exact', head: true }).eq('status', 'submitted'),
+    supabase.from('reports').select('id', { count: 'exact', head: true }).eq('status', 'open'),
+    supabase.from('deletion_requests').select('id', { count: 'exact', head: true }).eq('status', 'open'),
   ]);
-  if (requests.error) raise(requests.error);
-  if (paid.error) raise(paid.error);
-  if (licenses.error) raise(licenses.error);
-  return { live, review, waitingPayment, endingSoon, ended, licenses: licenses.count ?? 0, revenuePaise: paid.data.reduce((sum, x) => sum + x.amount_paise, 0), requests: requests.count ?? 0 };
+  for (const part of [requests, paid, licenses, reports, deletions]) if (part.error) raise(part.error);
+  return { live, review, waitingPayment, endingSoon, ended, licenses: licenses.count ?? 0, reports: reports.count ?? 0, deletions: deletions.count ?? 0, revenuePaise: paid.data.reduce((sum, x) => sum + x.amount_paise, 0), requests: requests.count ?? 0 };
 }
 
 export async function adminListChangeRequests() {

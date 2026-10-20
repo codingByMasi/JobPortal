@@ -10,6 +10,7 @@ import { formatDate } from '../../shared/lib/format';
 import { useLang } from '../../shared/i18n/LangContext';
 import { useAsync } from '../../shared/lib/useAsync';
 import { useNotice } from '../../shared/lib/useNotice';
+import { reportsOpenPerAd } from '../../shared/lib/reports';
 import { withParam } from '../../shared/lib/urlParams';
 
 /** Reports and deletion requests for the admin. Waiting ones show first. */
@@ -33,6 +34,11 @@ export default function AdminReports() {
     }
   };
   const show = (rows) => rows.filter((r) => status === 'all' || r.status === status);
+  const openPerAd = reportsOpenPerAd(data.data?.reports || []);
+  const hideAndClose = (r) => set(async () => {
+    await api.adminSetHidden(r.jobId, true);
+    await api.adminSetReport(r.id, 'done');
+  });
   const buttons = (r, setter) => r.status === 'open' && (
     <div className="row-actions">
       <Button size="sm" tone="green" icon="check" onClick={() => set(() => setter(r.id, 'done'))}>{t.reportMarkDone}</Button>
@@ -63,7 +69,7 @@ export default function AdminReports() {
                     {show(reports).map((r) => (
                       <tr key={r.id}>
                         <td data-label={t.colDate}>{formatDate(r.createdAt, lang)}</td>
-                        <td data-label={t.colAd}>{r.jobTitle || '-'}<br /><span className="muted">{r.employerName}</span></td>
+                        <td data-label={t.colAd}>{r.jobTitle || '-'}<br /><span className="muted">{r.employerName}</span>{r.status === 'open' && openPerAd[r.jobId] > 1 && <><br /><strong>{t.reportsOnAd(openPerAd[r.jobId])}</strong></>}</td>
                         <td data-label={t.colReason}>{t.reportReasons[r.reason]}</td>
                         <td data-label={t.colMessage}>{r.message || '-'}</td>
                         <td data-label={t.colContact}>{r.contact || '-'}</td>
@@ -72,6 +78,11 @@ export default function AdminReports() {
                           <div className="row-actions">
                             <Button size="sm" tone="outline" icon="search" to={`/admin/jobs?q=${adReference(r.jobId)}`}>{t.reportOpenAd}</Button>
                           </div>
+                          {r.status === 'open' && r.jobStatus === 'live' && (
+                            <div className="row-actions">
+                              <Button size="sm" tone="danger" icon="eyeoff" onClick={() => hideAndClose(r)}>{t.reportHideAd}</Button>
+                            </div>
+                          )}
                           {buttons(r, api.adminSetReport)}
                         </td>
                       </tr>
