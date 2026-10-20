@@ -320,6 +320,7 @@ begin
   select blocked::text into r from public.profiles where email = 'comeback@livetest.invalid';
   res := res || pg_temp.chk('15 launch', 'a new signup with a banned phone starts blocked', 'true', r);
 
+  -- (the test admin has two-step login on since section 13, so admin calls below use aal2)
   -- ===== 16. license verification, free posting, approving with days, extending an ended ad (migration 0028) =====
   insert into auth.users (id, email, raw_user_meta_data) values (u_e3, 'e3@livetest.invalid', '{"company_name":"Employer Three","phone":"9876500003"}');
   lic := u_e3 || '/license.jpg';
@@ -334,20 +335,20 @@ begin
   res := res || pg_temp.chk('16 license', 'the employer reads their own request', '1', r);
   r := pg_temp.try('select count(*)::text from storage.objects where bucket_id = ''licenses''', u_e2);
   res := res || pg_temp.chk('16 license', 'another employer cannot list license files except their own', '1', r);
-  r := pg_temp.try(format($q$insert into public.jobs (title, whatsapp) values ('Free live ad', '9876543210')$q$), u_e3);
+  r := pg_temp.try(format($q$insert into public.jobs (title, whatsapp) values ('Free live ad', '9700012345')$q$), u_e3);
   res := res || pg_temp.chk('16 license', 'an employer whose license is not yet checked cannot post', 'denied', r);
-  r := pg_temp.try(format($q$update public.profiles set verified = true where id = %L$q$, u_e3), u_admin);
+  r := pg_temp.try(format($q$update public.profiles set verified = true where id = %L$q$, u_e3), u_admin, 'aal2');
   res := res || pg_temp.chk('16 license', 'the admin verifies the employer after the license', 'ok rows=1', r);
   select status into r from public.verification_requests where recruiter_id = u_e3;
   res := res || pg_temp.chk('16 license', 'verifying closes the request as approved', 'approved', r);
-  r := pg_temp.try($q$insert into public.jobs (title, whatsapp, status, final_price_paise) values ('Free live ad', '9876543210', 'live', 5000)$q$, u_e3);
+  r := pg_temp.try($q$insert into public.jobs (title, whatsapp, status, final_price_paise) values ('Free live ad', '9700012345', 'live', 5000)$q$, u_e3);
   res := res || pg_temp.chk('16 free posting', 'a verified employer posts without choosing a package', 'ok rows=1', r);
   select id into j7 from public.jobs where title = 'Free live ad';
   select status || '/' || final_price_paise || '/' || (package_id is not null)::text into r from public.jobs where id = j7;
   res := res || pg_temp.chk('16 free posting', 'whatever they ask, the ad waits for approval at price 0 with the default plan', 'paid_pending_review/0/true', r);
-  r := pg_temp.try(format($q$select public.admin_approve_job(%L, 400)::text$q$, j7), u_admin);
+  r := pg_temp.try(format($q$select public.admin_approve_job(%L, 400)::text$q$, j7), u_admin, 'aal2');
   res := res || pg_temp.chk('16 free posting', 'the admin cannot approve for 400 days', 'denied', r);
-  r := pg_temp.try(format($q$select (public.admin_approve_job(%L, 12)).id::text$q$, j7), u_admin);
+  r := pg_temp.try(format($q$select (public.admin_approve_job(%L, 12)).id::text$q$, j7), u_admin, 'aal2');
   res := res || pg_temp.chk('16 free posting', 'the admin approves and chooses 12 days', 'allowed', r);
   select status || '/' || round(extract(epoch from (expires_at - starts_at)) / 86400)::int into r from public.jobs where id = j7;
   res := res || pg_temp.chk('16 free posting', 'it is live for exactly the chosen days', 'live/12', r);
@@ -359,7 +360,7 @@ begin
   res := res || pg_temp.chk('16 free posting', 'an expired ad is not on the public list', '0', r);
   r := pg_temp.try(format($q$select public.admin_extend_job(%L, 5, 'live test')::text$q$, j7), u_e3);
   res := res || pg_temp.chk('16 free posting', 'an employer cannot add days', 'denied', r);
-  r := pg_temp.try(format($q$select (public.admin_extend_job(%L, 5, 'live test')).id::text$q$, j7), u_admin);
+  r := pg_temp.try(format($q$select (public.admin_extend_job(%L, 5, 'live test')).id::text$q$, j7), u_admin, 'aal2');
   res := res || pg_temp.chk('16 free posting', 'the admin adds days to the ended ad', 'allowed', r);
   select status into r from public.jobs where id = j7;
   res := res || pg_temp.chk('16 free posting', 'the ended ad is live again', 'live', r);
