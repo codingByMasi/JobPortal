@@ -180,6 +180,8 @@ export async function adminCounts() {
     endingSoon: state.db.jobs.map(asJob).filter((j) => endsSoon(j, now)).length,
     ended: state.db.jobs.map(asJob).filter((j) => endedRecently(j, now)).length,
     licenses: (state.db.verification_requests || []).filter((r) => r.status === 'submitted').length,
+    reports: (state.db.reports || []).filter((r) => r.status === 'open').length,
+    deletions: (state.db.deletion_requests || []).filter((r) => r.status === 'open').length,
     revenuePaise: state.db.payments
       .filter((x) => x.status === 'paid' && Date.parse(x.created_at) >= monthStart)
       .reduce((sum, x) => sum + x.amount_paise, 0),

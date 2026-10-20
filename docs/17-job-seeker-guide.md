@@ -17,7 +17,7 @@ A free place to see job ads for work in the Gulf (UAE, Saudi Arabia, Qatar, Kuwa
 
 ### How to find a job
 1. Open the site. Choose your **country** or your **kind of work** (plumber, electrician, driver, technician, cook, helper, office).
-2. Or tap **Jobs** and use the filters: country, kind of work, and how much **experience** the job needs. Use the search box for a city or company.
+2. Or tap **Jobs** and use the filters: country, kind of work, how much **experience** the job needs, and **salary**: choose a currency (for example AED), then write the lowest salary per month you want, and choose **Highest salary first** if you like. Tap **Get job alerts** to get an email when a new ad matches the country and work you chose: write your email, open the email we send and tap **Confirm**. You get one email a day at most, and every email has an **Unsubscribe** link. Use the search box for a city or company.
 3. The card shows the salary (if the employer wrote it), the experience, the place and a **New** tag for ads under 3 days old. Ads with a star are **Featured**.
 4. Tap **View** to open the whole ad. You can **zoom** a picture, **download** it, or open a **PDF**.
 5. On the ad page you also see: salary, vacancies, the last date to apply and the visa type (if given).
@@ -29,7 +29,7 @@ Your name and phone number go **only** to that employer. We delete applications 
 
 ### Check the agency before you trust it
 - Open **How to check an agency** (link at the bottom of every page). It shows how to check the registration number on the government eMigrate website, what a fake offer looks like, and what to do if you already paid.
-- Open **Verified agencies** to see the employers whose license our team checked, with their registration number. Being on the list is a good sign, not a promise: check the number yourself too.
+- Open **Verified agencies** to see the employers whose license our team checked, with their registration number. Tap **See their ads** to open the agency's own page with all its live ads. Being on the list is a good sign, not a promise: check the number yourself too.
 - Found a good job? Tap **Share this job on WhatsApp** on the ad to send it to a friend or family member.
 
 ### If something is wrong with an ad

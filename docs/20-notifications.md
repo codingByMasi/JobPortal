@@ -13,7 +13,7 @@ Employers get a short email (English, then Hindi) when something happens to thei
 | An ad ends within 3 days | Your ad ends soon: ask for more days (sent once; sent again after days are added) |
 | An ad ends | Your ad has ended: ask for more days or renew |
 
-Emails are plain text only (no HTML, no pictures, no tracking). Whatever an employer typed (a title, a reason) is cleaned: no line breaks in the subject, no control characters, cut to a safe length. Each email ends with how to turn the emails off. An employer turns them off in **My details**; blocked employers get none; a failed message is tried up to 5 times; messages older than 60 days are deleted.
+Each email is a styled page (header bar, the message in English and Hindi each with a button, footer with Contact and My details links; code in `supabase/functions/_shared/emailHtml.js`) plus a plain-text copy. No pictures and no tracking. Whatever an employer typed (a title, a reason) is cleaned: no line breaks in the subject, no control characters, cut to a safe length, and escaped in the page so it can never become HTML or a link; only links that start with our own https address are used. Each email ends with how to turn the emails off. An employer turns them off in **My details**; blocked employers get none; a failed message is tried up to 5 times; messages older than 60 days are deleted.
 
 The admin's **Tell the employer on WhatsApp** button is separate and stays: use it when you want to write personally.
 

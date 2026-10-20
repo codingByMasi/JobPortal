@@ -6,7 +6,10 @@ import Icon from '../../shared/ui/Icon';
 import JobCard from './JobCard';
 import SectionHeading from '../../shared/ui/SectionHeading';
 import { Empty, JobsStatus } from '../../shared/ui/StateViews';
-import { CATEGORIES, COUNTRIES, EXPERIENCE } from '../../shared/lib/catalog';
+import AlertSignup from './AlertSignup';
+import SalaryFilter from './SalaryFilter';
+import { CATEGORIES, COUNTRIES, CURRENCIES, EXPERIENCE } from '../../shared/lib/catalog';
+import { currenciesIn, matchSalary, sortJobs } from '../../shared/lib/jobFilters';
 import { useJobs } from './JobsContext';
 import { useLang } from '../../shared/i18n/LangContext';
 import { usePageMeta } from '../../shared/lib/usePageMeta';
@@ -27,24 +30,36 @@ export default function Jobs({ fixedCountry = '' }) {
   const experience = params.get('experience') || '';
   const category = params.get('category') || '';
   const q = params.get('q') || '';
+  const currency = params.get('currency') || '';
+  const min = params.get('min') || '';
+  const sort = currency ? params.get('sort') || '' : '';
 
   const setParam = (key, value) => {
     setParams((prev) => withParam(prev, key, value), { replace: true });
     setShown(PAGE);
   };
 
+  // One change for all three salary settings: separate changes would overwrite each other in the address.
+  const clearSalary = () => {
+    setParams((prev) => { const next = new URLSearchParams(prev); ['currency', 'min', 'sort'].forEach((k) => next.delete(k)); return next; }, { replace: true });
+    setShown(PAGE);
+  };
+
   const list = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    return jobs.filter((j) => {
+    const kept = jobs.filter((j) => {
       if (country && j.country !== country) return false;
       if (category && j.category !== category) return false;
       if (experience && j.experienceLevel !== experience) return false;
+      if (!matchSalary(j, { currency, min })) return false;
       if (!needle) return true;
       return [j.title, j.city, j.company, t.country[j.country], t.category[j.category]].join(' ').toLowerCase().includes(needle);
     });
-  }, [jobs, country, category, experience, q, t]);
+    return sortJobs(kept, sort);
+  }, [jobs, country, category, experience, currency, min, sort, q, t]);
+  const currencies = useMemo(() => currenciesIn(jobs, CURRENCIES), [jobs]);
 
-  const filtered = (!fixedCountry && country) || category || experience || q;
+  const filtered = (!fixedCountry && country) || category || experience || currency || q;
 
   return (
     <div className="page">
@@ -99,7 +114,10 @@ export default function Jobs({ fixedCountry = '' }) {
             </button>
           ))}
         </fieldset>
+        <SalaryFilter currencies={currencies} currency={currency} min={min} sort={sort} setParam={setParam} onClear={clearSalary} />
       </div>
+
+      <div className="more"><AlertSignup country={fixedCountry || country} category={category} /></div>
 
       <JobsStatus status={status} onRetry={reload} />
 

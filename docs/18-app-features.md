@@ -7,7 +7,9 @@ One page that explains the whole product in plain words. Details for each role a
 
 ## Features for job seekers (no login)
 - Browse the latest and **featured** ads; pages for **UAE, Saudi Arabia, Qatar, Kuwait, Oman and other countries**.
-- **Filters** by country, kind of work and experience, plus a **search box**; a **New** tag for ads under 3 days.
+- **Job alerts:** a job seeker leaves an email (after choosing a country or kind of work if they like), confirms it, and gets one email a day with new matching ads; one tap to unsubscribe.
+- **Agency page:** each verified agency has its own page (name, registration number, live ads), opened from the Verified agencies list.
+- **Filters** by country, kind of work, experience and **salary** (a currency, a lowest monthly salary, highest first), plus a **search box**; a **New** tag for ads under 3 days.
 - Each ad shows the employer's own **picture or PDF** (zoom, download, open PDF) and, when given, **salary, experience, vacancies, last date and visa type**; a **Verified** tag with the registration number when the admin has checked the employer.
 - **Apply** by WhatsApp or by a short form (consent tick, one application per phone per ad).
 - **Fraud warning** ("Never pay money for a job"), **Report this ad**, and **Delete my account**.

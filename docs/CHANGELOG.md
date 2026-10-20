@@ -1,5 +1,20 @@
 # Changelog
 
+## Step 29 - Reports in the admin work queue
+- The admin dashboard now shows **Reports to check** and **Account deletions** as cards (they were easy to miss before). On the Reports screen, a live reported ad gets one button, **Hide the ad and close the report**, and an ad with several open reports says so. No database change (the counts and the hide use what admins could already read and do). Tests: `reports.test.js`, `e2e/reportsqueue.spec.js`.
+
+## Step 28 - Job alerts (migration 0035)
+- A job seeker taps **Get job alerts** on the jobs list, leaves an email, confirms it from a confirm mail, and then gets one email a day with the new matching ads. Every mail has an Unsubscribe link (deletes all alerts of that email). Confirm first, 5 alerts per email, 300 sign-ups an hour, unconfirmed alerts deleted after 7 days. New tables `job_alerts` and `alert_outbox` closed to the website; three public functions; server-only sender functions; daily cron. The `send-notifications` function now sends these mails too (new file `_shared/alertMail.js`; the email page builder now takes its footer links). New pages `/alerts/confirm` and `/alerts/unsubscribe` (kept out of search engines). Privacy page updated. Details: `docs/21-job-alerts.md`. Needs migration 0035 applied and the function redeployed to work on the live site.
+
+## Step 27 - Agency page
+- Each verified agency now has a public page `/agency?ra=<registration number>` with its name, registration number and live ads; "See their ads" on /agencies opens it. No database change: it uses the verified list and the registration number the ads already show (no phone or email). If two verified accounts used the same registration number their ads would show together; the admin should not verify duplicates. `AgencyPage.jsx`, browser tests in `e2e/agencies.spec.js`.
+
+## Step 26 - Salary filter on the jobs list
+- Job seekers can filter by salary: pick a currency (only currencies that ads really show), then a lowest salary per month and "highest salary first". Salaries in different currencies are never compared. Works in English and Hindi, kept in the address. Screen-only change (no database change): `SalaryFilter.jsx`, `shared/lib/jobFilters.js`, tests `jobFilters.test.js` and `e2e/salary.spec.js`.
+
+## Step 25 - Styled employer emails
+- The emails to employers now carry a styled page (header bar, English and Hindi each with a button, footer with Contact and My details links) together with the plain-text copy. New file `supabase/functions/_shared/emailHtml.js`; `notify.js` sends both. Everything an employer typed is escaped; only links that start with our own https address are used; no images, no tracking. Tests added in `scripts/notify.test.mjs` (escaping checked by breaking it on purpose). No database change.
+
 ## Step 24 - Edit while waiting, file clean-up, ready-made reasons, bulk approve, views, emails (migrations 0031 to 0034)
 - **Edit while waiting (0031):** an employer can edit an ad while it waits for approval (the status, dates, plan, price and owner stay locked by the database). "Ask us to change this" now appears only after approval.
 - **File clean-up (0032):** when an ad is deleted, or its picture replaced, the old file paths go into a queue (`file_cleanup_queue`). The admin's browser removes those files through the Storage API when an admin opens the admin area (Supabase blocks deleting storage files from SQL). This closes the known gap GAP-1.

@@ -42,7 +42,7 @@ export async function adminListReports() {
   needAdmin();
   return [...reportRows()].sort(newest).map((r) => {
     const job = state.db.jobs.find((j) => j.id === r.job_id);
-    return toReport({ ...r, job: job ? { title: job.title, recruiter: profileOf(job.recruiter_id) } : null });
+    return toReport({ ...r, job: job ? { title: job.title, status: job.status, recruiter: profileOf(job.recruiter_id) } : null });
   });
 }
 

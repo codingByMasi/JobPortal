@@ -40,6 +40,36 @@ describe('renderEmail', () => {
     expect(mail.text).not.toMatch(/\r/);
   });
 
+  it('the styled page has a header, both languages with a button each, and a footer', () => {
+    for (const kind of KINDS) {
+      const { html } = renderEmail(kind, data, { siteUrl: SITE });
+      expect(html, kind).toContain('Jobs Abroad</span>'); // header bar
+      expect(html, kind).toContain('lang="en"');
+      expect(html, kind).toContain('lang="hi"');
+      expect(html.match(/<a href="/g).length, kind).toBe(4); // two buttons and two footer links
+      expect(html, kind).toContain('turn them off'); // footer
+      expect(html, kind).toMatch(/[ऀ-ॿ]/);
+    }
+  });
+
+  it('whatever an employer typed is escaped in the page: no tags, no quotes that break out, no outside links', () => {
+    const evil = { ...data, title: '<script>alert(1)</script><img src=x onerror=alert(2)>"\'', reason: '<a href="https://evil.example">click</a>', job_id: 'x"><b>' };
+    for (const kind of KINDS) {
+      const { html } = renderEmail(kind, evil, { siteUrl: SITE });
+      expect(html, kind).not.toContain('<script');
+      expect(html, kind).not.toContain('<img');
+      expect(html, kind).not.toContain('<b>');
+      expect(html, kind).not.toContain('href="https://evil.example"');
+      const hrefs = [...html.matchAll(/href="([^"]*)"/g)].map((m) => m[1]);
+      for (const href of hrefs) expect(href.startsWith(`${SITE}/`), `${kind} ${href}`).toBe(true);
+    }
+  });
+
+  it('a site address that is not https gives no links at all', () => {
+    const { html } = renderEmail('ad_approved', data, { siteUrl: 'http://deshduniya.com' });
+    expect(html).not.toContain('<a href=');
+  });
+
   it('long reasons and titles are cut, a missing date does not print "undefined" or "Invalid Date"', () => {
     const mail = renderEmail('ad_rejected', { title: 'T'.repeat(500), reason: 'R'.repeat(900) }, { siteUrl: SITE });
     expect(mail.text.length).toBeLessThan(2000);
@@ -79,7 +109,8 @@ describe('sendDueNotifications', () => {
     const body = JSON.parse(posts[0].init.body);
     expect(body).toMatchObject({ from: 'Jobs Abroad <hello@deshduniya.com>', to: ['e0@x.co'] });
     expect(body.text).toContain(`${SITE}/job/abc-123`); // the trailing slash of SITE_URL was dropped
-    expect(body).not.toHaveProperty('html');
+    expect(body.html).toContain('<!doctype html>'); // the styled page goes with the plain-text copy
+    expect(body.html).toContain(`${SITE}/job/abc-123`);
     expect(calls.filter(([n]) => n === 'mark_notification_sent').map(([, a]) => a.p_id)).toEqual(['n0', 'n1']);
   });
 

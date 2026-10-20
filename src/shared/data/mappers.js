@@ -289,6 +289,7 @@ export function toReport(row) {
     id: row.id,
     jobId: row.job_id,
     jobTitle: row.job?.title || '',
+    jobStatus: row.job?.status || '',
     employerName: row.job?.recruiter?.company_name || '',
     reason: row.reason,
     message: row.message || '',

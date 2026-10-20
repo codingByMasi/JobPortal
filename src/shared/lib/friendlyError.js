@@ -20,6 +20,9 @@ export function errorKey(err) {
   if (/license: needed/i.test(msg)) return 'errLicenseNeeded';
   if (/license: number/i.test(msg)) return 'errLicenseNumber';
   if (/license: file/i.test(msg)) return 'errLicenseFile';
+  if (code === 'ALERT_EMAIL' || /correct email address/i.test(msg)) return 'errAlertEmail';
+  if (code === 'ALERT_LIMIT' || /already has 5 alerts/i.test(msg)) return 'errAlertLimit';
+  if (/too many requests right now/i.test(msg)) return 'errAlertBusy';
   if (/blocked/i.test(msg)) return 'errBlocked';
   if (/payments_reference|payments_one_paid|payment_proofs_reference|proof: reference_used/i.test(msg) || code === 'REFERENCE_USED' || code === 'PROOF_REFERENCE_USED') return 'errReferenceUsed';
   if (/has ended/i.test(msg)) return 'errEnded';

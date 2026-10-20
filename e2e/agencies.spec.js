@@ -24,7 +24,22 @@ test.describe('trust pages and sharing', () => {
     const body = await page.locator('main').innerText();
     expect(body).not.toMatch(/@|\b9[0-9]{9}\b|recruiter@example/);
     await card.getByRole('link', { name: 'See their ads' }).click();
-    await expect(page).toHaveURL(/\/jobs\?q=Gulf%20Works/);
+    await expect(page).toHaveURL(/\/agency\?ra=B-1234%2FDEL%2F2020/);
+    await expect(page.getByRole('heading', { name: 'Gulf Works', level: 1 })).toBeVisible();
+    await expect(page.getByText('Registration number: B-1234/DEL/2020')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Plumbers Needed' })).toBeVisible(); // its live ad
+    await expect(page.getByRole('heading', { name: 'Heavy Driver' })).toHaveCount(0); // another employer's ad
+    const body2 = await page.locator('main').innerText();
+    expect(body2).not.toMatch(/@|\b9[0-9]{9}\b/);
+  });
+
+  test('an agency page for an unknown number says so, with a way back', async ({ page }) => {
+    await page.goto('/agency?ra=NOT-A-REAL-NUMBER');
+    await expect(page.getByText('We could not find this agency in our verified list.')).toBeVisible();
+    await page.locator('main').getByRole('link', { name: 'Verified agencies' }).click();
+    await expect(page).toHaveURL(/\/agencies$/);
+    await page.goto('/agency');
+    await expect(page.getByText('We could not find this agency in our verified list.')).toBeVisible();
   });
 
   test('how to check an agency: every step is there and the government website opens in a new tab', async ({ page }) => {
