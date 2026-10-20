@@ -1,5 +1,8 @@
 # Changelog
 
+## Step 26 - Salary filter on the jobs list
+- Job seekers can filter by salary: pick a currency (only currencies that ads really show), then a lowest salary per month and "highest salary first". Salaries in different currencies are never compared. Works in English and Hindi, kept in the address. Screen-only change (no database change): `SalaryFilter.jsx`, `shared/lib/jobFilters.js`, tests `jobFilters.test.js` and `e2e/salary.spec.js`.
+
 ## Step 25 - Styled employer emails
 - The emails to employers now carry a styled page (header bar, English and Hindi each with a button, footer with Contact and My details links) together with the plain-text copy. New file `supabase/functions/_shared/emailHtml.js`; `notify.js` sends both. Everything an employer typed is escaped; only links that start with our own https address are used; no images, no tracking. Tests added in `scripts/notify.test.mjs` (escaping checked by breaking it on purpose). No database change.
 
