@@ -16,6 +16,9 @@ Everything that could be done in the code has been done (see the status table at
 - [ ] **Hindi**: pay one native Hindi reader (about 2 hours) to read `src/shared/i18n/hi.js` and the legal texts.
 - [ ] **Real-project hand check**: the list in `07-testing.md` (items 1-14 and 13b).
 
+## A2. Emails to employers (optional, recommended)
+- [ ] Make a Resend account, verify your domain, set the secrets and deploy the sender (`20-notifications.md`). Until then employers learn about decisions only from your WhatsApp button or by logging in.
+
 ## B. Professionals (this is not legal advice; ask them to confirm)
 - [ ] **Lawyer: overseas recruitment.** Which agents must be registered, what you must check and display, fee limits for job seekers, and whether you may advertise for employers without registration. Then tell your developer what the admin checklist and the registration-number rule should say.
 - [ ] **Lawyer: personal data.** The consent text on the apply form, the 180-day keeping time, deletion requests, and the privacy page (current texts are drafts: "not legal advice").

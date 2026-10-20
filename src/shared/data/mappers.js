@@ -49,6 +49,7 @@ export function toProfile(row) {
     raNumber: row.ra_number || '',
     verified: Boolean(row.verified),
     blocked: Boolean(row.blocked),
+    emailNotifications: row.email_notifications !== false,
     createdAt: toTime(row.created_at),
   };
 }

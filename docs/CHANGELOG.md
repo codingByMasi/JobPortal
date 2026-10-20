@@ -1,5 +1,13 @@
 # Changelog
 
+## Step 24 - Edit while waiting, file clean-up, ready-made reasons, bulk approve, views, emails (migrations 0031 to 0034)
+- **Edit while waiting (0031):** an employer can edit an ad while it waits for approval (the status, dates, plan, price and owner stay locked by the database). "Ask us to change this" now appears only after approval.
+- **File clean-up (0032):** when an ad is deleted, or its picture replaced, the old file paths go into a queue (`file_cleanup_queue`). The admin's browser removes those files through the Storage API when an admin opens the admin area (Supabase blocks deleting storage files from SQL). This closes the known gap GAP-1.
+- **Ready-made reasons and bulk approve:** reasons to tap when rejecting an ad or a license (English and Hindi); on the Ads list filtered to "Waiting for approval" the admin can tick several ads and approve them for the same days.
+- **Views and applications (0033):** a plain counter per live ad per day (nothing about the visitor; once per browser per day; not for logged-in people). "My ads" shows "N views · M applications". The privacy page says so.
+- **Emails to employers (0034):** a queue the database fills for verified, license rejected, ad approved/rejected, days added, ends soon (3 days), ended; an Edge Function sends them by Resend; off until a key is set; employers can turn it off in My details. See `20-notifications.md`.
+- Tests: new database tests for each migration, unit tests for the sender and the file clean-up, browser tests; the lists of callable functions and of tables with row security were updated on purpose.
+
 ## Step 23 - QR picture and payment proof removed (migration 0030)
 - The QR picture and payment proof database parts (migration 0024) are dropped by migration 0030: the proof table and functions, the QR setting, the two storage buckets (when Supabase allows deleting them from SQL). `admin_mark_paid` no longer touches proofs.
 - Code: the UPI settings (`upiId`, `upiName`, the example values in `src/config.js`), the unused pay-screen, receipt and UPI texts in English and Hindi, and the unused styles were removed. The database still accepts the old UPI settings keys, so anything saved is not lost.

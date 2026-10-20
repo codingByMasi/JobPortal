@@ -12,15 +12,15 @@ export function effectiveStatus(job, now = Date.now()) {
 /** True when visitors may see the ad. */
 export const isPubliclyVisible = (job, now = Date.now()) => job.status === 'live' && job.expiresAt != null && job.expiresAt > now;
 
-/** Employers can fix an ad the admin rejected (then they send it for review again). Ads from before migration 0028 may still wait for payment. */
-export const canEditAsRecruiter = (job) => job.status === 'pending_payment' || job.status === 'rejected';
+/** Employers can edit an ad that waits for approval, and fix an ad the admin rejected (then they send it for review again). Ads from before migration 0028 may still wait for payment. */
+export const canEditAsRecruiter = (job) => ['pending_payment', 'paid_pending_review', 'rejected'].includes(job.status);
 
 /** Employers can withdraw (delete) an ad only when it is not running: waiting for approval, rejected or ended. Live ads are hidden by us, not deleted. */
 export const canDelete = (job, now = Date.now()) =>
   ['draft', 'pending_payment', 'paid_pending_review', 'rejected'].includes(job.status) || effectiveStatus(job, now) === 'expired';
 
-/** Once an ad is past "waiting for payment" employers cannot edit it, but they can ask us to change it. */
-export const canRequestChange = (job) => job.status !== 'pending_payment' && job.status !== 'draft';
+/** Once an ad is approved employers cannot edit it, but they can ask us to change it (while it waits or after a rejection they edit it themselves). */
+export const canRequestChange = (job) => !['pending_payment', 'draft', 'paid_pending_review'].includes(job.status);
 
 /** Employers can renew an ad that has ended. */
 export const canRenew = (job, now = Date.now()) => effectiveStatus(job, now) === 'expired';

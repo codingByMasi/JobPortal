@@ -25,12 +25,14 @@ One page that explains the whole product in plain words. Details for each role a
 - **Get verified**: send the license number and a picture or PDF of the license; see if it is being checked or was rejected (with the reason) and send again.
 - **Post an ad** (verified employers only): picture or PDF, details, optional salary and job facts. Free; no plan, price or payment. It waits for the admin's approval.
 - **My ads** with plain statuses, an "Ends in N days" note and an **Ask for more days** button; **withdraw** a waiting, rejected or ended ad; **fix and send again** after a rejection; **renew** an ended ad; **ask us to change** an approved ad.
-- **Applications** (names and phones after the company is verified), **My details**.
+- **Edit an ad while it waits for approval**; **views and applications** for each ad; **My details** with the email choice; **Applications** (names and phones after the company is verified).
+- **Emails** about verification, approval, rejection, added days, ending soon and ended (off until the email key is set).
 
 ## Features for admins (login, optional two-step login)
 - **Dashboard (work queue)**: licenses to check, ads waiting for approval, ads ending in 3 days, change requests, ads that ended in the last 30 days, live ads; each card opens that list. A reminder if Settings are missing.
 - **All ads**: view the ad, **approve and choose the days**, reject (with reason), hide, show, edit, delete, add an ad, **more days** (also for ended ads, which then go live again), **featured on or off**.
 - **Employers**: **check the license** (open the file, verify or reject with a reason), block, see their ads. An employer cannot be verified without a license.
+- **Faster work:** ready-made reasons for rejecting, approve several ads at once, and pictures of deleted ads cleaned up by themselves.
 - **Applications**: search and download. **History**: every change of a plan or offer.
 - Older tools for ads made before posting became free (kept for the records): **Payments**, **Packages**, **Offers**, mark paid, free ad, refund.
 - **Reports** about ads and **account deletion requests**. **Change requests** from employers.

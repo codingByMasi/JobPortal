@@ -126,7 +126,14 @@ test.describe('employer', () => {
     await expect(live.getByRole('link', { name: 'Edit' })).toHaveCount(0);
     const waiting = page.locator('.ad-row', { hasText: 'Office Assistant' }); // waiting for approval
     await expect(waiting.getByRole('button', { name: 'Delete' })).toHaveCount(1);
-    await expect(waiting.getByRole('link', { name: 'Edit' })).toHaveCount(0);
+    await expect(waiting.getByRole('button', { name: 'Ask us to change this' })).toHaveCount(0); // while it waits they edit it themselves
+    await waiting.getByRole('link', { name: 'Edit' }).click();
+    await page.getByLabel('Job title').fill('Office Assistant (better title)');
+    await page.locator('input[type=file]').setInputFiles(picture()); // the sample ad has no file yet, and an ad needs one
+    await expect(page.getByText(/ad\.png \(\d+ KB\)/)).toBeVisible({ timeout: 15000 });
+    await page.getByRole('button', { name: 'Save changes' }).click();
+    await expect(page.getByText('Office Assistant (better title)').first()).toBeVisible();
+    await expect(page.locator('.ad-row', { hasText: 'Office Assistant (better title)' }).getByText('Waiting for approval').first()).toBeVisible(); // still waiting, not live
     const edited = page.locator('.ad-row', { hasText: 'Kitchen Helper (edited)' });
     await edited.getByRole('button', { name: 'Delete' }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
@@ -174,5 +181,13 @@ test.describe('employer', () => {
     await expect(page.getByText(/not found/i).first()).toBeVisible();
     await page.goto('/dashboard/profile');
     await expect(page.getByLabel('Company name')).toHaveValue('Gulf Works');
+    // the emails about my account and ads: on by default, can be turned off and stay off
+    const emails = page.getByLabel('Send me emails about my account and my ads');
+    await expect(emails).toBeChecked();
+    await emails.uncheck();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('Your details are saved.')).toBeVisible();
+    await page.reload();
+    await expect(page.getByLabel('Send me emails about my account and my ads')).not.toBeChecked();
   });
 });

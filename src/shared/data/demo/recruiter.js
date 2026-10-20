@@ -41,7 +41,7 @@ export async function updateJob(id, patch) {
   const p = needUser();
   const row = findJob(id);
   if (p.blocked) throw fail('BLOCKED');
-  if (row.recruiter_id !== p.id || !['pending_payment', 'rejected'].includes(row.status)) throw fail('NOT_ALLOWED');
+  if (row.recruiter_id !== p.id || !['pending_payment', 'paid_pending_review', 'rejected'].includes(row.status)) throw fail('NOT_ALLOWED');
   const { package_id: _locked, ...fields } = toJobRow(patch);
   if (fields.whatsapp !== undefined && !isValidWhatsapp(fields.whatsapp)) throw fail('NOT_ALLOWED');
   Object.assign(row, fields);
@@ -61,12 +61,12 @@ export async function resubmitJob(id) {
   return asJob(row);
 }
 
-export async function updateProfile(id, { companyName, phone, raNumber }) {
+export async function updateProfile(id, { companyName, phone, raNumber, emailNotifications = true }) {
   await wait();
   const p = needUser();
   if (p.id !== id) throw fail('NOT_ALLOWED');
   const identityChanged = companyName.trim() !== p.company_name || (raNumber || '').trim() !== (p.ra_number || '');
-  Object.assign(p, { company_name: companyName.trim(), phone: phone.trim(), ra_number: (raNumber || '').trim() });
+  Object.assign(p, { company_name: companyName.trim(), phone: phone.trim(), ra_number: (raNumber || '').trim(), email_notifications: Boolean(emailNotifications) });
   if (identityChanged) p.verified = false; // same rule as the database: a changed identity must be checked again
   save();
   return toProfile(p);
@@ -111,6 +111,17 @@ export async function listMyApplications() {
 }
 
 // same rules as the database (migration 0011): own ad, past "waiting for payment", not blocked, 3 to 300 letters, 3 open at most
+/** Views and applications for each of my ads (numbers only). */
+export async function listMyAdStats() {
+  await wait();
+  const p = needUser();
+  const views = state.db.ad_views || {};
+  return Object.fromEntries(state.db.jobs.filter((j) => j.recruiter_id === p.id).map((j) => [j.id, {
+    views: views[j.id] || 0,
+    applications: state.db.applications.filter((a) => a.job_id === j.id).length,
+  }]));
+}
+
 export async function createChangeRequest({ jobId, message }) {
   await wait();
   const p = needUser();

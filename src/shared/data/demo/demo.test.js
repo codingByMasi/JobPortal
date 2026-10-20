@@ -98,7 +98,7 @@ describe('employers', () => {
     await api.signIn({ email: 'other@example.com', password: 'other12345' }); // not verified in the sample data
     await expect(api.createJob(newAd())).rejects.toMatchObject({ code: 'NOT_VERIFIED' });
   });
-  it('can edit only a rejected ad, cannot change the package or status, and not a live, waiting or someone else\'s ad', async () => {
+  it('can edit a waiting or rejected ad, cannot change the package or status, and not a live or someone else\'s ad', async () => {
     await asEmployer();
     const job = await setStatus(await api.createJob(newAd()), 'rejected');
     const edited = await api.updateJob(job.id, { title: 'Better title', packageId: 'pkg-30f', status: 'live' });
@@ -106,7 +106,8 @@ describe('employers', () => {
     expect(edited.packageId).not.toBe('pkg-30f');
     expect(edited.status).toBe('rejected');
     const waiting = await api.createJob(newAd({ title: 'Waiting' }));
-    await expect(api.updateJob(waiting.id, { title: 'Too late' })).rejects.toMatchObject({ code: 'NOT_ALLOWED' });
+    expect((await api.updateJob(waiting.id, { title: 'Better title while waiting' })).title).toBe('Better title while waiting'); // a waiting ad can be edited
+    expect((await api.updateJob(waiting.id, { status: 'live', title: 'Still waiting' })).status).toBe('paid_pending_review'); // but not made live
     await expect(api.updateJob('job-1', { title: 'Hacked' })).rejects.toMatchObject({ code: 'NOT_ALLOWED' }); // live ad
     await expect(api.updateJob('job-2', { title: 'Hacked' })).rejects.toMatchObject({ code: 'NOT_ALLOWED' }); // someone else's
   });

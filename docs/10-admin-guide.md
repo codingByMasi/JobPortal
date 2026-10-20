@@ -40,6 +40,12 @@ The guides are written in `docs/10-admin-guide.md`, `16-employer-guide.md`, `17-
 4. **Change requests**: employers cannot edit a paid ad; they ask you. Tap **Open the ad to edit**, make the change, come back and tap **Mark done** (or **Decline** if you cannot). Tap **WhatsApp them** to tell them.
 5. **Employers**: verify only after you checked the license (see below). Tap **Block** for a bad employer: all their live ads are hidden at once.
 
+## Faster work
+- **Ready-made reasons:** when you reject an ad or a license, tap one of the reasons to fill the box, then change the words if you like. The employer reads what you send.
+- **Approve many ads:** on the **Ads** tab choose the status **Waiting for approval**. Tick the ads you have read (or **Select all**), tap **Approve selected**, choose the days, confirm. Read the ads first: it does not ask again for each one.
+- **Tell the employer:** after an approve, reject, more days or verify, tap **Tell the employer on WhatsApp**. If emails are set up (`20-notifications.md`) the employer also gets an email by itself.
+- **Pictures of deleted ads** are removed from storage quietly when you open the admin area.
+
 ## Verify an employer: check the license
 Only a **verified** employer can post ads, and you cannot verify an employer who has not sent a license.
 1. **Employers** tab: find the row that says **License sent: check it**. Tap **Check license**.

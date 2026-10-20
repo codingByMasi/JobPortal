@@ -3,7 +3,7 @@
 For the step that takes the work from the branch `feat/razorpay-and-fixes` to the live site (Cloudflare Pages + the Supabase project JobPortal-Mumbai). Do the steps in order. Nothing here is done automatically.
 
 ## What changes for the live site
-- **Database** (migrations 0027, 0028, 0029, 0030): only verified employers can post; verifying needs a license; ads are free and wait for approval; the admin chooses the days; ended ads can get More days; a public Verified agencies list. All three are additive (new tables, triggers, functions, a view, two private storage buckets). They change how posting works, so **the new website code and the new database must go live together**: the OLD website code cannot post an ad once 0028 is applied.
+- **Database** (migrations 0027 to 0034): only verified employers can post; verifying needs a license; ads are free and wait for approval; the admin chooses the days; ended ads can get More days; a public Verified agencies list. All three are additive (new tables, triggers, functions, a view, two private storage buckets). They change how posting works, so **the new website code and the new database must go live together**: the OLD website code cannot post an ad once 0028 is applied.
 - **Website**: license form, free posting, approve with days, work queue, share button, Verified agencies and How to check an agency pages, the WhatsApp "tell the employer" button. The employer payment screens are gone.
 
 ## State of the live project when this runbook was written (checked read-only)
@@ -16,12 +16,16 @@ For the step that takes the work from the branch `feat/razorpay-and-fixes` to th
 3. Optional backup: with only one test ad and one payment there is little to lose. If you want one anyway, in the Supabase dashboard open Database > Backups, or run `npx supabase db dump --linked -f backup.sql` (needs Docker).
 
 ## Steps
-1. **Apply the four migrations, in order, to the linked project** (the CLI is logged in and linked; if not: `npx.cmd supabase login`, then `npx.cmd supabase link --project-ref nvjoiomubxtqnnlmfzkb`):
+1. **Apply the eight migrations, in order, to the linked project** (the CLI is logged in and linked; if not: `npx.cmd supabase login`, then `npx.cmd supabase link --project-ref nvjoiomubxtqnnlmfzkb`):
    ```
    npx supabase db query --linked -f supabase/migrations/0027_verified_to_post.sql
    npx supabase db query --linked -f supabase/migrations/0028_license_and_free_posting.sql
    npx supabase db query --linked -f supabase/migrations/0029_verified_agencies.sql
    npx supabase db query --linked -f supabase/migrations/0030_remove_qr_and_payment_proof.sql
+   npx supabase db query --linked -f supabase/migrations/0031_edit_while_waiting.sql
+   npx supabase db query --linked -f supabase/migrations/0032_file_cleanup_queue.sql
+   npx supabase db query --linked -f supabase/migrations/0033_ad_views.sql
+   npx supabase db query --linked -f supabase/migrations/0034_notifications.sql
    ```
    Do not use `live-apply.mjs` for 0027 alone: its live test already expects 0028. If 0030 prints a notice that it could not delete the empty buckets `shop-assets` and `payment-proofs`, delete those two empty buckets in Supabase > Storage by hand.
 2. **Run the live database test** (it rolls everything back and keeps nothing): `node scripts/live-e2e.mjs`. Expect every check to pass (about 120). If any line fails, stop and do not deploy: tell the developer which line.
@@ -38,6 +42,7 @@ For the step that takes the work from the branch `feat/razorpay-and-fixes` to th
 - **Live test fails:** do not deploy. The new database rules only block posting by unverified employers, so the live site (no employers yet) keeps working for visitors.
 
 ## After go-live (not part of this step)
+- Emails to employers are off until you set them up: `20-notifications.md` (Resend account, domain, key, deploy the function, cron). Without it the messages just wait in the queue. If `pg_cron` is not turned on, migration 0034 prints a notice: turn on `pg_cron` and run its last block again, or run `select public.queue_ending_reminders();` by hand.
 - Add the two GitHub secrets for the weekly backup (`SUPABASE_DB_URL`, `BACKUP_PASSPHRASE`).
 - A lawyer reads the terms, privacy, refund and How-to-check pages; a native Hindi reader checks the Hindi.
 - Make a second admin with two-step login (Admin > Security).

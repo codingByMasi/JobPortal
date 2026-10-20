@@ -7,6 +7,7 @@ import Modal from '../../shared/ui/Modal';
 import { adReference } from '../../shared/lib/adReference';
 import { useLang } from '../../shared/i18n/LangContext';
 import { formatPrice } from '../../shared/lib/money';
+import ReasonChips from './ReasonChips';
 
 /** The ad exactly as visitors will see it: the picture, or a big link to the PDF, plus the details text. */
 export function AdFileDialog({ job, onClose }) {
@@ -48,6 +49,7 @@ export function RejectDialog({ job, busy, onClose, onConfirm }) {
   return (
     <Modal title={t.rejectTitle} onClose={onClose}>
       <p className="modal-text"><strong>{job.title}</strong></p>
+      <ReasonChips reasons={t.rejectReasons} label={t.reasonChipsLabel} onPick={setReason} />
       <Field label={t.rejectReason}>
         <textarea rows={3} value={reason} onChange={(e) => setReason(e.target.value)} maxLength={300} />
       </Field>
@@ -69,6 +71,22 @@ export function PaidDialog({ job, busy, onClose, onConfirm }) {
         <input type="text" value={reference} onChange={(e) => setReference(e.target.value)} maxLength={60} />
       </Field>
       <Button icon="rupee" disabled={busy || !reference.trim()} onClick={() => onConfirm(reference.trim())}>{t.markPaid}</Button>
+    </Modal>
+  );
+}
+
+/** Approve many waiting ads at once, all for the same number of days. */
+export function BulkApproveDialog({ count, busy, onClose, onConfirm }) {
+  const { t } = useLang();
+  const [days, setDays] = useState('30');
+  const valid = Number.isInteger(+days) && +days >= 1 && +days <= 365;
+  return (
+    <Modal title={t.bulkApproveTitle} onClose={onClose}>
+      <p className="modal-text">{t.bulkApproveText(count)}</p>
+      <Field label={t.approveDays} error={valid ? '' : t.errRequired}>
+        <input type="number" inputMode="numeric" min="1" max="365" value={days} onChange={(e) => setDays(e.target.value)} />
+      </Field>
+      <Button icon="check" disabled={busy || !valid} onClick={() => onConfirm(+days)}>{t.bulkApproveConfirm(count)}</Button>
     </Modal>
   );
 }

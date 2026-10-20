@@ -13,7 +13,7 @@ describe('database files', () => {
     const all = buildSchema();
     const dropped = [...all.matchAll(/drop table if exists public\.(\w+)/g)].map((m) => m[1]); // a table that a later migration removed
     const tables = [...all.matchAll(/create table if not exists public\.(\w+)/g)].map((m) => m[1]).filter((name) => !dropped.includes(name));
-    expect(tables.sort()).toEqual(['admin_log', 'app_settings', 'applications', 'audit_log', 'blocked_contacts', 'change_requests', 'deletion_requests', 'error_log', 'guides', 'jobs', 'offer_redemptions', 'offers', 'packages', 'payments', 'profiles', 'reports', 'site_settings', 'verification_requests']);
+    expect(tables.sort()).toEqual(['ad_views', 'admin_log', 'app_settings', 'applications', 'audit_log', 'blocked_contacts', 'change_requests', 'deletion_requests', 'error_log', 'file_cleanup_queue', 'guides', 'jobs', 'notifications', 'offer_redemptions', 'offers', 'packages', 'payments', 'profiles', 'reports', 'site_settings', 'verification_requests']);
     for (const t of tables) expect(all).toMatch(new RegExp(String.raw`alter table public\.${t}\s+enable row level security`));
   });
 

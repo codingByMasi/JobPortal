@@ -23,6 +23,11 @@ export async function listVerifiedAgencies() {
   return ok(await supabase.from('verified_agencies').select('*')).map(toAgency);
 }
 
+/** Counts one view of a live ad (a number only; nothing about the visitor). Never throws: a failed count must not break the page. */
+export async function recordAdView(jobId) {
+  await supabase.rpc('record_ad_view', { p_job: jobId });
+}
+
 export async function submitApplication({ jobId, name, phone, city, message }) {
   const { error } = await supabase.from('applications').insert({
     job_id: jobId, name: name.trim(), phone: phone.trim(), city: (city || '').trim(), message: (message || '').trim(),

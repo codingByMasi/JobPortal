@@ -1,4 +1,4 @@
-// /dashboard/edit/:id - change an ad that is still waiting for payment.
+// /dashboard/edit/:id - change an ad that waits for approval, or fix a rejected one.
 import { useNavigate, useParams } from 'react-router-dom';
 import JobForm from '../ads/JobForm';
 import Notice from '../../shared/ui/Notice';
@@ -27,7 +27,7 @@ export default function EditAd() {
       <AsyncView state={data} isEmpty={() => false}>
         {({ job }) =>
           job && canEditAsRecruiter(job) ? (
-            <JobForm mode="edit" job={job} onSaved={(saved) => navigate('/dashboard', { state: { notice: saved.status === 'paid_pending_review' ? t.adResent : t.adSaved } })} />
+            <JobForm mode="edit" job={job} onSaved={() => navigate('/dashboard', { state: { notice: job.status === 'rejected' ? t.adResent : t.adSaved } })} />
           ) : (
             <Notice tone="error">{job ? t.errNotAllowed : t.errNotFound}</Notice>
           )

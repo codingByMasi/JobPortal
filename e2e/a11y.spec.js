@@ -7,7 +7,7 @@ import { login } from './helpers.js';
 
 const PUBLIC = ['/', '/jobs', '/job/job-1', '/post-job', '/agencies', '/check-agency', '/contact', '/login', '/signup', '/forgot-password', '/privacy', '/terms', '/about', '/faq', '/refund-policy', '/delete-account', '/jobs/uae'];
 const EMPLOYER = ['/dashboard', '/dashboard/new', '/dashboard/applications', '/dashboard/profile'];
-const ADMIN = ['/admin', '/admin/jobs', '/admin/jobs/new', '/admin/employers', '/admin/payments', '/admin/packages', '/admin/offers', '/admin/history', '/admin/reports', '/admin/settings', '/admin/guides', '/admin/applications', '/admin/requests', '/admin/security', '/admin/problems'];
+const ADMIN = ['/admin', '/admin/jobs', '/admin/jobs?status=paid_pending_review', '/admin/jobs/new', '/admin/employers', '/admin/payments', '/admin/packages', '/admin/offers', '/admin/history', '/admin/reports', '/admin/settings', '/admin/guides', '/admin/applications', '/admin/requests', '/admin/security', '/admin/problems'];
 
 const slug = (s) => s.replace(/[^a-z0-9]+/gi, '_').replace(/^_|_$/g, '') || 'home';
 

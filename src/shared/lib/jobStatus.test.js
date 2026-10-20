@@ -23,9 +23,9 @@ describe('who can do what', () => {
     expect(isPubliclyVisible(job({ status: 'hidden' }), NOW)).toBe(false);
     expect(isPubliclyVisible(job({ status: 'live', expiresAt: null }), NOW)).toBe(false);
   });
-  it('employers edit only while waiting for payment, or after a rejection (then they send it again)', () => {
-    for (const status of ['pending_payment', 'rejected']) expect(canEditAsRecruiter(job({ status }))).toBe(true);
-    for (const status of ['paid_pending_review', 'live', 'hidden', 'expired']) expect(canEditAsRecruiter(job({ status }))).toBe(false);
+  it('employers edit while the ad waits for approval, or after a rejection (then they send it again), never once it is live, hidden or ended', () => {
+    for (const status of ['pending_payment', 'paid_pending_review', 'rejected']) expect(canEditAsRecruiter(job({ status }))).toBe(true);
+    for (const status of ['live', 'hidden', 'expired']) expect(canEditAsRecruiter(job({ status }))).toBe(false);
   });
   it('employers withdraw only ads that are not running: waiting, rejected or ended', () => {
     for (const status of ['pending_payment', 'paid_pending_review', 'rejected', 'expired']) expect(canDelete(job({ status, expiresAt: null }), NOW)).toBe(true);
@@ -75,9 +75,9 @@ describe('dates and order', () => {
 });
 
 describe('change requests', () => {
-  it('employers can ask for a change once an ad is past "waiting for payment"', () => {
-    expect(canRequestChange({ status: 'pending_payment' })).toBe(false);
-    for (const status of ['paid_pending_review', 'live', 'hidden', 'rejected', 'expired']) expect(canRequestChange({ status })).toBe(true);
+  it('employers can ask for a change once an ad is approved (while it waits they edit it themselves)', () => {
+    for (const status of ['pending_payment', 'draft', 'paid_pending_review']) expect(canRequestChange({ status })).toBe(false); // the employer edits these themselves
+    for (const status of ['live', 'hidden', 'rejected', 'expired']) expect(canRequestChange({ status })).toBe(true);
   });
 });
 

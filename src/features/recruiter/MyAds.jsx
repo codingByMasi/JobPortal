@@ -24,6 +24,7 @@ export default function MyAds() {
   const location = useLocation();
   const ads = useAsync(() => api.listMyJobs(user.id), [user.id]);
   const requests = useAsync(() => api.listMyChangeRequests(user.id), [user.id]);
+  const stats = useAsync(() => api.listMyAdStats(), [user.id]);
   const [toDelete, setToDelete] = useState(null);
   const [toChange, setToChange] = useState(null); // { job, message } - the ad and an optional ready-typed message
   const [notice, setNotice] = useState({ tone: 'success', text: location.state?.notice || '' });
@@ -78,6 +79,7 @@ export default function MyAds() {
                     </p>
                     <p className={`status-line status-${status}`}>{describeStatus(job, t, lang)}</p>
                     {latestRequest(job.id) && <p className="help">{t.requestLine[latestRequest(job.id).status]}</p>}
+                    {stats.data?.[job.id] && ['live', 'hidden', 'expired'].includes(job.status) && <p className="help ad-stats">{t.adStats(stats.data[job.id].views, stats.data[job.id].applications)}</p>}
                     {endsSoon(job) && <p className="help ends-note">{t.endsInNote(daysLeft(job))}</p>}
                     {status === 'expired' && <p className="help ends-note">{t.endedNote}</p>}
                   </div>

@@ -19,6 +19,16 @@ export async function listVerifiedAgencies() {
     .sort((a, b) => b.liveAds - a.liveAds || a.companyName.localeCompare(b.companyName));
 }
 
+/** Same rule as the database: only a live ad counts a view; a number per ad, nothing about the visitor. */
+export async function recordAdView(jobId) {
+  await wait();
+  const row = state.db.jobs.find((j) => j.id === jobId);
+  if (!row || !isLive(row)) return;
+  const views = (state.db.ad_views ||= {});
+  views[jobId] = (views[jobId] || 0) + 1;
+  save();
+}
+
 export async function listLiveJobs() {
   await wait();
   return state.db.jobs.filter((j) => isLive(j)).map(asJob);

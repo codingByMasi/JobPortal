@@ -5,7 +5,7 @@ import { hasSupabase } from './env';
 
 /** Names of data functions that can change what visitors see (so the public list should reload afterwards). */
 export const changesPublicData = (name) =>
-  /^(createJob|updateJob|deleteJob)$/.test(name) || (/^admin/.test(name) && !/^admin(List|Counts)/.test(name));
+  /^(createJob|updateJob|deleteJob)$/.test(name) || (/^admin/.test(name) && !/^admin(List|Counts|Clean)/.test(name));
 
 export const DATA_CHANGED = 'jobs-abroad:data-changed';
 

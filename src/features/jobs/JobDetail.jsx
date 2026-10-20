@@ -16,6 +16,7 @@ import { countryById } from '../../shared/lib/catalog';
 import { downloadLink, relativeDate, whatsappLink, whatsappShareLink } from '../../shared/lib/format';
 import { useJobs } from './JobsContext';
 import { useLang } from '../../shared/i18n/LangContext';
+import { useAuth } from '../auth/AuthContext';
 import { useAdImage } from './useAdImage';
 import { usePageMeta } from '../../shared/lib/usePageMeta';
 import { useSettings } from '../../shared/settings/SettingsContext';
@@ -58,6 +59,7 @@ export default function JobDetail() {
   const { id } = useParams();
   const { t, lang } = useLang();
   const { settings } = useSettings();
+  const { user } = useAuth();
   const { jobs, status, reload } = useJobs();
   const [zoomed, setZoomed] = useState(false);
   const listed = jobs.find((j) => j.id === id);
@@ -66,6 +68,19 @@ export default function JobDetail() {
   const job = listed || extra.data;
   const image = useAdImage(job?.fileUrl);
   usePageMeta(job?.title, job ? `${job.title} - ${job.city}` : undefined);
+
+  // count the view once per browser per ad per day; logged-in people (employers, admins) are not counted
+  useEffect(() => {
+    if (!job?.id || user) return;
+    const key = `viewed:${job.id}:${new Date().toISOString().slice(0, 10)}`;
+    try {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(key, '1');
+    } catch {
+      /* storage blocked: count anyway */
+    }
+    api.recordAdView(job.id).catch(() => {});
+  }, [job?.id, user]);
 
   const back = <Button to="/jobs" tone="outline" icon="back">{t.back}</Button>;
 

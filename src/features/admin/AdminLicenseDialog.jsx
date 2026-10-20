@@ -5,6 +5,7 @@ import Field from '../../shared/ui/Field';
 import Icon from '../../shared/ui/Icon';
 import Modal from '../../shared/ui/Modal';
 import Notice from '../../shared/ui/Notice';
+import ReasonChips from './ReasonChips';
 import { api } from '../../shared/data';
 import { formatDate } from '../../shared/lib/format';
 import { friendlyMessage } from '../../shared/lib/friendlyError';
@@ -47,6 +48,7 @@ export default function AdminLicenseDialog({ employer, request, busy, onClose, o
       )}
       {request.status === 'submitted' && rejecting && (
         <>
+          <ReasonChips reasons={t.licenseReasons} label={t.reasonChipsLabel} onPick={setReason} />
           <Field label={t.licenseRejectReason}>
             <textarea rows={2} value={reason} onChange={(e) => setReason(e.target.value)} maxLength={300} />
           </Field>

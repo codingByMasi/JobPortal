@@ -338,6 +338,8 @@ export const en = {
   termsLink: 'Terms and safety',
   privacyTitle: 'Privacy',
   privacyPoints: [
+    'We count how many times each ad is opened, as a plain number. We do not store who opened it.',
+    'If you are an employer, we send emails about your account and your ads (for example that you are verified or that an ad ends soon). You can turn them off in My details.',
     'You do not need to log in or give your name to see jobs.',
     'If you apply, you tick a box to agree. Your name, phone number, city and message then go to the employer of that ad and to us. We use them only for that job.',
     'The employer may call or WhatsApp you about that job only. Employers must not share or sell your details.',
@@ -748,6 +750,24 @@ Problem: `,
   settingsMissingTitle: 'Fill in the Settings before you take payments',
   settingsMissingText: (names) => `Not filled in yet: ${names}.`,
   settingsMissingLink: 'Open Settings',
+  /* emails to employers */
+  emailPrefLabel: 'Send me emails about my account and my ads',
+  emailPrefHelp: 'For example: you are verified, an ad is live or was not approved, an ad ends soon. You can turn this off at any time.',
+  /* views and applications per ad */
+  adStats: (views, applications) => `${views} ${views === 1 ? 'view' : 'views'} · ${applications} ${applications === 1 ? 'application' : 'applications'}`,
+  /* ready-made reasons and bulk approve */
+  reasonChipsLabel: 'Ready-made reasons (tap to use)',
+  rejectReasons: ['Phone number or company name is missing.', 'The ad asks job seekers for money.', 'The picture is not clear. Please add a clearer one.', 'The details look wrong or fake.', 'The ad shows a personal document (passport or ID).', 'Salary or job details are missing.'],
+  licenseReasons: ['The picture is not readable. Please send a clear one.', 'The license number does not match the picture.', 'The license has expired.', 'The name on the license does not match your company.', 'We could not find this license in the government list.'],
+  colSelect: 'Select',
+  selectAd: (title) => `Select the ad: ${title}`,
+  selectAll: 'Select all',
+  selectNone: 'Select none',
+  approveSelected: (n) => `Approve selected (${n})`,
+  bulkApproveTitle: 'Approve the selected ads?',
+  bulkApproveText: (n) => `${n} ads will go live now, all for the same number of days. Read them first: this does not ask again.`,
+  bulkApproveConfirm: (n) => `Approve ${n} ads`,
+  bulkApproved: (done, failed) => (failed ? `${done} ads approved, ${failed} could not be approved.` : `${done} ads approved.`),
   /* telling the employer after a decision */
   tellEmployer: 'Tell the employer on WhatsApp',
   msgApproved: (title, days, date) => `Hello, your ad "${title}" is now live on Jobs Abroad for ${days} days (until ${date}). Thank you.`,

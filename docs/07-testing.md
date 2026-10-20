@@ -70,6 +70,9 @@ Automatic: `scripts/rls.agencies.test.mjs` (what the public list shows and hides
 ## Admin work queue and ending notes
 Automatic: `src/shared/lib/jobStatus.test.js` (ending soon, ended recently, days left), `demo.queue.test.js` (the card numbers), `e2e/queue.spec.js` (dashboard cards and filtered lists, the employer's note and ready-typed request, licenses first). Hand check on the real project: approve a test ad for 2 days and see it under "Ending in 3 days"; set its end date in the past and see it under "Ended"; use More days and see it live again.
 
+## Edit while waiting, file queue, bulk approve, views, emails
+Automatic: `rls.waiting`, `rls.filequeue`, `rls.views`, `rls.notifications` (database rules), `notify.test.mjs` (email texts and the sender with a fake service), `supabase/files.test.js` (the clean-up through the Storage API), `demo.stats` / `demo.emailpref`, and the browser tests `bulk.spec.js`, `stats.spec.js`, `employer.spec.js`. Hand check on the real project: approve a test ad for a test employer and see the email arrive (after `20-notifications.md`); delete an ad and see its picture leave storage the next time an admin opens the admin area; edit a waiting ad.
+
 ## Accessibility
 Automated axe scan (WCAG 2.1 AA) at 375 px in English and Hindi: **clean on every public, employer and admin screen** (one finding on the turned-off package row was fixed). Re-run after any visual change.
 

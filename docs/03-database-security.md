@@ -79,6 +79,12 @@ Source of truth: the numbered files in `supabase/migrations` (0001 to 0022). Put
 - The view `verified_agencies` is readable by visitors. It shows only verified, unblocked, non-admin employers that have a company name, and only three columns: company name, registration number, and the count of ads that are live right now. It never holds a phone, email, id or license. A person who loses the tag, or is blocked, leaves the list at once.
 - Tests: `scripts/rls.agencies.test.mjs` (and the demo copy in `demo.agencies.test.js`).
 
+## Later additions (migrations 0031 to 0034)
+- **0031** an employer may update their own ad while its status is waiting for payment, waiting for approval or rejected (policy `jobs recruiter update own waiting`); the guard trigger still locks status, dates, owner, plan, price and verification. Test: `rls.waiting.test.mjs`.
+- **0032** `file_cleanup_queue` (paths of deleted or replaced ad files; only an admin reads or empties it; nobody writes it except the triggers). Test: `rls.filequeue.test.mjs`.
+- **0033** `ad_views` (job, day, count; only an admin reads it; no visitor data) and two functions: `record_ad_view` (anyone; only counts an ad that is live now) and `my_ad_stats` (an employer's own views and applications, numbers only). Test: `rls.views.test.mjs`.
+- **0034** `notifications` queue, `profiles.email_notifications`, `jobs.ending_reminder_at`; `queue_notification`, `claim_notifications`, `mark_notification_sent/failed`, `queue_ending_reminders`, `purge_old_notifications` are server-only (nobody logged in can call them; only an admin reads the table). Tests: `rls.notifications.test.mjs`.
+
 ## Functions
 - `public_counts()` (visitors may call it): three numbers for the home page: live ads, verified employers, applications. Nothing else (0020).
 - `is_admin()` (also checks the two-step login), `is_blocked()` - helpers for the rules.

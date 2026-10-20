@@ -36,7 +36,7 @@ Tap **Post an ad**.
 5. **The ad itself**: add your **picture** (JPG, PNG or WebP) or a **PDF**. Pictures are made smaller automatically; a PDF can be up to 2 MB. This is what job seekers see, so make sure the company name and your phone number are clear. **Do not upload ID cards, passports or other personal papers.**
 6. Tap **Send for approval**.
 
-There is nothing to pay and no plan to choose. You can have up to 20 ads waiting for approval at a time.
+There is nothing to pay and no plan to choose. You can have up to 20 ads waiting for approval at a time. While an ad waits for approval you can still **Edit** it (for example to fix a phone number); once we approve it, ask us for changes (section 6).
 
 ## 4. Approval and going live
 Our team reads every ad before it goes live, and chooses for how many days it stays live. You see the steps on **My ads**:
@@ -50,6 +50,12 @@ Our team reads every ad before it goes live, and chooses for how many days it st
 | **Expired** | the days are over; it is no longer shown | ask us to add days (it goes live again), or **Renew** to make a new ad copied from this one |
 
 We reject ads that ask job seekers for money (visa fee, registration fee, "security deposit"), that have no company or phone number, that look fake, or that show personal documents. Fix what the reason says and send the ad again.
+
+## 4b. How your ads are doing
+For ads that are live, hidden or ended, **My ads** shows how many times the ad was opened and how many people applied, for example "34 views · 5 applications". Views are a plain count: we do not keep who looked.
+
+## 4c. Emails
+We email you (in English and Hindi) when you are verified, when your license is not accepted, when an ad is approved or not approved, when days are added, when an ad ends in 3 days, and when it ends. Turn the emails off any time in **My details**.
 
 ## 5. Applications
 When a job seeker applies, you see their **name, phone and message** in **Applications** (and a WhatsApp button to answer). You see the names and phone numbers only after our team has **verified** your company. Until then you see only **how many** people applied. Applications are deleted after 180 days; please keep them private and use them only for this job.
