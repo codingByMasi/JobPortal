@@ -29,7 +29,7 @@ Your name and phone number go **only** to that employer. We delete applications 
 
 ### Check the agency before you trust it
 - Open **How to check an agency** (link at the bottom of every page). It shows how to check the registration number on the government eMigrate website, what a fake offer looks like, and what to do if you already paid.
-- Open **Verified agencies** to see the employers whose license our team checked, with their registration number. Being on the list is a good sign, not a promise: check the number yourself too.
+- Open **Verified agencies** to see the employers whose license our team checked, with their registration number. Tap **See their ads** to open the agency's own page with all its live ads. Being on the list is a good sign, not a promise: check the number yourself too.
 - Found a good job? Tap **Share this job on WhatsApp** on the ad to send it to a friend or family member.
 
 ### If something is wrong with an ad

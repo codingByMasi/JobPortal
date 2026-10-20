@@ -24,7 +24,7 @@ export default function Agencies() {
                 <h2 className="agency-name"><Icon name="badge" size={24} />{a.companyName}</h2>
                 {a.raNumber && <p className="help">{t.raNumberShown(a.raNumber)}</p>}
                 <p className="help">{t.agencyAds(a.liveAds)}</p>
-                {a.liveAds > 0 && <Button size="sm" tone="outline" icon="search" to={`/jobs?q=${encodeURIComponent(a.companyName)}`}>{t.agencySee}</Button>}
+                {a.liveAds > 0 && <Button size="sm" tone="outline" icon="search" to={a.raNumber ? `/agency?ra=${encodeURIComponent(a.raNumber)}` : `/jobs?q=${encodeURIComponent(a.companyName)}`}>{t.agencySee}</Button>}
               </li>
             ))}
           </ul>

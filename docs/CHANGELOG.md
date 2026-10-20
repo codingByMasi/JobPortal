@@ -1,5 +1,8 @@
 # Changelog
 
+## Step 27 - Agency page
+- Each verified agency now has a public page `/agency?ra=<registration number>` with its name, registration number and live ads; "See their ads" on /agencies opens it. No database change: it uses the verified list and the registration number the ads already show (no phone or email). If two verified accounts used the same registration number their ads would show together; the admin should not verify duplicates. `AgencyPage.jsx`, browser tests in `e2e/agencies.spec.js`.
+
 ## Step 26 - Salary filter on the jobs list
 - Job seekers can filter by salary: pick a currency (only currencies that ads really show), then a lowest salary per month and "highest salary first". Salaries in different currencies are never compared. Works in English and Hindi, kept in the address. Screen-only change (no database change): `SalaryFilter.jsx`, `shared/lib/jobFilters.js`, tests `jobFilters.test.js` and `e2e/salary.spec.js`.
 
