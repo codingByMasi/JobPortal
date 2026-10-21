@@ -279,7 +279,7 @@ describe('24. employers cannot change plans, offers, prices or the log', () => {
     await db.query('update public.packages set active = false where id = $1', [oldPlan]);
     expect(await as(db, e1, async () => (await db.query('select id from public.packages where id = $1', [oldPlan])).rows.length)).toBe(1);
     expect(await as(db, e2, async () => (await db.query('select id from public.packages where id = $1', [oldPlan])).rows.length)).toBe(0);
-    expect(await as(db, null, async () => (await db.query('select id from public.packages where id = $1', [oldPlan])).rows.length)).toBe(0);
+    await denied(as(db, null, () => db.query('select id from public.packages where id = $1', [oldPlan]))); // visitors have no right on plans (migration 0037)
   });
 });
 
@@ -308,8 +308,8 @@ describe('25. plans: order, delete rule and audit log', () => {
   });
   it('the audit log cannot be written or changed by anyone through the website', async () => {
     await denied(as(db, admin, () => db.query("insert into public.audit_log (action, table_name) values ('x','y')")));
-    expect(await as(db, e1, async () => (await db.query('delete from public.audit_log returning id')).rows.length)).toBe(0);
-    expect(await as(db, admin, async () => (await db.query('update public.audit_log set action = $1 returning id', ['x'])).rows.length)).toBe(0);
+    await denied(as(db, e1, () => db.query('delete from public.audit_log returning id'))); // no right to write the log at all (migration 0037)
+    await denied(as(db, admin, () => db.query('update public.audit_log set action = $1 returning id', ['x'])));
   });
 });
 

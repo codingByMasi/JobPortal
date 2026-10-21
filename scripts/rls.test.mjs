@@ -82,27 +82,26 @@ describe('1. visitors (not logged in)', () => {
       await denied(as(db, who, () => db.query("insert into public.public_jobs (id, title) values (gen_random_uuid(), 'x')")));
     }
   });
+  // Since migration 0037 visitors have no right on these tables at all (stricter than "Row Level Security shows nothing"): the database says "permission denied".
   it('cannot read the jobs table at all (only the public view)', async () => {
-    const rows = await as(db, null, () => rowsOf(db, 'select id from public.jobs'));
-    expect(rows).toEqual([]); // visitors read ads only through the view, never the table (so owner ids are never exposed)
+    await denied(as(db, null, () => rowsOf(db, 'select id from public.jobs'))); // visitors read ads only through the view, never the table (so owner ids are never exposed)
   });
   it('cannot read profiles, payments or applications', async () => {
     for (const table of ['profiles', 'payments', 'applications']) {
-      expect(await as(db, null, () => countOf(db, `select * from public.${table}`))).toBe(0);
+      await denied(as(db, null, () => countOf(db, `select * from public.${table}`)));
     }
   });
-  it('can read packages (prices are public)', async () => {
-    expect(await as(db, null, () => countOf(db, 'select * from public.packages'))).toBeGreaterThanOrEqual(3);
+  it('cannot read the plans (packages) either: they are for employers and admins', async () => {
+    await denied(as(db, null, () => countOf(db, 'select * from public.packages')));
+    expect(await as(db, e1, () => countOf(db, 'select * from public.packages'))).toBeGreaterThanOrEqual(3);
   });
   it('cannot create, change or delete ads, payments, packages or profiles', async () => {
     await denied(insertJob(null, newJob(e1)));
     await denied(as(db, null, () => db.query("insert into public.payments (recruiter_id, amount_paise) values ($1, 1)", [e1])));
     await denied(as(db, null, () => db.query("insert into public.packages (name, price_paise, duration_days) values ('x', 1, 1)")));
     await denied(as(db, null, () => db.query("insert into public.profiles (id, role) values (gen_random_uuid(), 'admin')")));
-    const upd = await as(db, null, () => db.query("update public.jobs set title = 'hacked'"));
-    const del = await as(db, null, () => db.query('delete from public.jobs'));
-    expect(upd.affectedRows).toBe(0);
-    expect(del.affectedRows).toBe(0);
+    await denied(as(db, null, () => db.query("update public.jobs set title = 'hacked'")));
+    await denied(as(db, null, () => db.query('delete from public.jobs')));
   });
   it('cannot call admin functions or the expiry function', async () => {
     await denied(as(db, null, () => db.query('select public.admin_approve_job($1)', [pending1])));
@@ -144,8 +143,9 @@ describe('2. visitors applying', () => {
     const err = await denied(apply(full, '8000000000'));
     expect(err.code).toBe('54000');
   });
-  it('visitors cannot read back what they sent', async () => {
-    expect(await as(db, null, () => countOf(db, 'select * from public.applications'))).toBe(0);
+  it('visitors cannot read back what they sent (not even by asking the insert to return the row)', async () => {
+    await denied(as(db, null, () => countOf(db, 'select * from public.applications')));
+    await denied(as(db, null, () => db.query("insert into public.applications (job_id, name, phone) values ($1, 'Back', '9822200011') returning id", [live1])));
   });
 });
 
@@ -523,7 +523,7 @@ describe('8. change requests (employers cannot edit paid ads, but can ask us)', 
     expect(del.affectedRows).toBe(0);
   });
   it('visitors cannot read or write requests', async () => {
-    expect(await as(db, null, () => countOf(db, 'select * from public.change_requests'))).toBe(0);
+    await denied(as(db, null, () => countOf(db, 'select * from public.change_requests')));
     await denied(as(db, null, () => db.query("insert into public.change_requests (job_id, recruiter_id, message) values ($1, $2, 'hello there')", [live1, e1])));
   });
   it('the admin reads all, and marking one done stamps the time', async () => {
