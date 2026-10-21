@@ -3,6 +3,7 @@
 export const en = {
   langButton: 'हिन्दी',
   langLabel: 'Change language to Hindi',
+  langPickerLabel: 'Language',
   siteName: 'Jobs Abroad',
   navHome: 'Home',
   navJobs: 'Jobs',
@@ -432,6 +433,7 @@ Problem: `,
   grievanceTitle: 'Complaints and removal of an ad',
   errCaptcha: 'Please complete the check (I am not a robot).',
   captchaLabel: 'Security check',
+  errHumanCheck: 'Please finish the security check above and try again.',
   employerTermsTitle: 'Rules for employers',
   employerTermsPoints: [
     'Post only real jobs. Do not ask job seekers for money for an interview, a visa or a job unless the law allows it.',

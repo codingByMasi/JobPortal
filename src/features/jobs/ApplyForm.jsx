@@ -1,6 +1,7 @@
 // "Apply here" form on a job page: saves the candidate's details and shows a clear success message.
 import { useState } from 'react';
 import Button from '../../shared/ui/Button';
+import Captcha from '../../shared/ui/Captcha';
 import Field from '../../shared/ui/Field';
 import Icon from '../../shared/ui/Icon';
 import Notice from '../../shared/ui/Notice';
@@ -18,6 +19,8 @@ export default function ApplyForm({ job }) {
   const [consent, setConsent] = useState(false);
   const [errors, setErrors] = useState({});
   const [state, setState] = useState({ status: 'idle', message: '' });
+  const [token, setToken] = useState('');
+  const [round, setRound] = useState(0);
 
   const set = (key) => (e) => {
     setValues((v) => ({ ...v, [key]: e.target.value }));
@@ -34,12 +37,15 @@ export default function ApplyForm({ job }) {
     if (Object.keys(next).length) return;
     setState({ status: 'sending', message: '' });
     try {
-      await api.submitApplication({ jobId: job.id, ...values });
+      await api.submitApplication({ jobId: job.id, ...values, captchaToken: token });
       setState({ status: 'done', message: '' });
       setValues(EMPTY);
       setConsent(false);
     } catch (err) {
       setState({ status: 'error', message: friendlyMessage(err, t) });
+    } finally {
+      setToken('');
+      setRound((r) => r + 1); // a check answer works once: show a fresh one for the next try
     }
   };
 
@@ -77,6 +83,7 @@ export default function ApplyForm({ job }) {
           <span>{t.applyConsent}</span>
         </label>
         {errors.consent && <p className="field-error" role="alert">{errors.consent}</p>}
+        <Captcha key={round} onToken={setToken} />
         <Notice tone="error">{state.message}</Notice>
         <Button type="submit" icon="check" disabled={state.status === 'sending'}>
           {state.status === 'sending' ? t.applySending : t.applySend}

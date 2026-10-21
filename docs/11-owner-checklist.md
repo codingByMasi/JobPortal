@@ -53,4 +53,5 @@ These pages hold **placeholder drafts**. They are not legal advice. Please have 
 ## D. Optional extras that need an outside account
 - [ ] Error reports: a free Sentry account (needs a small code change and a line in `scripts/headers.mjs`). Today the site only logs errors in the browser.
 - [ ] A staging Supabase project (free) to try database changes before the real one.
-- [ ] Cloudflare Turnstile + an Edge Function for the apply form (stops fake applications; needs a developer).
+- [ ] Turn on the Apply and Report form check (built; needs your Cloudflare Turnstile keys): follow `22-spam-protection.md`.
+- [ ] **Malayalam, Tamil, Telugu, Urdu:** the translations of what job seekers see were written by an AI. A native reader of each should check `ml.js`, `ta.js`, `te.js`, `ur.js` before you promote these languages. Legal, employer and admin texts are still English in those languages.

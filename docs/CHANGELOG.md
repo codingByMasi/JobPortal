@@ -1,5 +1,11 @@
 # Changelog
 
+## Step 31 - Spam check on forms (migration 0036) and four more languages
+- **Human check (off until switched on):** the Apply and Report forms can require Cloudflare Turnstile. New Edge Function `verify-human` (`_shared/humanCheck.js`), table `human_passes`, setting `require_human`, column `human_pass` on `applications` and `reports`, and the guard triggers now check the pass when the setting is on. The forms show the Turnstile box when `VITE_TURNSTILE_SITE_KEY` is set. Steps to switch it on: `docs/22-spam-protection.md`. Not tested against the real Cloudflare.
+- **Languages:** Malayalam, Tamil, Telugu and Urdu (about 240 texts each, drafts for a native reader), chosen in the footer; Urdu reads right to left; texts not translated yet show in English. Header button unchanged (English/Hindi). Language tests in `i18n.test.js`, `e2e/languages.spec.js`, and the accessibility scan runs in all four.
+- Small fix: the search box on the jobs page no longer shows a second frame inside the first.
+- Security update of a development tool: Vite 8.3.5 (a flaw in the dev server's editor launcher, fixed in a patch release; it never reached the published site). Only `package-lock.json` changed.
+
 ## Step 30 - Help articles, CV maker, install bar, admin Activity
 - **Help articles:** `/articles` and four short articles (papers to keep ready, how to read a job offer, before you pay anyone, a CV that gets replies), English and Hindi, in the sitemap. General guidance with a "not legal advice" note; a professional should read them (`docs/11-owner-checklist.md`).
 - **CV maker:** `/cv`, a free one-page CV built in the browser and printed or saved as a PDF with the browser; only the CV prints; nothing is stored or sent.

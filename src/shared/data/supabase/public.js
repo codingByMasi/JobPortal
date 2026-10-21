@@ -1,6 +1,6 @@
 // Supabase: what visitors can do - read packages and live ads (through the safe public view), apply.
 import { toAgency, toJob, toPackage } from '../mappers';
-import { ok, raise, supabase } from './client';
+import { getHumanPass, ok, raise, supabase } from './client';
 
 export async function listPackages() {
   return ok(await supabase.from('packages').select('*').order('sort_order').order('price_paise')).map(toPackage);
@@ -28,9 +28,10 @@ export async function recordAdView(jobId) {
   await supabase.rpc('record_ad_view', { p_job: jobId });
 }
 
-export async function submitApplication({ jobId, name, phone, city, message }) {
+export async function submitApplication({ jobId, name, phone, city, message, captchaToken = '' }) {
+  const humanPass = await getHumanPass(captchaToken);
   const { error } = await supabase.from('applications').insert({
-    job_id: jobId, name: name.trim(), phone: phone.trim(), city: (city || '').trim(), message: (message || '').trim(),
+    job_id: jobId, name: name.trim(), phone: phone.trim(), city: (city || '').trim(), message: (message || '').trim(), human_pass: humanPass,
   });
   if (error) raise(error);
 }

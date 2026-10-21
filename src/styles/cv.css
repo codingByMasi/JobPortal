@@ -1,4 +1,7 @@
-/* CV maker and the install bar. On screen the CV is a white sheet; when printed, only the sheet is printed. */
+/* CV maker, the install bar and the language picker. On screen the CV is a white sheet; when printed, only the sheet is printed. */
+.lang-picker { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.lang-picker-label { font-weight: 700; margin-inline-end: 4px; }
+.lang-picker .chip { min-height: 48px; }
 .cv-page { display: flex; flex-direction: column; gap: 18px; }
 .cv-screen { display: flex; flex-direction: column; gap: 18px; }
 .cv-job { border: 2px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }

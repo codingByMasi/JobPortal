@@ -20,6 +20,14 @@ describe('friendly errors', () => {
     expect(errorKey({ code: '42501', message: 'new row violates row-level security policy' })).toBe('errNotAllowed');
     expect(errorKey({ message: 'This ad is not waiting for payment.' })).toBe('errNotWaiting');
   });
+  it('understands the human check and job alert errors in plain words', () => {
+    expect(errorKey({ code: 'HUMAN' })).toBe('errHumanCheck');
+    expect(errorKey({ code: '22023', message: 'Please finish the human check and try again.' })).toBe('errHumanCheck');
+    expect(errorKey({ code: '22023', message: 'Please write a correct email address.' })).toBe('errAlertEmail');
+    expect(errorKey({ code: '54000', message: 'This email already has 5 alerts.' })).toBe('errAlertLimit');
+    expect(errorKey({ code: '54000', message: 'Too many requests right now. Please try again later.' })).toBe('errAlertBusy');
+    for (const lang of ['en', 'hi']) for (const key of ['errHumanCheck', 'errAlertEmail', 'errAlertLimit', 'errAlertBusy']) expect(translations[lang][key]).toBeTruthy();
+  });
   it('understands the license and verification errors', () => {
     expect(errorKey({ code: 'P0001', message: 'Your account is not verified yet.' })).toBe('errNeedVerified');
     expect(errorKey({ code: 'NOT_VERIFIED' })).toBe('errNeedVerified');

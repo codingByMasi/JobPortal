@@ -1,10 +1,11 @@
 // Supabase: reports about an ad, account deletion requests, the home page counters, and the admin lists for both.
 import { toCounts, toDeletionRequest, toReport } from '../mappers';
-import { ok, supabase } from './client';
+import { getHumanPass, ok, supabase } from './client';
 
 /** A visitor reports an ad. The database limits how many one connection may send. */
-export async function reportAd({ jobId, reason, message = '', contact = '' }) {
-  ok(await supabase.from('reports').insert({ job_id: jobId, reason, message: message.trim(), contact: contact.trim() }).select('id').maybeSingle());
+export async function reportAd({ jobId, reason, message = '', contact = '', captchaToken = '' }) {
+  const humanPass = await getHumanPass(captchaToken);
+  ok(await supabase.from('reports').insert({ job_id: jobId, reason, message: message.trim(), contact: contact.trim(), human_pass: humanPass }).select('id').maybeSingle());
 }
 
 /** Anyone asks us to delete their account and data. An admin checks and does it by hand. */

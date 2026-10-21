@@ -64,6 +64,19 @@ for (const [group, paths, who] of [['public', PUBLIC, null], ['employer', EMPLOY
   });
 }
 
+test.describe('accessibility: Malayalam, Tamil, Telugu, Urdu', () => {
+  for (const lang of ['ml', 'ta', 'te', 'ur']) {
+    for (const path of ['/', '/jobs', '/job/job-1', '/cv']) {
+      test(`${path} (${lang})`, async ({ page }, info) => {
+        await page.addInitScript((code) => localStorage.setItem('jobs-abroad-lang', code), lang);
+        const r = await scan(page, path, info.project.name, lang);
+        expect(r.violations, `axe violations on ${path} in ${lang}`).toEqual([]);
+        expect.soft(r.smallTapTargets, `tap targets under 44 px on ${path} in ${lang}`).toEqual([]);
+      });
+    }
+  }
+});
+
 test.describe('accessibility: Hindi', () => {
   for (const path of ['/', '/jobs', '/job/job-1', '/post-job', '/signup', '/terms']) {
     test(`${path} (Hindi)`, async ({ page }, info) => {

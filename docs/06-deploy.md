@@ -12,7 +12,7 @@ A short "what only you can do" list is in `11-owner-checklist.md`. This file exp
 5. **Authentication > URL configuration**: set Site URL to your real site address, and add `https://YOUR-SITE/reset-password` to the allowed redirect URLs (for "forgot password").
 6. **Authentication > SMTP Settings**: connect your own email sender (Resend, Brevo, SES or similar). Supabase's built-in sender allows only a few emails an hour, so signup and reset emails would fail.
 7. **Project Settings > API**: copy **Project URL** and the **anon public** key. Never copy or share the *service_role* key.
-8. **(Recommended) CAPTCHA for signup**: make a free Cloudflare Turnstile widget. Put the **secret** key in Supabase **Authentication > Attack Protection > CAPTCHA** (provider Turnstile). Put the **site** key in the Cloudflare Pages settings as `VITE_TURNSTILE_SITE_KEY`. The signup screen then shows the check automatically.
+8. **(Recommended) CAPTCHA for signup**: make a free Cloudflare Turnstile widget. Put the **secret** key in Supabase **Authentication > Attack Protection > CAPTCHA** (provider Turnstile). Put the **site** key in the Cloudflare Pages settings as `VITE_TURNSTILE_SITE_KEY`. The signup screen then shows the check automatically. **The same site key also adds the check to the Apply and Report forms**, but the database only insists on it after you switch it on: see `docs/22-spam-protection.md` for the steps and their order.
 
 ## B. Run on your computer
 ```

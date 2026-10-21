@@ -1,6 +1,7 @@
 // Hindi text. Same keys as en.js (a test checks this). Keep the words simple.
 export const hi = {
   langButton: 'English',
+  langPickerLabel: 'भाषा',
   langLabel: 'भाषा अंग्रेज़ी में बदलें',
   siteName: 'विदेश में नौकरी',
   navHome: 'होम',
@@ -431,6 +432,7 @@ export const hi = {
   grievanceTitle: 'शिकायत और विज्ञापन हटवाना',
   errCaptcha: 'कृपया जांच पूरी करें (मैं रोबोट नहीं हूं)।',
   captchaLabel: 'सुरक्षा जांच',
+  errHumanCheck: 'कृपया ऊपर की सुरक्षा जाँच पूरी करें और फिर कोशिश करें।',
   employerTermsTitle: 'मालिकों के लिए नियम',
   employerTermsPoints: [
     'सिर्फ़ असली नौकरियां डालें। इंटरव्यू, वीज़ा या नौकरी के नाम पर नौकरी ढूंढने वालों से पैसे न मांगें, जब तक कानून इजाज़त न दे।',

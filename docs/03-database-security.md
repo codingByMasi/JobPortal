@@ -79,12 +79,13 @@ Source of truth: the numbered files in `supabase/migrations` (0001 to 0022). Put
 - The view `verified_agencies` is readable by visitors. It shows only verified, unblocked, non-admin employers that have a company name, and only three columns: company name, registration number, and the count of ads that are live right now. It never holds a phone, email, id or license. A person who loses the tag, or is blocked, leaves the list at once.
 - Tests: `scripts/rls.agencies.test.mjs` (and the demo copy in `demo.agencies.test.js`).
 
-## Later additions (migrations 0031 to 0035)
+## Later additions (migrations 0031 to 0036)
 - **0031** an employer may update their own ad while its status is waiting for payment, waiting for approval or rejected (policy `jobs recruiter update own waiting`); the guard trigger still locks status, dates, owner, plan, price and verification. Test: `rls.waiting.test.mjs`.
 - **0032** `file_cleanup_queue` (paths of deleted or replaced ad files; only an admin reads or empties it; nobody writes it except the triggers). Test: `rls.filequeue.test.mjs`.
 - **0033** `ad_views` (job, day, count; only an admin reads it; no visitor data) and two functions: `record_ad_view` (anyone; only counts an ad that is live now) and `my_ad_stats` (an employer's own views and applications, numbers only). Test: `rls.views.test.mjs`.
 - **0034** `notifications` queue, `profiles.email_notifications`, `jobs.ending_reminder_at`; `queue_notification`, `claim_notifications`, `mark_notification_sent/failed`, `queue_ending_reminders`, `purge_old_notifications` are server-only (nobody logged in can call them; only an admin reads the table). Tests: `rls.notifications.test.mjs`.
 - **0035** job alerts: `job_alerts` (email, optional country and kind of work, language, a secret token, confirmed time) and `alert_outbox` (the confirm mails and daily digests waiting to be sent). Both tables are closed to visitors and employers (no policies, no grants). A visitor can call only three functions: `subscribe_job_alert` (checks the email, country and work; at most 5 alerts per email and 300 new alerts an hour in total; looks the same whether the alert existed), `confirm_job_alert(token)` and `unsubscribe_job_alert(token)` (removes every alert of that email). `queue_alert_digests` (daily 04:00 UTC: live ads that started after the alert was last checked and match it, up to 8 listed), `claim_alert_mail`, `mark_alert_mail_sent/failed` and `purge_job_alerts` (alerts nobody confirmed in 7 days and old messages) are server-only. Only confirmed alerts get a digest and only unconfirmed ones a confirm mail. Test: `rls.alerts.test.mjs`.
+- **0036** optional human check on the Apply and Report forms: table `human_passes` (closed to everyone; only the verify-human Edge Function writes it), setting `require_human` ('off' by default), column `human_pass` on `applications` and `reports` (never stored: the guard triggers use it and clear it), `human_check` (server-only) and `purge_human_passes` (daily). With the setting on, a form row needs an unused pass younger than 10 minutes; without it the insert is refused. Test: `rls.human.test.mjs`. Details: `docs/22-spam-protection.md`.
 
 ## Functions
 - `public_counts()` (visitors may call it): three numbers for the home page: live ads, verified employers, applications. Nothing else (0020).
@@ -116,7 +117,7 @@ Security check list (all automated unless noted):
 **Not covered by these tests (needs the real project, once):** Supabase's own services: Auth (email confirmation, password rules, CAPTCHA, the real MFA tables), Storage's enforcement of the bucket's file type and size limits, pg_cron actually running, and that the keys in `.env` are right. `06-deploy.md` and the hand checklist in `07-testing.md` cover these.
 
 ## Known limits
-- The Apply form has duplicate and per-address flood limits but no CAPTCHA (that needs an Edge Function; Cloudflare Turnstile is built in for signup only). Someone with many addresses can still invent phone numbers below the limits.
+- The Apply and Report forms have duplicate and per-address flood limits, and an optional Cloudflare Turnstile check that is off until you add your keys and switch it on (`docs/22-spam-protection.md`). While it is off, someone with many addresses can still invent phone numbers below the limits.
 - Phone numbers typed by applicants are not verified (anyone can enter another person's number).
 - Ad files are public by link: employers must not upload personal documents. Uploads are checked by declared type, not by content; the admin looks at every ad before it goes live.
 - Admin-created ads and admin edits are trusted: the file-link rule does not apply to admins.

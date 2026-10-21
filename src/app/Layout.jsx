@@ -8,6 +8,7 @@ import { whatsappLink } from '../shared/lib/format';
 import { useLang } from '../shared/i18n/LangContext';
 import { useSettings } from '../shared/settings/SettingsContext';
 import InstallPrompt from './InstallPrompt';
+import LanguagePicker from './LanguagePicker';
 
 const NAV = [
   { to: '/', icon: 'home', label: 'navHome', end: true },
@@ -85,6 +86,7 @@ export default function Layout() {
           <Link className="footer-link" to="/refund-policy"><Icon name="rupee" size={22} /><span>{t.refundLink}</span></Link>
           <Link className="footer-link" to="/delete-account"><Icon name="trash" size={22} /><span>{t.deleteLink}</span></Link>
         </nav>
+        <LanguagePicker />
         <div className="legal-links">
           <Link className="footer-link" to="/privacy"><Icon name="shield" size={22} /><span>{t.privacyLink}</span></Link>
           <Link className="footer-link" to="/terms"><Icon name="shield" size={22} /><span>{t.termsLink}</span></Link>
