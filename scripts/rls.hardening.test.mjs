@@ -147,7 +147,7 @@ describe('9. hardening (migration 0012)', () => {
   });
 
   it('visitors cannot read the jobs table at all, only the public view', async () => {
-    expect(await as(db, null, () => countOf(db, 'select * from public.jobs'))).toBe(0);
+    await denied(as(db, null, () => countOf(db, 'select * from public.jobs'))); // no right at all since migration 0037
     expect(await as(db, null, () => countOf(db, 'select * from public.public_jobs'))).toBeGreaterThan(0);
   });
 

@@ -2,15 +2,18 @@
 import { toCounts, toDeletionRequest, toReport } from '../mappers';
 import { getHumanPass, ok, supabase } from './client';
 
+// A visitor may add a row to reports and deletion_requests but may not read them back, so these two inserts must NOT ask for the saved row
+// (`.select()` after `.insert()` makes the database refuse it). The apply form works the same way.
+
 /** A visitor reports an ad. The database limits how many one connection may send. */
 export async function reportAd({ jobId, reason, message = '', contact = '', captchaToken = '' }) {
   const humanPass = await getHumanPass(captchaToken);
-  ok(await supabase.from('reports').insert({ job_id: jobId, reason, message: message.trim(), contact: contact.trim(), human_pass: humanPass }).select('id').maybeSingle());
+  ok(await supabase.from('reports').insert({ job_id: jobId, reason, message: message.trim(), contact: contact.trim(), human_pass: humanPass }));
 }
 
 /** Anyone asks us to delete their account and data. An admin checks and does it by hand. */
 export async function requestAccountDeletion({ email, note = '' }) {
-  ok(await supabase.from('deletion_requests').insert({ email: email.trim(), note: note.trim() }).select('id').maybeSingle());
+  ok(await supabase.from('deletion_requests').insert({ email: email.trim(), note: note.trim() }));
 }
 
 /** Live ads, verified employers and applications (three numbers, nothing private). */

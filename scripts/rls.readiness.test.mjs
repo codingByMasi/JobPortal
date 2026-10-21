@@ -28,7 +28,7 @@ const tablesAndViews = async () => (await rowsOf(db, `
    where n.nspname = 'public' and c.relkind in ('r', 'v') order by 1`));
 
 describe('whole-database guards', () => {
-  it('a visitor can read rows from ONLY the packages table and the public_jobs view, and nowhere else', async () => {
+  it('a visitor can read rows from ONLY the public_jobs and verified_agencies views and the public settings, and nowhere else', async () => {
     const readable = [];
     for (const { name } of await tablesAndViews()) {
       try {
@@ -38,7 +38,8 @@ describe('whole-database guards', () => {
         /* permission denied: fine */
       }
     }
-    expect(readable.sort()).toEqual(['packages', 'public_jobs']);
+    expect(readable).toContain('public_jobs');
+    expect(readable.filter((n) => !['public_jobs', 'verified_agencies', 'site_settings'].includes(n))).toEqual([]);
   });
 
   it('an employer sees rows only from their own data plus packages and the public list', async () => {

@@ -42,11 +42,9 @@ const SUPABASE_STUBS = `
     select (string_to_array(name, '/'))[1:array_length(string_to_array(name, '/'), 1) - 1]
   $$;
 
-  -- Supabase's default: everyone may TRY everything on new public tables; Row Level Security then decides.
+  -- Like a Supabase project that no longer grants data access to new tables by itself: the website roles may use the schema, and every right on a table or
+  -- function must be GRANTed in our own migrations (0037 states them all). A migration that forgets a grant fails the tests instead of working by accident.
   grant usage on schema public, storage to anon, authenticated;
-  alter default privileges in schema public grant all on tables to anon, authenticated;
-  alter default privileges in schema public grant all on sequences to anon, authenticated;
-  alter default privileges in schema public grant execute on functions to anon, authenticated;
   grant select, insert, update, delete on storage.objects to anon, authenticated;
   grant select on storage.buckets to anon, authenticated;
 `;
