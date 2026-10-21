@@ -20,6 +20,7 @@ export function errorKey(err) {
   if (/license: needed/i.test(msg)) return 'errLicenseNeeded';
   if (/license: number/i.test(msg)) return 'errLicenseNumber';
   if (/license: file/i.test(msg)) return 'errLicenseFile';
+  if (code === 'HUMAN' || /human check/i.test(msg)) return 'errHumanCheck';
   if (code === 'ALERT_EMAIL' || /correct email address/i.test(msg)) return 'errAlertEmail';
   if (code === 'ALERT_LIMIT' || /already has 5 alerts/i.test(msg)) return 'errAlertLimit';
   if (/too many requests right now/i.test(msg)) return 'errAlertBusy';

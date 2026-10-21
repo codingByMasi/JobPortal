@@ -284,6 +284,18 @@ export function toChangeRequest(row) {
   };
 }
 
+/** One line of the admin log. `admin` is the profile of who did it, when known. */
+export function toActivity(row, admin) {
+  return {
+    id: row.id,
+    action: row.action,
+    targetId: row.target_id || '',
+    detail: row.detail || '',
+    adminName: admin?.company_name || admin?.email || '',
+    createdAt: toTime(row.created_at),
+  };
+}
+
 export function toReport(row) {
   return {
     id: row.id,

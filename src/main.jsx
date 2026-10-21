@@ -13,6 +13,7 @@ import { appMode } from './shared/data/env';
 import { LangProvider } from './shared/i18n/LangContext';
 import './styles/base.css';
 import './styles/app.css';
+import './styles/cv.css';
 
 startAnalytics();
 window.addEventListener('error', (event) => reportError(event.error || event.message));

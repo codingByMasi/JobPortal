@@ -76,7 +76,11 @@ describe('submitApplication', () => {
     await publicApi.submitApplication({ jobId: 'job-1', name: '  Ram  ', phone: ' 98765 43210 ', city: ' Pune ', message: ' Hi ', status: 'x', extra: 'ignored' });
     const call = fake.state.calls[0];
     expect(call.table).toBe('applications');
-    expect(opsOf(call).insert[0]).toEqual({ job_id: 'job-1', name: 'Ram', phone: '98765 43210', city: 'Pune', message: 'Hi' });
+    expect(opsOf(call).insert[0]).toEqual({ job_id: 'job-1', name: 'Ram', phone: '98765 43210', city: 'Pune', message: 'Hi', human_pass: null });
+  });
+  it('without a Turnstile site key in this website no pass is asked for (human_pass stays empty)', async () => {
+    await publicApi.submitApplication({ jobId: 'job-1', name: 'Ram', phone: '9876543210', captchaToken: 'ignored' });
+    expect(opsOf(fake.state.calls[0]).insert[0].human_pass).toBeNull();
   });
   it('does not ask to read the row back (visitors are not allowed to read applications)', async () => {
     await publicApi.submitApplication({ jobId: 'job-1', name: 'Ram', phone: '9876543210' });

@@ -49,5 +49,14 @@
 ## Employer emails are styled HTML plus a plain-text copy (step 25)
 Why: plain text looked unprofessional. The page uses simple tables and inline styles (works in Gmail, Outlook and phones), no library, no images, no tracking. Anything an employer typed is escaped, and only links under our own https address are allowed. The plain-text copy stays for mail apps and spam filters.
 
+## CV maker prints with the browser; the install bar has no service worker (step 30)
+Why: a CV library or a PDF generator would add weight and a new thing to keep safe. The browser can already print a page or save it as a PDF, so the CV is a plain page with a print style that shows only the CV. Nothing typed is stored or sent. The install bar listens for the browser's own install offer; we did not add a service worker because an offline copy of the site could show old job ads. If the browser does not offer installing (for example Safari on iPhone), the bar simply does not show.
+
+## Four more languages as partial files with an English fallback (step 31)
+Why: Malayalam, Tamil, Telugu and Urdu readers are a large part of the audience, but a full translation of every employer, admin and legal text would be about 1,000 texts per language, and legal and safety wording must not be guessed. So each new language holds only what job seekers see (about 240 texts); everything else shows in English until a native reader and a professional can do more. The tests keep a partial file honest (only real keys, same kind of value, no dropped numbers). The language list is in the footer so the header button stays a one-tap English/Hindi switch. Urdu sets the page direction to right-to-left; the layout uses flexible rows, so it mirrors without a separate style sheet. System fonts are used (no web fonts) so nothing new is downloaded.
+
+## The human check lives in the database, not only in the form (step 31)
+Why: a check that only the form asks for can be skipped by calling the database directly (the public key is in the website). So the form sends a one-time pass that the verify-human function hands out after Cloudflare said yes, and the guard triggers refuse a row without one when the rule is on. It is off by default so nothing breaks before the keys exist. The pass is used inside the same database step as the insert, so a form that fails another rule does not burn it.
+
 ## ESLint added as a development tool (step 11)
 Why: the project had no code checker. It found a real mistake on its first run (a text key written twice, so the first text was silently ignored). It is a development tool only (`eslint`, `@eslint/js`, `eslint-plugin-react-hooks`, `globals`): nothing is added to the website the visitors download. Two style rules of the newest hooks plugin are switched off because they flag data-loading patterns that work correctly here. Run it with `npm run lint`; it also runs in CI and in `npm run test:all`.

@@ -5,9 +5,9 @@ import { expect, test } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { login } from './helpers.js';
 
-const PUBLIC = ['/', '/jobs', '/job/job-1', '/post-job', '/agencies', '/check-agency', '/contact', '/login', '/signup', '/forgot-password', '/privacy', '/terms', '/about', '/faq', '/refund-policy', '/delete-account', '/jobs/uae'];
+const PUBLIC = ['/', '/jobs', '/job/job-1', '/post-job', '/agencies', '/check-agency', '/contact', '/login', '/signup', '/forgot-password', '/privacy', '/terms', '/about', '/faq', '/refund-policy', '/delete-account', '/jobs/uae', '/articles', '/articles/documents', '/cv', '/agency?ra=B-1234%2FDEL%2F2020'];
 const EMPLOYER = ['/dashboard', '/dashboard/new', '/dashboard/applications', '/dashboard/profile'];
-const ADMIN = ['/admin', '/admin/jobs', '/admin/jobs?status=paid_pending_review', '/admin/jobs/new', '/admin/employers', '/admin/payments', '/admin/packages', '/admin/offers', '/admin/history', '/admin/reports', '/admin/settings', '/admin/guides', '/admin/applications', '/admin/requests', '/admin/security', '/admin/problems'];
+const ADMIN = ['/admin', '/admin/jobs', '/admin/jobs?status=paid_pending_review', '/admin/jobs/new', '/admin/employers', '/admin/payments', '/admin/packages', '/admin/offers', '/admin/history', '/admin/activity', '/admin/reports', '/admin/settings', '/admin/guides', '/admin/applications', '/admin/requests', '/admin/security', '/admin/problems'];
 
 const slug = (s) => s.replace(/[^a-z0-9]+/gi, '_').replace(/^_|_$/g, '') || 'home';
 
@@ -63,6 +63,19 @@ for (const [group, paths, who] of [['public', PUBLIC, null], ['employer', EMPLOY
     }
   });
 }
+
+test.describe('accessibility: Malayalam, Tamil, Telugu, Urdu', () => {
+  for (const lang of ['ml', 'ta', 'te', 'ur']) {
+    for (const path of ['/', '/jobs', '/job/job-1', '/cv']) {
+      test(`${path} (${lang})`, async ({ page }, info) => {
+        await page.addInitScript((code) => localStorage.setItem('jobs-abroad-lang', code), lang);
+        const r = await scan(page, path, info.project.name, lang);
+        expect(r.violations, `axe violations on ${path} in ${lang}`).toEqual([]);
+        expect.soft(r.smallTapTargets, `tap targets under 44 px on ${path} in ${lang}`).toEqual([]);
+      });
+    }
+  }
+});
 
 test.describe('accessibility: Hindi', () => {
   for (const path of ['/', '/jobs', '/job/job-1', '/post-job', '/signup', '/terms']) {

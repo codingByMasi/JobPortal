@@ -47,6 +47,9 @@ input[type='text'], input[type='email'], input[type='url'], input[type='password
 textarea { min-height: 96px; resize: vertical; }
 input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 4px solid #f5a623; outline-offset: 2px; }
 .has-error input, .has-error select, .has-error textarea { border-color: var(--red); }
+/* the search box draws its own frame (.search in base.css); the general field style above must not add a second one */
+.search input[type='search'] { width: auto; flex: 1; min-width: 0; padding: 0; border: 0; border-radius: 0; background: transparent; }
+.search input[type='search']:focus-visible { outline: 0; }
 .check { display: flex; align-items: center; gap: 12px; min-height: var(--tap); font-weight: 700; }
 .check input { width: 26px; height: 26px; accent-color: var(--blue); }
 .file-btn { cursor: pointer; }

@@ -1,4 +1,5 @@
 // The demo backend: same function names as the Supabase backend (see ../supabase/index.js).
+import * as activity from './activity';
 import * as admin from './admin';
 import * as alerts from './alerts';
 import * as auth from './auth';
@@ -24,6 +25,7 @@ export const demoApi = {
   ...guides,
   ...verification,
   ...alerts,
+  ...activity,
   /** For the "Start again" button in the demo banner. */
   async resetDemo() {
     resetState();

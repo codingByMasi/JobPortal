@@ -33,6 +33,7 @@ export default function AdminLayout() {
     { to: '/admin/security', icon: 'shield', label: t.tabSecurity },
     { to: '/admin/reports', icon: 'alert', label: t.tabReports },
     { to: '/admin/history', icon: 'list', label: t.tabAudit },
+    { to: '/admin/activity', icon: 'users', label: t.tabActivity },
     { to: '/admin/problems', icon: 'alert', label: t.tabProblems },
   ];
 

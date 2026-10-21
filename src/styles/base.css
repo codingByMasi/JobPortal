@@ -24,7 +24,7 @@ body {
   margin: 0;
   background: #fff;
   color: var(--ink);
-  font: 400 16px/1.5 Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Devanagari', 'Noto Sans', sans-serif;
+  font: 400 16px/1.5 Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Devanagari', 'Noto Sans Malayalam', 'Noto Sans Tamil', 'Noto Sans Telugu', 'Noto Naskh Arabic', 'Nirmala UI', 'Noto Sans', sans-serif;
 }
 h1, h2, h3, p, ul, ol, fieldset { margin: 0; padding: 0; }
 ul, ol { list-style: none; }

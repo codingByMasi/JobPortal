@@ -1,6 +1,7 @@
 // "Report this ad": a small pop-up form. The report is saved in the database and an admin reviews it.
 import { useState } from 'react';
 import Button from '../../shared/ui/Button';
+import Captcha from '../../shared/ui/Captcha';
 import Field from '../../shared/ui/Field';
 import Modal from '../../shared/ui/Modal';
 import Notice from '../../shared/ui/Notice';
@@ -18,18 +19,22 @@ export default function ReportAd({ job }) {
   const [v, setV] = useState({ reason: 'asked_money', message: '', contact: '' });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [token, setToken] = useState('');
+  const [round, setRound] = useState(0);
 
   const send = async (e) => {
     e.preventDefault();
     setBusy(true);
     setError('');
     try {
-      await api.reportAd({ jobId: job.id, reason: v.reason, message: v.message, contact: v.contact });
+      await api.reportAd({ jobId: job.id, reason: v.reason, message: v.message, contact: v.contact, captchaToken: token });
       setDone(true);
     } catch (err) {
       setError(friendlyMessage(err, t));
     } finally {
       setBusy(false);
+      setToken('');
+      setRound((r) => r + 1); // a check answer works once: show a fresh one for the next try
     }
   };
 
@@ -57,6 +62,7 @@ export default function ReportAd({ job }) {
               <Field label={t.reportContact} help={t.reportContactHelp}>
                 <input type="tel" inputMode="numeric" value={v.contact} maxLength={20} onChange={(e) => setV({ ...v, contact: e.target.value })} />
               </Field>
+              <Captcha key={round} onToken={setToken} />
               <Notice tone="error">{error}</Notice>
               <Button type="submit" icon="check" disabled={busy}>{busy ? t.saving : t.reportSend}</Button>
             </form>

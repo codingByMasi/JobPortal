@@ -36,6 +36,8 @@ These pages hold **placeholder drafts**. They are not legal advice. Please have 
 - [ ] **Recruitment rules:** advertising overseas jobs and the Verified badge: confirm whether you may show "Verified" and what proof you must check (registration with the Protector of Emigrants, e-Migrate rules).
 - [ ] **Fraud banner and "applying is free":** confirm the wording does not promise more than you can guarantee.
 - [ ] **Salary facts:** employers type them; confirm your terms make the employer responsible for their accuracy.
+- [ ] **Help articles** (`/articles`): the four articles are general guidance. Have someone who knows Indian overseas recruitment rules read them, especially "Before you pay anyone" (agent fees, receipts) and "Papers to keep ready" (what is asked differs by country).
+- [ ] **Job alerts and the privacy page:** confirm the wording about alert emails (kept only to send alerts, deleted on unsubscribe and after 7 days if never confirmed) matches what you want to promise.
 - [ ] **Hindi:** a native reader checks all the new Hindi text.
 - [ ] **Search console:** after launch, add the site and send `sitemap.xml` (see `15-seo-plan.md`).
 
@@ -51,4 +53,5 @@ These pages hold **placeholder drafts**. They are not legal advice. Please have 
 ## D. Optional extras that need an outside account
 - [ ] Error reports: a free Sentry account (needs a small code change and a line in `scripts/headers.mjs`). Today the site only logs errors in the browser.
 - [ ] A staging Supabase project (free) to try database changes before the real one.
-- [ ] Cloudflare Turnstile + an Edge Function for the apply form (stops fake applications; needs a developer).
+- [ ] Turn on the Apply and Report form check (built; needs your Cloudflare Turnstile keys): follow `22-spam-protection.md`.
+- [ ] **Malayalam, Tamil, Telugu, Urdu:** the translations of what job seekers see were written by an AI. A native reader of each should check `ml.js`, `ta.js`, `te.js`, `ur.js` before you promote these languages. Legal, employer and admin texts are still English in those languages.

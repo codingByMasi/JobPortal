@@ -44,6 +44,9 @@ For the step that takes the work from the branch `feat/razorpay-and-fixes` to th
 ## Later: job alerts (migration 0035)
 Not part of the first go-live. When you want them: follow "Putting it live" in `21-job-alerts.md` (apply 0035, redeploy `send-notifications`, merge the website change).
 
+## Later: the spam check on forms (migration 0036)
+Not part of the first go-live. Migration 0036 changes the two form guards but does nothing visible until you switch the rule on. Apply it, then follow "Turning it on" in `22-spam-protection.md` in that order.
+
 ## After go-live (not part of this step)
 - Emails to employers are off until you set them up: `20-notifications.md` (Resend account, domain, key, deploy the function, cron). Without it the messages just wait in the queue. If `pg_cron` is not turned on, migration 0034 prints a notice: turn on `pg_cron` and run its last block again, or run `select public.queue_ending_reminders();` by hand.
 - Add the two GitHub secrets for the weekly backup (`SUPABASE_DB_URL`, `BACKUP_PASSPHRASE`).

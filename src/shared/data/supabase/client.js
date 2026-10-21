@@ -2,7 +2,7 @@
 // Only the public (anon) key is used here. It is safe in the browser BECAUSE every table has Row Level Security.
 import { createClient } from '@supabase/supabase-js';
 import { withTimeout } from '../../lib/fetchTimeout';
-import { SUPABASE_ANON_KEY, SUPABASE_URL } from '../env';
+import { SUPABASE_ANON_KEY, SUPABASE_URL, TURNSTILE_SITE_KEY } from '../env';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { persistSession: true, autoRefreshToken: true },
@@ -30,6 +30,19 @@ export const ok = ({ data, error }) => {
 
 export const iso = (ts) => new Date(ts).toISOString();
 export const uuid = () => crypto.randomUUID();
+
+/**
+ * The one-time pass for a form send (migration 0036), or null when this website does not use the human check (no Turnstile site key).
+ * Throws code HUMAN when the check was not passed.
+ */
+export async function getHumanPass(captchaToken) {
+  if (!TURNSTILE_SITE_KEY) return null;
+  const refused = () => Object.assign(new Error('Please finish the human check and try again.'), { code: 'HUMAN' });
+  if (!captchaToken) throw refused();
+  const { data, error } = await supabase.functions.invoke('verify-human', { body: { token: captchaToken } });
+  if (error || !data?.pass) throw refused();
+  return data.pass;
+}
 
 /** The logged-in user's id, or an error asking to log in. */
 export async function userId() {

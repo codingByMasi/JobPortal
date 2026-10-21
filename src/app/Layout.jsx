@@ -7,6 +7,8 @@ import { useAuth } from '../features/auth/AuthContext';
 import { whatsappLink } from '../shared/lib/format';
 import { useLang } from '../shared/i18n/LangContext';
 import { useSettings } from '../shared/settings/SettingsContext';
+import InstallPrompt from './InstallPrompt';
+import LanguagePicker from './LanguagePicker';
 
 const NAV = [
   { to: '/', icon: 'home', label: 'navHome', end: true },
@@ -38,6 +40,7 @@ export default function Layout() {
           <button type="button" onClick={resetDemo}>{t.demoReset}</button>
         </div>
       )}
+      <InstallPrompt />
       <header className="site-header">
         <div className="header-row">
           <Link to="/" className="brand">
@@ -76,11 +79,14 @@ export default function Layout() {
         <nav className="legal-links" aria-label={t.footerPages}>
           <Link className="footer-link" to="/check-agency"><Icon name="shield" size={22} /><span>{t.checkLink}</span></Link>
           <Link className="footer-link" to="/agencies"><Icon name="badge" size={22} /><span>{t.agenciesLink}</span></Link>
+          <Link className="footer-link" to="/articles"><Icon name="list" size={22} /><span>{t.articlesLink}</span></Link>
+          <Link className="footer-link" to="/cv"><Icon name="edit" size={22} /><span>{t.cvLink}</span></Link>
           <Link className="footer-link" to="/about"><Icon name="home" size={22} /><span>{t.aboutLink}</span></Link>
           <Link className="footer-link" to="/faq"><Icon name="search" size={22} /><span>{t.faqLink}</span></Link>
           <Link className="footer-link" to="/refund-policy"><Icon name="rupee" size={22} /><span>{t.refundLink}</span></Link>
           <Link className="footer-link" to="/delete-account"><Icon name="trash" size={22} /><span>{t.deleteLink}</span></Link>
         </nav>
+        <LanguagePicker />
         <div className="legal-links">
           <Link className="footer-link" to="/privacy"><Icon name="shield" size={22} /><span>{t.privacyLink}</span></Link>
           <Link className="footer-link" to="/terms"><Icon name="shield" size={22} /><span>{t.termsLink}</span></Link>

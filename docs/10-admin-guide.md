@@ -66,6 +66,9 @@ Employers post for free, so the **Payments**, **Packages** and **Offers** tabs, 
 - If something is empty the site hides it (for example no WhatsApp button). The home tab shows a red reminder until everything is filled in.
 - The site address is used for the search pages and sitemap the next time the site is built (up to 3 hours, or press the deploy hook).
 
+## Activity tab (what the admins did)
+Open **Activity** to see every approval, rejection, extra days, hide or show, payment, refund and settings change, newest first, with who did it and a link to the ad. Use the **What** filter to see one kind. It is only for reading: nothing can be changed or deleted here. Use it when two admins work together, or to find out who did something.
+
 ## Reports and deletion requests (Reports tab)
 - **Reports about ads:** a visitor tapped "Report this ad". Open reports and account deletion requests also show as cards on the dashboard ("Reports to check", "Account deletions"), so you do not have to remember to look. Read the reason and message. When one ad has several open reports, the row says so ("3 open reports on this ad"). Tap *Find the ad* to open it in the Ads tab. If the ad looks fake or asks for money: tap *Hide the ad and close the report* (one tap: the ad goes off the site and the report is closed), then block the employer in the Employers tab if needed. If the report is wrong or silly, tap *Dismiss*. Do this daily at the start; reports about money demands first.
 - **Account deletion requests:** anyone can send one with any email, so **never delete only because of a request**. Write to that email first and ask the owner to confirm (or confirm from the phone number on the account). Then ask your developer to delete the account (or in Supabase delete the employer's user), and tap *Mark done*. Payment records stay (the law may need them).
