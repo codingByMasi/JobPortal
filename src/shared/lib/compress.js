@@ -59,7 +59,11 @@ async function shrinkImage(file) {
   try {
     bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
   } catch {
-    throw fail('IMAGE_FAIL');
+    try {
+      bitmap = await createImageBitmap(file); // older phones/browsers do not know the options
+    } catch {
+      throw fail('IMAGE_FAIL');
+    }
   }
   try {
     const full = await drawJpeg(bitmap, { maxWidth: LIMITS.imageMaxWidth, targetBytes: LIMITS.imageTargetBytes, name: 'ad.jpg' });
