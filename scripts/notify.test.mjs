@@ -25,7 +25,7 @@ describe('renderEmail', () => {
     expect(renderEmail('ad_extended', data, { siteUrl: SITE }).text).toContain('We added 20 days');
     expect(renderEmail('ad_ending_soon', data, { siteUrl: SITE }).text).toContain('ends on 10 Nov 2026');
     expect(renderEmail('ad_ended', data, { siteUrl: SITE }).text).toContain('has ended');
-    expect(renderEmail('license_verified', {}, { siteUrl: SITE }).subject).toBe('Your company is verified on Jobs Abroad');
+    expect(renderEmail('license_verified', {}, { siteUrl: SITE }).subject).toBe('Your job posting request is approved on Jobs Abroad');
   });
 
   it('an unknown kind gives nothing', () => {

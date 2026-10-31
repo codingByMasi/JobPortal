@@ -34,10 +34,10 @@ export function renderEmail(kind, data = {}, { siteUrl = '' } = {}) {
   const adLink = data.job_id ? `${siteUrl}/job/${encodeURIComponent(data.job_id)}` : mine;
   const parts = {
     license_verified: {
-      subject: 'Your company is verified on Jobs Abroad',
+      subject: 'Your job posting request is approved on Jobs Abroad',
       url: `${siteUrl}/dashboard/new`,
-      en: { lines: ['Your company is now verified on Jobs Abroad.'], lead: 'You can post your ads now', button: 'Post an ad' },
-      hi: { lines: ['आपकी कंपनी अब Jobs Abroad पर वेरिफ़ाइड है।'], lead: 'आप अब अपने विज्ञापन डाल सकते हैं', button: 'विज्ञापन डालें' },
+      en: { lines: ['Your request for job posting is approved. Your company is now verified on Jobs Abroad.'], lead: 'You can now post different jobs', button: 'Post an ad' },
+      hi: { lines: ['नौकरी पोस्ट करने का आपका अनुरोध स्वीकार कर लिया गया है। आपकी कंपनी अब Jobs Abroad पर वेरिफ़ाइड है।'], lead: 'अब आप अलग-अलग नौकरियाँ पोस्ट कर सकते हैं', button: 'विज्ञापन डालें' },
     },
     license_rejected: {
       subject: 'We could not accept your license',

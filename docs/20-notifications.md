@@ -5,7 +5,7 @@ Employers get a short email (English, then Hindi) when something happens to thei
 ## What is sent
 | When | Message |
 |---|---|
-| The admin verifies the employer | Your company is verified: you can post now |
+| The admin verifies the employer | Your job posting request is approved: you can now post different jobs |
 | The admin rejects the license | We could not accept your license, with the reason |
 | The admin approves an ad | Your ad is live for N days, until a date, with the link |
 | The admin rejects an ad | We could not approve it, with the reason and where to fix it |
