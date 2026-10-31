@@ -32,6 +32,12 @@ describe('license verification (demo)', () => {
     expect(await api.getMyVerification()).toMatchObject({ licenseNumber: 'LIC-123' });
   });
 
+  it('a PDF license keeps a .pdf path so the admin screen opens it as a PDF', async () => {
+    await asNewbie();
+    const sent = await api.submitVerification({ licenseNumber: 'LIC-123', file: { type: 'application/pdf', name: 'license.pdf' } });
+    expect(sent.filePath).toMatch(/\.pdf$/);
+  });
+
   it('an already verified employer cannot send one', async () => {
     await asEmployer();
     await expect(api.submitVerification({ licenseNumber: 'LIC-123', file: file() })).rejects.toMatchObject({ code: 'NOT_ALLOWED' });

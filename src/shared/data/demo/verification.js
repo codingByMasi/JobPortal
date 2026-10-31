@@ -26,7 +26,7 @@ export async function submitVerification({ licenseNumber, file }) {
   const number = String(licenseNumber || '').trim();
   if (number.length < 3 || number.length > 40) throw fail('LICENSE_NUMBER', 'license: number');
   if (!file) throw fail('LICENSE_FILE', 'license: file');
-  const path = `${p.id}/${uid()}`;
+  const path = `${p.id}/${uid()}.${file.type === 'application/pdf' ? 'pdf' : 'jpg'}`; // the extension tells the admin screen it is a PDF
   pictures()[path] = await readAsDataUrl(file);
   const now = new Date().toISOString();
   let row = requests().find((x) => x.recruiter_id === p.id);

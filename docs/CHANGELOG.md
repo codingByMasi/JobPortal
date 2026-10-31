@@ -1,7 +1,10 @@
 # Changelog
 
+
 ## WhatsApp apply message shows the job's details
 - The ready-typed WhatsApp message on the ad page no longer carries the internal job id. It now lists the title, place, company, salary, experience, vacancies, last date and visa (only what the ad has). Code: `applyMessage` in `shared/lib/jobFacts.js`; test in `jobFacts.test.js`.
+## PDF licenses
+- Employers can send their license as a PDF (up to 2 MB) as well as a picture; the database, the upload box and the admin pop-up already allowed it. Fix: in demo mode a PDF license lost its `.pdf` name, so the admin saw a broken picture; it now opens as a PDF. Test in `demo.license.test.js`.
 
 ## Step 32 - Least privilege (migration 0037) and a fix for the Report form
 - **Migration 0037 (not yet applied to the live project):** the rights of the visitor and signed-in roles are now written out in full and are smaller. No `TRUNCATE`, `REFERENCES` or `TRIGGER` for anyone; visitors read only the two public views and the public settings and only add forms; the two views and the two logs are read-only for signed-in people; new tables give no rights by themselves. This also makes a fresh install safe now that Supabase stops granting access to new tables automatically. Details and the full list: `docs/03-database-security.md`. Test: `scripts/rls.privileges.test.mjs`; the test database no longer gives rights by default; older tests that expected "no rows" for visitors now expect "not allowed".
