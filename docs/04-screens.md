@@ -50,4 +50,4 @@ Every screen that loads data has **loading, empty and error** states (shared `St
 Waiting for payment - Waiting for approval - Live until DATE - Hidden - Rejected: reason - Expired.
 
 ## Layout
-Bottom nav on phones (Home, Jobs, Contact); same three items in the header on wide screens. Header also has an account button and the Hindi/English toggle. Tables become one card per row on phones.
+Bottom nav on phones (Home, Jobs, Contact); same three items in the header on wide screens. Header also has a blue "Post a Job" button (icon only on phones), an account button and the Hindi/English toggle. Tables become one card per row on phones.

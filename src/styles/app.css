@@ -17,9 +17,12 @@
 .brand { min-width: 0; margin-right: auto; }
 .brand-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .account-btn { min-width: 44px; justify-content: center; display: flex; align-items: center; gap: 8px; min-height: var(--tap); padding: 0 12px; color: var(--blue-dark); border-radius: 12px; font-weight: 700; font-size: 14px; }
+.post-btn { display: flex; align-items: center; gap: 8px; min-height: var(--tap); padding: 0 14px; background: var(--blue); color: #fff; border-radius: 12px; font-weight: 700; font-size: 14px; white-space: nowrap; }
 .account-btn:active { background: var(--blue-soft); }
 @media (max-width: 479px) {
   .account-btn span { display: none; }
+  .post-btn { padding: 0 10px; min-width: var(--tap); justify-content: center; }
+  .post-btn span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .lang-btn { padding: 0 10px; }
   .brand { gap: 8px; }
   .brand-name { font-size: 16px; }
