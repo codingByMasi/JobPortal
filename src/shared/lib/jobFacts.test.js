@@ -49,3 +49,17 @@ describe('factsFromForm and last date', () => {
     expect(isPastLastDate({ lastDate: d }, d + DAY + 1)).toBe(true);
   });
 });
+
+describe('applyMessage', () => {
+  it('lists the ad details and never the id', async () => {
+    const { applyMessage } = await import('./jobFacts.js');
+    const { en } = await import('../i18n/en.js');
+    const job = { id: 'abc-123', title: 'Plumber', company: 'Acme', salaryMin: 1500, salaryMax: 2200, currency: 'AED', vacancies: 5, visaType: 'Employment' };
+    const msg = applyMessage(job, en, 'en', 'Dubai, UAE', () => '');
+    expect(msg).toContain('Plumber');
+    expect(msg).toContain('Company: Acme');
+    expect(msg).toContain('AED 1,500 - 2,200');
+    expect(msg).toContain('Vacancies: 5');
+    expect(msg).not.toContain('abc-123');
+  });
+});

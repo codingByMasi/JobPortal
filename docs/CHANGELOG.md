@@ -1,5 +1,8 @@
 # Changelog
 
+## WhatsApp apply message shows the job's details
+- The ready-typed WhatsApp message on the ad page no longer carries the internal job id. It now lists the title, place, company, salary, experience, vacancies, last date and visa (only what the ad has). Code: `applyMessage` in `shared/lib/jobFacts.js`; test in `jobFacts.test.js`.
+
 ## Step 32 - Least privilege (migration 0037) and a fix for the Report form
 - **Migration 0037 (not yet applied to the live project):** the rights of the visitor and signed-in roles are now written out in full and are smaller. No `TRUNCATE`, `REFERENCES` or `TRIGGER` for anyone; visitors read only the two public views and the public settings and only add forms; the two views and the two logs are read-only for signed-in people; new tables give no rights by themselves. This also makes a fresh install safe now that Supabase stops granting access to new tables automatically. Details and the full list: `docs/03-database-security.md`. Test: `scripts/rls.privileges.test.mjs`; the test database no longer gives rights by default; older tests that expected "no rows" for visitors now expect "not allowed".
 - **Fix:** the Report form and the "delete my account" request asked the database to send the saved row back, which visitors are not allowed to read, so the database refused them ("You cannot do this"). They now just add the row. Test: `src/shared/data/supabase/trust.test.js`. (The Apply form already worked this way.) This fix is in the website code, so it reaches visitors when this is merged and published, not when the migration is applied.

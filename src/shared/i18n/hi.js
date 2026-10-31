@@ -77,7 +77,7 @@ export const hi = {
   imageFailed: 'फोटो नहीं खुली। विज्ञापन डाउनलोड करें दबाएं।',
   hiring: 'भर्ती चल रही है',
   safety: 'मालिक और नौकरी की जांच किए बिना किसी को पैसे न दें।',
-  waMessage: (id, title, city) => `नमस्ते, मैं इस नौकरी के लिए आवेदन करना चाहता हूं।\nनौकरी नंबर: ${id}\nनौकरी: ${title}\nशहर: ${city}`,
+  waMessage: (title, place) => `नमस्ते, मैं इस नौकरी के लिए आवेदन करना चाहता हूं।\nनौकरी: ${title}\nशहर: ${place}`,
   notFound: 'यह नौकरी अब उपलब्ध नहीं है।',
 
   applyTitle: 'यहां आवेदन करें',
@@ -635,6 +635,7 @@ export const hi = {
   errSalaryOrder: 'ज़्यादा से ज़्यादा वेतन, कम से कम वेतन से कम नहीं हो सकता।',
   errVacancies: 'कृपया 1 से 9999 के बीच की संख्या लिखें।',
   errLastDate: 'आख़िरी तारीख बीत चुकी तारीख नहीं हो सकती।',
+  companyLabel: 'कंपनी',
   salaryLabel: 'वेतन',
   perMonth: 'महीना',
   experienceLabel: 'अनुभव',

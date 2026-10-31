@@ -20,10 +20,9 @@ describe('translations', () => {
     walk(translations, 'translations');
     expect(empties).toEqual([]);
   });
-  it('WhatsApp message carries the job id, title and city in every language', () => {
+  it('WhatsApp message carries the job title and place (no id) in every language', () => {
     for (const lang of Object.keys(translations)) {
-      const msg = translations[lang].waMessage('101', 'Plumber', 'Dubai');
-      expect(msg).toContain('101');
+      const msg = translations[lang].waMessage('Plumber', 'Dubai');
       expect(msg).toContain('Plumber');
       expect(msg).toContain('Dubai');
     }
