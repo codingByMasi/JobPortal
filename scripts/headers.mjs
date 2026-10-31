@@ -20,7 +20,7 @@ export function buildHeaders({ supabaseUrl = '', turnstile = false, plausible = 
     "default-src 'self'",
     `script-src ${script}`,
     "style-src 'self'",
-    "img-src 'self' data: https:",
+    "img-src 'self' data: blob: https:",
     "font-src 'self'",
     `connect-src ${connect}`,
     `frame-src ${frame}`,

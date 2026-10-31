@@ -3,6 +3,10 @@
 ## PDF licenses
 - Employers can send their license as a PDF (up to 2 MB) as well as a picture; the database, the upload box and the admin pop-up already allowed it. Fix: in demo mode a PDF license lost its `.pdf` name, so the admin saw a broken picture; it now opens as a PDF. Test in `demo.license.test.js`.
 
+## Fix - Picture preview in the ad form
+- Also: if the browser does not know the picture options of `createImageBitmap`, it now retries without them instead of failing (`compress.js`).
+- The security policy (`scripts/headers.mjs`) allowed pictures only from `self`, `data:` and `https:`, so the preview of a picture just chosen in the ad form (a `blob:` address) was blocked on the real site and showed broken. `img-src` now also allows `blob:`. Test: `scripts/headers.test.mjs`.
+
 ## Step 32 - Least privilege (migration 0037) and a fix for the Report form
 - **Migration 0037 (not yet applied to the live project):** the rights of the visitor and signed-in roles are now written out in full and are smaller. No `TRUNCATE`, `REFERENCES` or `TRIGGER` for anyone; visitors read only the two public views and the public settings and only add forms; the two views and the two logs are read-only for signed-in people; new tables give no rights by themselves. This also makes a fresh install safe now that Supabase stops granting access to new tables automatically. Details and the full list: `docs/03-database-security.md`. Test: `scripts/rls.privileges.test.mjs`; the test database no longer gives rights by default; older tests that expected "no rows" for visitors now expect "not allowed".
 - **Fix:** the Report form and the "delete my account" request asked the database to send the saved row back, which visitors are not allowed to read, so the database refused them ("You cannot do this"). They now just add the row. Test: `src/shared/data/supabase/trust.test.js`. (The Apply form already worked this way.) This fix is in the website code, so it reaches visitors when this is merged and published, not when the migration is applied.
