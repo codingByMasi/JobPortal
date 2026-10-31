@@ -1,5 +1,8 @@
 # Changelog
 
+## Step 33 - Clearer license-approval email
+- The email sent when the admin approves an employer now says in English and Hindi: your request for job posting is approved, you can now post different jobs. The rejection email (with the reason, English and Hindi) already existed and is unchanged. Only the text in `supabase/functions/_shared/notify.js` changed, so the `send-notifications` function must be deployed again for it to reach employers. `npm test` passes.
+
 ## Step 32 - Least privilege (migration 0037) and a fix for the Report form
 - **Migration 0037 (not yet applied to the live project):** the rights of the visitor and signed-in roles are now written out in full and are smaller. No `TRUNCATE`, `REFERENCES` or `TRIGGER` for anyone; visitors read only the two public views and the public settings and only add forms; the two views and the two logs are read-only for signed-in people; new tables give no rights by themselves. This also makes a fresh install safe now that Supabase stops granting access to new tables automatically. Details and the full list: `docs/03-database-security.md`. Test: `scripts/rls.privileges.test.mjs`; the test database no longer gives rights by default; older tests that expected "no rows" for visitors now expect "not allowed".
 - **Fix:** the Report form and the "delete my account" request asked the database to send the saved row back, which visitors are not allowed to read, so the database refused them ("You cannot do this"). They now just add the row. Test: `src/shared/data/supabase/trust.test.js`. (The Apply form already worked this way.) This fix is in the website code, so it reaches visitors when this is merged and published, not when the migration is applied.
