@@ -47,6 +47,10 @@ export default function Layout() {
             <span className="brand-mark"><Icon name="briefcase" size={26} /></span>
             <span className="brand-name">{t.siteName}</span>
           </Link>
+          <Link to="/post-job" className="post-btn" aria-label={t.postTitle}>
+            <Icon name="upload" size={22} />
+            <span>{t.postTitle}</span>
+          </Link>
           <Link to={user ? (isAdmin ? '/admin' : '/dashboard') : '/login'} className="account-btn" aria-label={user ? t.myAccount : t.login}>
             <Icon name="user" size={22} />
             <span>{user ? t.myAccount : t.login}</span>
