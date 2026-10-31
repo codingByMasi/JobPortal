@@ -1,5 +1,8 @@
 # Changelog
 
+
+## WhatsApp apply message shows the job's details
+- The ready-typed WhatsApp message on the ad page no longer carries the internal job id. It now lists the title, place, company, salary, experience, vacancies, last date and visa (only what the ad has). Code: `applyMessage` in `shared/lib/jobFacts.js`; test in `jobFacts.test.js`.
 ## PDF licenses
 - Employers can send their license as a PDF (up to 2 MB) as well as a picture; the database, the upload box and the admin pop-up already allowed it. Fix: in demo mode a PDF license lost its `.pdf` name, so the admin saw a broken picture; it now opens as a PDF. Test in `demo.license.test.js`.
 

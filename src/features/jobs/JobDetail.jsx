@@ -13,7 +13,8 @@ import Icon from '../../shared/ui/Icon';
 import { JobTags } from '../../shared/ui/StatusBadge';
 import { JobsStatus } from '../../shared/ui/StateViews';
 import { countryById } from '../../shared/lib/catalog';
-import { downloadLink, relativeDate, whatsappLink, whatsappShareLink } from '../../shared/lib/format';
+import { applyMessage } from '../../shared/lib/jobFacts';
+import { downloadLink, formatDate, relativeDate, whatsappLink, whatsappShareLink } from '../../shared/lib/format';
 import { useJobs } from './JobsContext';
 import { useLang } from '../../shared/i18n/LangContext';
 import { useAuth } from '../auth/AuthContext';
@@ -102,7 +103,7 @@ export default function JobDetail() {
   const hasFile = Boolean(job.fileUrl);
   const rel = relativeDate(job.startsAt || job.posted, t, lang);
   const postedText = !rel ? '' : rel === t.today ? t.postedToday : t.postedOn(rel);
-  const waLink = whatsappLink(job.whatsapp || settings.whatsappNumber, t.waMessage(job.id, job.title, job.city));
+  const waLink = whatsappLink(job.whatsapp || settings.whatsappNumber, applyMessage(job, t, lang, place, formatDate));
   const base = settings.siteUrl || window.location.origin;
   const shareLink = whatsappShareLink(t.shareMessage(job.title, place, `${base}/job/${encodeURIComponent(job.id)}`));
 

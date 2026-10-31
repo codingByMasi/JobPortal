@@ -62,3 +62,17 @@ export function factsFromForm(v) {
     visaType: String(v.visaType || '').trim() || null,
   };
 }
+
+/** The text typed into WhatsApp when someone applies: the job's own details (no internal id). `place` is "City, Country". */
+export function applyMessage(job, t, lang, place, formatDate) {
+  const salary = salaryText(job);
+  const lines = [
+    job.company && `${t.companyLabel || 'Company'}: ${job.company}`,
+    salary && `${t.salaryLabel}: ${salary} ${t.perMonth}`,
+    job.experienceLevel && t.exp?.[job.experienceLevel] && `${t.experienceLabel}: ${t.exp[job.experienceLevel]}`,
+    job.vacancies && `${t.vacanciesLabel}: ${job.vacancies}`,
+    job.lastDate && !isPastLastDate(job) && `${t.lastDateLabel}: ${formatDate(job.lastDate, lang)}`,
+    job.visaType && `${t.visaLabel}: ${job.visaType}`,
+  ].filter(Boolean);
+  return [t.waMessage(job.title, place), ...lines].join('\n');
+}
