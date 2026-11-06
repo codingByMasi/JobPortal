@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import Button from '../../shared/ui/Button';
 import Icon from '../../shared/ui/Icon';
 import JobCard from './JobCard';
+import AdSlot from '../../shared/ui/AdSlot';
 import SectionHeading from '../../shared/ui/SectionHeading';
 import { Empty, JobsStatus } from '../../shared/ui/StateViews';
 import AlertSignup from './AlertSignup';
@@ -128,6 +129,7 @@ export default function Jobs({ fixedCountry = '' }) {
           <>
             <p className="count" aria-live="polite">{t.jobsFound(list.length)}</p>
             <div className="job-list">{list.slice(0, shown).map((j) => <JobCard key={j.id} job={j} headingLevel={2} />)}</div>
+            <AdSlot slot="list" />
             {list.length > shown && (
               <div className="more">
                 <Button tone="outline" icon="plus" onClick={() => setShown((s) => s + PAGE)}>{t.showMore}</Button>

@@ -352,6 +352,8 @@ export const en = {
     'If we count visits, we use a tool that does not track you across sites and sets no cookies.',
     'For a complaint, see the Contact page: it names the person who answers.',
   ],
+  privacyAds: 'This site shows ads from Google. Google may use cookies to choose ads. You can turn this off at adssettings.google.com.',
+  adLabel: 'Advertisement',
   termsTitle: 'Terms and safety',
   termsPoints: [
     'Job ads are posted by employers and agents. We check that an ad looks real, but we cannot promise any job.',

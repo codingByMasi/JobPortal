@@ -19,6 +19,7 @@ import { useJobs } from './JobsContext';
 import { useLang } from '../../shared/i18n/LangContext';
 import { useAuth } from '../auth/AuthContext';
 import { useAdImage } from './useAdImage';
+import AdSlot from '../../shared/ui/AdSlot';
 import { usePageMeta } from '../../shared/lib/usePageMeta';
 import { useSettings } from '../../shared/settings/SettingsContext';
 
@@ -169,6 +170,7 @@ export default function JobDetail() {
 
       <ApplyForm job={job} />
 
+      <AdSlot slot="job" />
       <FraudBanner />
       <p className="notice"><Icon name="alert" size={26} /><span>{t.safety}</span></p>
       <ReportAd job={job} />
