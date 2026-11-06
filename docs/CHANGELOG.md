@@ -1,5 +1,8 @@
 # Changelog
 
+## ads.txt for AdSense
+- Added `public/ads.txt` so AdSense can authorize the site. See `docs/23-adsense.md`.
+
 ## Google AdSense
 - AdSense script added to every page (`index.html`), Google addresses allowed in the security headers, optional ad boxes (`AdSlot`) on the job list and job page, privacy text updated. See `docs/23-adsense.md`.
 
