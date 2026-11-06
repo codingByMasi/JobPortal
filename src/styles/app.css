@@ -259,3 +259,8 @@ tfoot td { background: var(--blue-card); }
 .ad-stats { font-weight: 700; }
 .check-row { display: flex; gap: 12px; align-items: flex-start; padding: 8px 0; }
 .check-row input { width: 44px; height: 44px; flex: none; }
+
+/* Google AdSense box (only exists when ads are turned on) */
+.ad-slot { min-height: 100px; margin: 16px 0; text-align: center; overflow: hidden; }
+.ad-slot small { display: block; color: var(--muted, #555); font-size: 0.875rem; }
+.ad-slot ins { display: block; }

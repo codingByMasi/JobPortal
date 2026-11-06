@@ -1,5 +1,8 @@
 # Changelog
 
+## Google AdSense
+- AdSense script added to every page (`index.html`), Google addresses allowed in the security headers, optional ad boxes (`AdSlot`) on the job list and job page, privacy text updated. See `docs/23-adsense.md`.
+
 
 ## WhatsApp apply message shows the job's details
 - The ready-typed WhatsApp message on the ad page no longer carries the internal job id. It now lists the title, place, company, salary, experience, vacancies, last date and visa (only what the ad has). Code: `applyMessage` in `shared/lib/jobFacts.js`; test in `jobFacts.test.js`.

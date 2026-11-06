@@ -7,4 +7,11 @@ describe('buildHeaders', () => {
     const csp = buildHeaders({ supabaseUrl: 'https://x.supabase.co' }).split('\n').find((l) => l.includes('Content-Security-Policy'));
     expect(csp).toMatch(/img-src [^;]*blob:/);
   });
+
+  it('allows Google ad addresses unless AdSense is switched off', () => {
+    const csp = (o) => buildHeaders(o).split('\n').find((l) => l.includes('Content-Security-Policy'));
+    expect(csp({ adsense: false })).not.toMatch(/googlesyndication/);
+    expect(csp({ adsense: true })).toMatch(/script-src [^;]*pagead2\.googlesyndication\.com/);
+    expect(csp({ adsense: true })).toMatch(/frame-src [^;]*googleads\.g\.doubleclick\.net/);
+  });
 });

@@ -16,19 +16,19 @@ describe('configProblems (the hosted build needs only the database connection)',
 
 describe('buildHeaders (security headers)', () => {
   it('names only your own Supabase project, never every project', () => {
-    const text = buildHeaders({ supabaseUrl: 'https://abc.supabase.co/' });
+    const text = buildHeaders({ supabaseUrl: 'https://abc.supabase.co/', adsense: false });
     expect(text).toContain('connect-src \'self\' https://abc.supabase.co;');
     expect(text).toContain('frame-src https://abc.supabase.co;');
     expect(text).not.toContain('*.supabase.co');
   });
   it('allows no scripts from outside by default, and the check or counter only when turned on', () => {
-    expect(buildHeaders({ supabaseUrl: 'https://abc.supabase.co' })).toContain("script-src 'self';");
-    const on = buildHeaders({ supabaseUrl: 'https://abc.supabase.co', turnstile: true, plausible: true });
+    expect(buildHeaders({ supabaseUrl: 'https://abc.supabase.co', adsense: false })).toContain("script-src 'self';");
+    const on = buildHeaders({ supabaseUrl: 'https://abc.supabase.co', turnstile: true, plausible: true, adsense: false });
     expect(on).toContain('https://challenges.cloudflare.com');
     expect(on).toContain('https://plausible.io');
   });
   it('keeps the other protections', () => {
-    const text = buildHeaders({ supabaseUrl: 'https://abc.supabase.co' });
+    const text = buildHeaders({ supabaseUrl: 'https://abc.supabase.co', adsense: false });
     for (const part of ["frame-ancestors 'none'", "object-src 'none'", 'X-Content-Type-Options: nosniff', 'X-Frame-Options: DENY', 'Strict-Transport-Security']) {
       expect(text).toContain(part);
     }
@@ -45,7 +45,7 @@ describe('buildHeaders (security headers)', () => {
     expect(Math.max(...lines.map((l) => l.length))).toBeLessThan(2000);
   });
   it('without a Supabase address nothing outside is allowed', () => {
-    const text = buildHeaders({});
+    const text = buildHeaders({ adsense: false });
     expect(text).toContain("connect-src 'self';");
     expect(text).toContain("frame-src 'none';");
   });

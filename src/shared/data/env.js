@@ -3,6 +3,12 @@ export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 /** Public key of the optional "I am not a robot" check (Cloudflare Turnstile). Empty = no check shown. */
 export const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
+/** Google AdSense publisher ID (public). Same ID as the script in index.html. Slots are the ad unit numbers from the AdSense screen. */
+export const ADSENSE_CLIENT = /^ca-pub-\d{10,20}$/.test(import.meta.env.VITE_ADSENSE_CLIENT || 'ca-pub-6973524994504204') ? import.meta.env.VITE_ADSENSE_CLIENT || 'ca-pub-6973524994504204' : '';
+export const ADSENSE_SLOTS = {
+  list: /^\d{6,20}$/.test(import.meta.env.VITE_ADSENSE_SLOT_LIST || '') ? import.meta.env.VITE_ADSENSE_SLOT_LIST : '',
+  job: /^\d{6,20}$/.test(import.meta.env.VITE_ADSENSE_SLOT_JOB || '') ? import.meta.env.VITE_ADSENSE_SLOT_JOB : '',
+};
 
 /**
  * 'supabase' = real data (both keys present).

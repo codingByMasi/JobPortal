@@ -6,16 +6,20 @@ import { fileURLToPath } from 'node:url';
 import { ANALYTICS_DOMAIN, isPlaceholder } from '../src/config.js';
 
 /** The text of the _headers file. */
-export function buildHeaders({ supabaseUrl = '', turnstile = false, plausible = false } = {}) {
+export function buildHeaders({ supabaseUrl = '', turnstile = false, plausible = false, adsense = true } = {}) {
   let supabase;
   try {
     supabase = supabaseUrl ? new URL(supabaseUrl).origin : '';
   } catch {
     supabase = '';
   }
-  const script = ["'self'", plausible && 'https://plausible.io', turnstile && 'https://challenges.cloudflare.com'].filter(Boolean).join(' ');
-  const connect = ["'self'", supabase, plausible && 'https://plausible.io'].filter(Boolean).join(' ');
-  const frame = [supabase, turnstile && 'https://challenges.cloudflare.com'].filter(Boolean).join(' ') || "'none'";
+  // Google AdSense (only when turned on): the ad script, the ad frames and the ad reports.
+  const adScript = 'https://pagead2.googlesyndication.com https://partner.googleadservices.com https://tpc.googlesyndication.com https://www.googletagservices.com';
+  const adConnect = 'https://pagead2.googlesyndication.com https://ep1.adtrafficquality.google https://*.google.com';
+  const adFrame = 'https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://*.google.com';
+  const script = ["'self'", plausible && 'https://plausible.io', turnstile && 'https://challenges.cloudflare.com', adsense && adScript].filter(Boolean).join(' ');
+  const connect = ["'self'", supabase, plausible && 'https://plausible.io', adsense && adConnect].filter(Boolean).join(' ');
+  const frame = [supabase, turnstile && 'https://challenges.cloudflare.com', adsense && adFrame].filter(Boolean).join(' ') || "'none'";
   const csp = [
     "default-src 'self'",
     `script-src ${script}`,

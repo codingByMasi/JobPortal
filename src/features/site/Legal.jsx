@@ -8,7 +8,7 @@ import { usePageMeta } from '../../shared/lib/usePageMeta';
 export default function Legal({ kind }) {
   const { t } = useLang();
   const title = kind === 'privacy' ? t.privacyTitle : t.termsTitle;
-  const points = kind === 'privacy' ? t.privacyPoints : t.termsPoints;
+  const points = kind === 'privacy' ? [...t.privacyPoints, t.privacyAds] : t.termsPoints;
   usePageMeta(title);
   return (
     <div className="page">
